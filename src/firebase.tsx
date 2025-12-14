@@ -1,6 +1,7 @@
-// Import the functions you need from the SDKs you need
 import { initializeApp } from "firebase/app";
-import { getDatabase } from "firebase/database"; // Import for Realtime Database
+import { getDatabase, Database } from "firebase/database";
+
+
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
 
@@ -18,7 +19,7 @@ const firebaseConfig = {
 };
 
 // Initialize Firebase
-const firebaseApp = initializeApp(firebaseConfig);
+const app =  initializeApp(firebaseConfig);
 
 // Get a reference to the Realtime Database service
-export const db = getDatabase(firebaseApp);
+export const db : Database = getDatabase(app);
