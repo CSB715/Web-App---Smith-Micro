@@ -24,8 +24,6 @@ const style = {
   p: 4,
 };
 
-const devices = ["MyPC"];
-
 const icon = <CheckBoxOutlineBlankIcon fontSize="small" />;
 const checkedIcon = <CheckBoxIcon fontSize="small" />;
 
