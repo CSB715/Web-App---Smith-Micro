@@ -1,4 +1,4 @@
-import SiteModal from "./components/SiteModal";
+import SiteModal from "./components1/SiteModal";
 
 export default function BrowserHistory() {
   return (
