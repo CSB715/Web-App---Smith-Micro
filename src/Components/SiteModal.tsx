@@ -6,9 +6,17 @@ import {
   TextField,
   Checkbox,
 } from "@mui/material";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import CheckBoxOutlineBlankIcon from "@mui/icons-material/CheckBoxOutlineBlank";
 import CheckBoxIcon from "@mui/icons-material/CheckBox";
+import {
+  ref,
+  child,
+  get,
+  update,
+  type DatabaseReference,
+} from "firebase/database";
+import { db } from "../firebase";
 
 const style = {
   position: "absolute",
@@ -27,14 +35,49 @@ const devices = ["MyPC"];
 const icon = <CheckBoxOutlineBlankIcon fontSize="small" />;
 const checkedIcon = <CheckBoxIcon fontSize="small" />;
 
-export default function SiteModal() {
+interface Site {
+  url: string;
+  user: DatabaseReference;
+}
+
+export default function SiteModal({ url, user }: Site) {
   const [open, setOpen] = useState(false);
   const handleOpen = () => setOpen(true);
   const handleClose = () => setOpen(false);
 
+  const [categorization, setCategorization] = useState<DatabaseReference>(
+    {} as DatabaseReference
+  );
+  const [overrides, setOverrides] = useState<DatabaseReference>(
+    {} as DatabaseReference
+  );
+  const key = url.replace(".", ",");
+
+  useEffect(() => {
+    get(ref(db, `categorization/${key}`)).then((snapshot) => {
+      console.debug("Categorization data:", snapshot.val());
+      setCategorization(snapshot.val());
+    });
+
+    get(ref(db, `users/1/category_overrides/${key}`)).then((snapshot) => {
+      console.debug("Override data:", snapshot.val());
+      setOverrides(snapshot.val());
+    });
+  }, [open]);
+
+  const [myOverrides, setMyOverrides] = useState(overrides.categories);
+
+  const handleSave = () => {
+    console.log(myOverrides);
+    const updates: Record<string, Array<string>> = {};
+    updates[`users/1/category_overrides/${key}/categories`] = myOverrides;
+    update(ref(db), updates);
+    setOpen(false);
+  };
+
   return (
     <div>
-      <Button onClick={handleOpen}>Open Modal</Button>
+      <Button onClick={handleOpen}>{url}</Button>
       <Modal
         open={open}
         onClose={handleClose}
@@ -42,19 +85,24 @@ export default function SiteModal() {
         aria-describedby="modal-modal-description"
       >
         <Box sx={style}>
-          <h2 id="modal-modal-title">amazon.com</h2>
+          <h2 id="modal-modal-title">{url}</h2>
           <Button onClick={handleClose}>X</Button>
           <a href="https://www.amazon.com/">visit site</a>
           <p>Original:</p>
           <Autocomplete
+            multiple
             disabled
-            defaultValue={"Shopping"}
+            defaultValue={categorization.categories}
             options={["Shopping", "Entertainment"]}
             renderInput={(params) => <TextField {...params} />}
           />
           <p>My Categories:</p>
           <Autocomplete
             multiple
+            defaultValue={overrides.categories}
+            onChange={(event: any, newValue: Array<string>) => {
+              setMyOverrides(newValue);
+            }}
             options={["Shopping", "Entertainment"]}
             renderInput={(params) => <TextField {...params} />}
           />
@@ -79,7 +127,7 @@ export default function SiteModal() {
             renderInput={(params) => <TextField {...params} />}
           />
           <Button onClick={handleClose}>Cancel</Button>
-          <Button onClick={handleClose}>Save</Button>
+          <Button onClick={handleSave}>Save</Button>
         </Box>
       </Modal>
     </div>
