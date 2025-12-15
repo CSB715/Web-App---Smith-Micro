@@ -9,13 +9,7 @@ import {
 import { useState, useEffect } from "react";
 import CheckBoxOutlineBlankIcon from "@mui/icons-material/CheckBoxOutlineBlank";
 import CheckBoxIcon from "@mui/icons-material/CheckBox";
-import {
-  ref,
-  child,
-  get,
-  update,
-  type DatabaseReference,
-} from "firebase/database";
+import { ref, get, update } from "firebase/database";
 import { db } from "../firebase";
 
 const style = {
@@ -37,20 +31,19 @@ const checkedIcon = <CheckBoxIcon fontSize="small" />;
 
 interface Site {
   url: string;
-  user: DatabaseReference;
+  user_id: number;
 }
 
-export default function SiteModal({ url, user }: Site) {
+export default function SiteModal({ url, user_id }: Site) {
   const [open, setOpen] = useState(false);
   const handleOpen = () => setOpen(true);
   const handleClose = () => setOpen(false);
 
-  const [categorization, setCategorization] = useState<DatabaseReference>(
-    {} as DatabaseReference
-  );
-  const [overrides, setOverrides] = useState<DatabaseReference>(
-    {} as DatabaseReference
-  );
+  const [categorization, setCategorization] = useState<{
+    categories?: string[];
+  }>({});
+  const [overrides, setOverrides] = useState<{ categories?: string[] }>({});
+  const [myOverrides, setMyOverrides] = useState<string[]>([]);
   const key = url.replace(".", ",");
 
   useEffect(() => {
@@ -59,13 +52,15 @@ export default function SiteModal({ url, user }: Site) {
       setCategorization(snapshot.val());
     });
 
-    get(ref(db, `users/1/category_overrides/${key}`)).then((snapshot) => {
-      console.debug("Override data:", snapshot.val());
-      setOverrides(snapshot.val());
-    });
+    get(ref(db, `users/${user_id}/category_overrides/${key}`)).then(
+      (snapshot) => {
+        console.debug("Override data:", snapshot.val());
+        const data = snapshot.val();
+        setOverrides(data);
+        setMyOverrides(data?.categories || []);
+      }
+    );
   }, [open]);
-
-  const [myOverrides, setMyOverrides] = useState(overrides.categories);
 
   const handleSave = () => {
     console.log(myOverrides);
@@ -100,7 +95,7 @@ export default function SiteModal({ url, user }: Site) {
           <Autocomplete
             multiple
             defaultValue={overrides.categories}
-            onChange={(event: any, newValue: Array<string>) => {
+            onChange={(_: any, newValue: Array<string>) => {
               setMyOverrides(newValue);
             }}
             options={["Shopping", "Entertainment"]}
