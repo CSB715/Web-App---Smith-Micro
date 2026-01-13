@@ -7,6 +7,6 @@ import BrowserHistory from "./BrowserHistory.tsx";
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <App />
-    <BrowserHistory />
+    <BrowserHistory user_id={1} />
   </StrictMode>
 );

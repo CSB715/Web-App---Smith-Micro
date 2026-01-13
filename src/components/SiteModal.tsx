@@ -27,12 +27,13 @@ const style = {
 const icon = <CheckBoxOutlineBlankIcon fontSize="small" />;
 const checkedIcon = <CheckBoxIcon fontSize="small" />;
 
-interface Site {
+export default function SiteModal({
+  url,
+  user_id,
+}: {
   url: string;
   user_id: number;
-}
-
-export default function SiteModal({ url, user_id }: Site) {
+}) {
   const [open, setOpen] = useState(false);
   const handleOpen = () => setOpen(true);
   const handleClose = () => setOpen(false);
@@ -47,14 +48,14 @@ export default function SiteModal({ url, user_id }: Site) {
   useEffect(() => {
     get(ref(db, `categorization/${key}`)).then((snapshot) => {
       console.debug("Categorization data:", snapshot.val());
-      setCategorization(snapshot.val());
+      setCategorization(snapshot.val() || []);
     });
 
     get(ref(db, `users/${user_id}/category_overrides/${key}`)).then(
       (snapshot) => {
         console.debug("Override data:", snapshot.val());
         const data = snapshot.val();
-        setOverrides(data);
+        setOverrides(data || []);
         setMyOverrides(data?.categories || []);
       }
     );
