@@ -1,6 +1,6 @@
 import React, { useEffect, useState, type ReactElement } from "react";
 import "./App.css";
-import { db } from "./firebase";
+import { db } from "./firebase-old";
 import { ref, child, get, type DatabaseReference } from "firebase/database";
 
 function App() {
