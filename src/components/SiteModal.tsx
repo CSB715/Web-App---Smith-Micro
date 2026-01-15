@@ -10,7 +10,7 @@ import { useState, useEffect } from "react";
 import CheckBoxOutlineBlankIcon from "@mui/icons-material/CheckBoxOutlineBlank";
 import CheckBoxIcon from "@mui/icons-material/CheckBox";
 import { ref, get, update } from "firebase/database";
-import { db } from "../firebase";
+import { db } from "./firebase";
 
 const style = {
   position: "absolute",

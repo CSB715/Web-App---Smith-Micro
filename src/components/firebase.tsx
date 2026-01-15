@@ -1,7 +1,7 @@
+// Import the functions you need from the SDKs you need
 import { initializeApp } from "firebase/app";
-import { getDatabase, Database } from "firebase/database";
-
-
+import { getFirestore } from "firebase/firestore";
+// import { getAnalytics } from "firebase/analytics";
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
 
@@ -14,12 +14,13 @@ const firebaseConfig = {
   projectId: "browser-insights-d704b",
   storageBucket: "browser-insights-d704b.firebasestorage.app",
   messagingSenderId: "1061503587334",
-  appId: "1:1061503587334:web:cc4fb1835ccffffccd1f87",
-  measurementId: "G-4QX7RV91TK"
+  appId: "1:1061503587334:web:74b603a406e35964cd1f87",
+  measurementId: "G-5RJHEYZFTQ"
 };
 
 // Initialize Firebase
-const app =  initializeApp(firebaseConfig);
+const app = initializeApp(firebaseConfig);
+// const analytics = getAnalytics(app);
+const db = getFirestore(app);
 
-// Get a reference to the Realtime Database service
-export const db : Database = getDatabase(app);
+export { db };
