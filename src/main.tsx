@@ -1,11 +1,14 @@
-import { StrictMode } from "react";
+// main.tsx
+import React from "react";
 import { createRoot } from "react-dom/client";
-import "./index.css";
-import App from "./App.tsx";
-import BrowserHistory from "./pages/BrowserHistory.tsx";
+import { BrowserRouter } from "react-router";
+import App from "./App";
 
-createRoot(document.getElementById("root")!).render(
-  <StrictMode>
-    <BrowserHistory user_id={"7LpcmhJK1QCWn9ETqLN5"} />
-  </StrictMode>
+const root = createRoot(document.getElementById("root")!);
+root.render(
+  <React.StrictMode>
+    <BrowserRouter>
+      <App />
+    </BrowserRouter>
+  </React.StrictMode>,
 );
