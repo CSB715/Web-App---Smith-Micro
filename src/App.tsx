@@ -17,28 +17,32 @@ import Summary from "./components/SummaryPage";
 const App = () => {
   return (
     <>
-      <Routes>
+    <div className="app-viewport">
+      <div className="app-container">
+        <Routes>
 
-        {/* Main Pages */}
-        <Route path="/" element={<Notifications />} /> {/* Default route */}
-        <Route path="/summary" element={<Summary />} />
-        <Route path="/history" element={<History />} />
-        <Route path="/settings" element={<Settings />} />
+          {/* Main Pages */}
+          <Route path="/" element={<Notifications />} /> {/* Default route */}
+          <Route path="/summary" element={<Summary />} />
+          <Route path="/history" element={<History />} />
+          <Route path="/settings" element={<Settings />} />
 
 
-        {/* Settings Subpages */}
-        <Route path="/settings/account" element={<Account />} />
-        <Route path="/settings/flagged-sites" element={<FlaggedSites />} />
-        <Route path="/settings/notifications" element={<NotificationSettings />} />
-        <Route path="/settings/site-categories" element={<SiteCategories />} />
-        <Route path="/settings/create-notification" element={<CreateNotification />} />
+          {/* Settings Subpages */}
+          <Route path="/settings/account" element={<Account />} />
+          <Route path="/settings/flagged-sites" element={<FlaggedSites />} />
+          <Route path="/settings/notifications" element={<NotificationSettings />} />
+          <Route path="/settings/site-categories" element={<SiteCategories />} />
+          <Route path="/settings/create-notification" element={<CreateNotification />} />
 
-        {/* Authentication Pages */}
-        <Route path="/create-account" element={<CreateAccount />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/password-reset" element={<PasswordReset />} />
-        
-      </Routes>
+          {/* Authentication Pages */}
+          <Route path="/create-account" element={<CreateAccount />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/password-reset" element={<PasswordReset />} />
+          
+        </Routes>
+      </div>
+      </div>
     </>
   );
 }
