@@ -9,8 +9,8 @@ import {
 import { useState, useEffect } from "react";
 import CheckBoxOutlineBlankIcon from "@mui/icons-material/CheckBoxOutlineBlank";
 import CheckBoxIcon from "@mui/icons-material/CheckBox";
-import { ref, get, update } from "firebase/database";
-import { db } from "../firebase-old";
+import { db, GetDoc } from "../utils/firestore";
+import { getDocs, collection } from "firebase/firestore";
 
 const style = {
   position: "absolute",
@@ -44,6 +44,12 @@ export default function SiteModal({
   const [overrides, setOverrides] = useState<{ categories?: string[] }>({});
   const [myOverrides, setMyOverrides] = useState<string[]>([]);
   const key = url.replace(".", ",");
+  const display_url = url.slice(12, -1);
+  getDocs(collection(db, "Categorization")).then((querySnapshot) => {
+    querySnapshot.forEach((doc) => {
+      console.log(`${doc.id} => ${doc.data()}`);
+    });
+  });
 
   /*useEffect(() => {
     get(ref(db, `categorization/${key}`)).then((snapshot) => {
@@ -71,7 +77,7 @@ export default function SiteModal({
 
   return (
     <div>
-      <Button onClick={handleOpen}>{url}</Button>
+      <Button onClick={handleOpen}>{display_url}</Button>
       <Modal
         open={open}
         onClose={handleClose}
@@ -79,9 +85,9 @@ export default function SiteModal({
         aria-describedby="modal-modal-description"
       >
         <Box sx={style}>
-          <h2 id="modal-modal-title">{url}</h2>
+          <h2 id="modal-modal-title">{display_url}</h2>
           <Button onClick={handleClose}>X</Button>
-          <a href="https://www.amazon.com/">visit site</a>
+          <a href={url}>visit site</a>
           <p>Original:</p>
           <Autocomplete
             multiple

@@ -2,7 +2,7 @@ import SiteModal from "../components/SiteModal";
 import { useEffect, useState } from "react";
 import { ref, get, update } from "firebase/database";
 import { doc, getDoc, getDocs, collection } from "firebase/firestore";
-import { db } from "../firebase";
+import { db } from "../utils/firestore";
 import { Autocomplete, Checkbox, TextField } from "@mui/material";
 import CheckBoxOutlineBlankIcon from "@mui/icons-material/CheckBoxOutlineBlank";
 import CheckBoxIcon from "@mui/icons-material/CheckBox";
@@ -18,9 +18,9 @@ export default function BrowserHistory({ user_id }: { user_id: string }) {
     const docRef = doc(
       db,
       `Users`,
-      user_id,
+      "7LpcmhJK1QCWn9ETqLN5",
       "userDevices",
-      "qJDvxuD7kDWNt5EA6vJp"
+      "qJDvxuD7kDWNt5EA6vJp",
     );
     const docSnap = await getDoc(docRef);
     if (docSnap.exists()) {
