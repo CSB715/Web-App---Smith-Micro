@@ -1,7 +1,8 @@
-import SiteModal from "./components/SiteModal";
+import SiteModal from "../components/SiteModal";
 import { useEffect, useState } from "react";
 import { ref, get, update } from "firebase/database";
-import { db } from "./firebase";
+import { doc, getDoc, getDocs, collection } from "firebase/firestore";
+import { db } from "../firebase";
 import { Autocomplete, Checkbox, TextField } from "@mui/material";
 import CheckBoxOutlineBlankIcon from "@mui/icons-material/CheckBoxOutlineBlank";
 import CheckBoxIcon from "@mui/icons-material/CheckBox";
@@ -9,17 +10,34 @@ import CheckBoxIcon from "@mui/icons-material/CheckBox";
 const icon = <CheckBoxOutlineBlankIcon fontSize="small" />;
 const checkedIcon = <CheckBoxIcon fontSize="small" />;
 
-export default function BrowserHistory({ user_id }: { user_id: number }) {
+export default function BrowserHistory({ user_id }: { user_id: string }) {
   const [devices, setDevices] = useState<any[]>([]);
   const [selectedDevices, setSelectedDevices] = useState<any[]>([]);
   const [visits, setVisits] = useState<any[]>([]);
-  useEffect(() => {
+  async function Test() {
+    const docRef = doc(
+      db,
+      `Users`,
+      user_id,
+      "userDevices",
+      "qJDvxuD7kDWNt5EA6vJp"
+    );
+    const docSnap = await getDoc(docRef);
+    if (docSnap.exists()) {
+      console.log("Document data:", docSnap.data());
+    } else {
+      console.log("No such document!");
+    }
+  }
+  Test();
+
+  /*useEffect(() => {
     get(ref(db, `users/${user_id}/user_devices`)).then((snapshot) => {
       console.debug("device data:", snapshot.val());
       setDevices(snapshot.val());
     });
   }, []);
-
+  
   useEffect(() => {
     const visitsArray: any[] = [];
     /*selectedDevices.forEach((device_id) => {
@@ -38,7 +56,7 @@ export default function BrowserHistory({ user_id }: { user_id: number }) {
           console.log("VisitsArray after device", device_id, ":", visitsArray);
         }
       );
-    });*/
+    });
     get(ref(db, `users/${user_id}/user_devices/1/visits`)).then((snapshot) => {
       console.debug("Categorization data:", snapshot.val());
       const data = snapshot.val();
@@ -51,7 +69,7 @@ export default function BrowserHistory({ user_id }: { user_id: number }) {
     console.log("Visits after set:", visits);
   }, [selectedDevices]);
 
-  console.log("selectedDevices render:", selectedDevices);
+  console.log("selectedDevices render:", selectedDevices);*/
   return (
     <>
       <Autocomplete

@@ -32,7 +32,7 @@ export default function SiteModal({
   user_id,
 }: {
   url: string;
-  user_id: number;
+  user_id: string;
 }) {
   const [open, setOpen] = useState(false);
   const handleOpen = () => setOpen(true);
@@ -45,7 +45,7 @@ export default function SiteModal({
   const [myOverrides, setMyOverrides] = useState<string[]>([]);
   const key = url.replace(".", ",");
 
-  useEffect(() => {
+  /*useEffect(() => {
     get(ref(db, `categorization/${key}`)).then((snapshot) => {
       console.debug("Categorization data:", snapshot.val());
       setCategorization(snapshot.val() || []);
@@ -59,13 +59,13 @@ export default function SiteModal({
         setMyOverrides(data?.categories || []);
       }
     );
-  }, [open]);
+  }, [open]);*/
 
   const handleSave = () => {
     console.log(myOverrides);
     const updates: Record<string, Array<string>> = {};
     updates[`users/1/category_overrides/${key}/categories`] = myOverrides;
-    update(ref(db), updates);
+    //update(ref(db), updates);
     setOpen(false);
   };
 
