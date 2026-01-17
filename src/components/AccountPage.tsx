@@ -96,7 +96,7 @@ function Account() {
 
             deleteDoc(docRef)
             .then(() => {
-                console.log("Document successfully deleted!");
+                console.log("Device successfully deleted!");
                 modal!.style.display = "none";
                 // reload device list
 
@@ -106,7 +106,7 @@ function Account() {
 
             })
             .catch((error) => {
-                console.error("Error removing document: ", error);
+                console.error("Error removing device: ", error);
                 modal!.style.display = "none";
                 // show error modal
             });
@@ -161,7 +161,7 @@ function Account() {
 
             updateDoc(docRef, { deviceName: newName })
             .then(() => {
-                console.log("Document successfully updated!");
+                console.log("Device successfully renamed!");
                 modal!.style.display = "none";
                 // reload device list
 
@@ -171,7 +171,7 @@ function Account() {
 
             })
             .catch((error) => {
-                console.error("Error renaming document: ", error);
+                console.error("Error renaming device: ", error);
                 modal!.style.display = "none";
                 // show error modal
             });
@@ -181,11 +181,115 @@ function Account() {
     function handleEditEmail() {
         console.log("Edit email button clicked");
         // TODO: Implement email prompt for changing email
+
+        const modal = document.getElementById("editEmailModal");
+        const span = document.getElementsByClassName("close")[2];
+        const newEmailInput = document.getElementById("newEmail") as HTMLInputElement;
+        const cancelBtn = document.getElementById("cancelEditEmail");
+        const confirmBtn = document.getElementById("confirmEditEmail");
+
+        modal!.style.display = "block";
+
+        span!.addEventListener("click", () => {
+            console.log("Cancelled editing email");
+            modal!.style.display = "none";
+        });
+
+        window.onclick = function(event) {
+            if (event.target === modal) {
+                console.log("Cancelled editing email");
+                modal!.style.display = "none";
+            }   
+        };
+
+        cancelBtn!.onclick = function() {
+            console.log("Cancelled editing email");
+            modal!.style.display = "none";
+        };
+
+        newEmailInput.addEventListener("keypress", function(event) {
+            if (event.key === "Enter") {
+                event.preventDefault();
+                confirmBtn!.click();
+            }
+        });
+
+        confirmBtn!.onclick = function() {
+            const newEmail = newEmailInput.value.trim();
+            if (newEmail.trim() === "") {
+                console.log("New email cannot be empty.");
+                return;
+            }
+
+            const docRef = doc(firestore, "Users", "7LpcmhJK1QCWn9ETqLN5"); // user!.uid
+
+            const data = { userEmail: newEmail };
+
+            // trigger sending email to authenticate new address, then change 
+        }
     }
 
     function handleEditPhone() {
         console.log("Edit phone button clicked");
-        // TODO: Implement text prompt for changing phone number
+
+        const modal = document.getElementById("editPhoneModal");
+        const span = document.getElementsByClassName("close")[3];
+        const newPhoneInput = document.getElementById("newPhone") as HTMLInputElement;
+        const cancelBtn = document.getElementById("cancelEditPhone");
+        const confirmBtn = document.getElementById("confirmEditPhone");
+
+        modal!.style.display = "block";
+
+        span!.addEventListener("click", () => {
+            console.log("Cancelled editing phone number");
+            modal!.style.display = "none";
+        });
+
+        window.onclick = function(event) {
+            if (event.target === modal) {
+                console.log("Cancelled editing phone number");
+                modal!.style.display = "none";
+            }   
+        };
+
+        cancelBtn!.onclick = function() {
+            console.log("Cancelled editing phone number");
+            modal!.style.display = "none";
+        };
+
+        newPhoneInput.addEventListener("keypress", function(event) {
+            if (event.key === "Enter") {
+                event.preventDefault();
+                confirmBtn!.click();
+            }
+        });
+
+        confirmBtn!.onclick = function() {
+            const newPhone = newPhoneInput.value.trim();
+            if (newPhone.trim() === "") {
+                console.log("New phone number cannot be empty.");
+                return;
+            }
+
+            const docRef = doc(firestore, "Users", "7LpcmhJK1QCWn9ETqLN5"); // user!.uid
+
+            updateDoc(docRef, { primaryPhone: newPhone })
+            .then(() => {
+                console.log("Phone number successfully updated");
+                modal!.style.display = "none";
+                // reload phone number display
+
+                const userId = "7LpcmhJK1QCWn9ETqLN5"; // user!.uid;
+                const ref = doc(firestore, "Users", userId);
+                fetchUserDoc();
+
+            })
+            .catch((error) => {
+                console.error("Error updating phone number: ", error);
+                modal!.style.display = "none";
+                // show error modal
+            });
+        }
     }
 
     function handleResetPassword() {
@@ -284,8 +388,32 @@ function Account() {
             </div>
 
             {/* modal for edit email */}
+            <div id="editEmailModal" className="modal"> 
+                <div className="modal-content">
+                    <span className="close" >&times;</span>
+                    <p>New Email Address</p>
+                    <input type="text" id="newEmail" placeholder="joesmith@example.com"/>
+                    <br/>
+                    <div>
+                        <button id="cancelEditEmail">Cancel</button>
+                        <button id="confirmEditEmail">Confirm</button>
+                    </div>
+                </div>
+            </div>
 
             {/* modal for edit phone */}
+            <div id="editPhoneModal" className="modal"> 
+                <div className="modal-content">
+                    <span className="close" >&times;</span>
+                    <p>New Phone Number</p>
+                    <input type="text" id="newPhone" placeholder="(555) 555-5555"/>
+                    <br/>
+                    <div>
+                        <button id="cancelEditPhone">Cancel</button>
+                        <button id="confirmEditPhone">Confirm</button>
+                    </div>
+                </div>
+            </div>
 
             {/* modal for delete account */}
 
