@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { getAuth, onAuthStateChanged, type User } from "firebase/auth";
 import { useNavigate } from "react-router";
 import firestore from "./firestore";
-import { collection, doc, getDoc, getDocs, deleteDoc, type DocumentData, type DocumentReference } from "firebase/firestore";
+import { collection, doc, getDoc, getDocs, deleteDoc, updateDoc, type DocumentData, type DocumentReference } from "firebase/firestore";
 import "../styles/Page.css";
 
 function Account() {
@@ -114,9 +114,68 @@ function Account() {
         };
     }
 
-    function handleEditDevice(deviceId: string) {
-        console.log("Edit device with ID:", deviceId);
-        // TODO: Implement device editing logic
+    function handleRenameDevice(deviceId: string) {
+        console.log("Rename device with ID:", deviceId);
+        setCurrDevice(devices.find(device => device.id === deviceId) || null);
+
+        const modal = document.getElementById("renameDeviceModal");
+        const span = document.getElementsByClassName("close")[1];
+        const newNameInput = document.getElementById("newDeviceName") as HTMLInputElement;
+        const cancelBtn = document.getElementById("cancelRenameDevice");
+        const confirmBtn = document.getElementById("confirmRenameDevice");
+
+        modal!.style.display = "block";
+
+        span!.addEventListener("click", () => {
+            console.log("Cancelled renaming of device ID:", deviceId);
+            modal!.style.display = "none";
+        });
+
+        window.onclick = function(event) {
+            if (event.target === modal) {
+                console.log("Cancelled renaming of device ID:", deviceId);
+                modal!.style.display = "none";
+            }   
+        };
+
+        cancelBtn!.onclick = function() {
+            console.log("Cancelled renaming of device ID:", deviceId);
+            modal!.style.display = "none";
+        };
+
+        newNameInput.addEventListener("keypress", function(event) {
+            if (event.key === "Enter") {
+                event.preventDefault();
+                confirmBtn!.click();
+            }
+        });
+
+        confirmBtn!.onclick = function() {
+            const newName = newNameInput.value.trim();
+            if (newName.trim() === "") {
+                console.log("New device name cannot be empty.");
+                return;
+            }
+
+            const docRef = doc(firestore, "Users", "7LpcmhJK1QCWn9ETqLN5", "userDevices", deviceId); // user!.uid
+
+            updateDoc(docRef, { deviceName: newName })
+            .then(() => {
+                console.log("Document successfully updated!");
+                modal!.style.display = "none";
+                // reload device list
+
+                const userId = "7LpcmhJK1QCWn9ETqLN5"; // user!.uid;
+                const ref = doc(firestore, "Users", userId);
+                fetchUserDevices(ref);
+
+            })
+            .catch((error) => {
+                console.error("Error renaming document: ", error);
+                modal!.style.display = "none";
+                // show error modal
+            });
+        }
     }
 
     function handleEditEmail() {
@@ -185,7 +244,7 @@ function Account() {
                         <tr key={device.id}>
                             <td>{device.deviceName}</td>
                             <td><button onClick={() => handleDeleteDevice(device.id)}>Del</button></td>
-                            <td><button onClick={()=> handleEditDevice(device.id)}>Edit</button></td>
+                            <td><button onClick={()=> handleRenameDevice(device.id)}>Edit</button></td>
                         </tr>
                     ))}
                     </tbody>
@@ -211,12 +270,28 @@ function Account() {
             </div>
 
             {/* modal for edit device */}
+            <div id="renameDeviceModal" className="modal"> 
+                <div className="modal-content">
+                    <span className="close" >&times;</span>
+                    <p>Rename {currDevice?.deviceName}?</p>
+                    <input type="text" id="newDeviceName" placeholder="New Name"/>
+                    <br/>
+                    <div>
+                        <button id="cancelRenameDevice">Cancel</button>
+                        <button id="confirmRenameDevice">Confirm</button>
+                    </div>
+                </div>
+            </div>
 
             {/* modal for edit email */}
 
             {/* modal for edit phone */}
 
             {/* modal for delete account */}
+
+            {/* error alert */}
+
+            {/* reset password alert */}
         </>
     );
 }
