@@ -1,15 +1,14 @@
 // Account Page Component
 import { useEffect, useState } from "react";
-import { getAuth, onAuthStateChanged } from "firebase/auth";
-import type { User } from "firebase/auth";
+import { getAuth, onAuthStateChanged, type User } from "firebase/auth";
 import { useNavigate } from "react-router";
 import firestore from "./firestore";
-import { collection, doc, getDoc, getDocs, type DocumentData } from "firebase/firestore";
+import { collection, doc, getDoc, getDocs, deleteDoc, type DocumentData, type DocumentReference } from "firebase/firestore";
 import "../styles/Page.css";
 
 function Account() {
     /* auth state check - redirect to login if not logged in */
-    // const [user, setUser] = useState<User | null | undefined>(undefined); // undefined = checking
+    const [user, setUser] = useState<User | null | undefined>(undefined); // undefined = checking
     // const navigate = useNavigate();
 
     // useEffect(() => {
@@ -28,10 +27,91 @@ function Account() {
 
     // if (user === undefined) return null; // or a loader
 
+    type UserData = { email?: string | null; phone?: string | null; [key: string]: any };
+    const [userData, setUserData] = useState<UserData | null>(null);
+    const [devices, setDevices] = useState<Array<DocumentData>>([]);
+    const [currDevice, setCurrDevice] = useState<DocumentData | null>(null);
+
+    // Fetch userDevices subcollection
+    async function fetchUserDevices(userRef: DocumentReference) {
+                const devicesCol = collection(userRef, "userDevices");
+                const devicesSnap = await getDocs(devicesCol);
+                const devicesArr = devicesSnap.docs.map(doc => ({ id: doc.id, ...doc.data()}));
+                console.log("Devices subcollection:", devicesArr);
+                setDevices(devicesArr);
+    }
+
+    // Fetch user document on component mount, including userDevices subcollection
+    async function fetchUserDoc() {
+        try {
+            const userId = "7LpcmhJK1QCWn9ETqLN5"; // user!.uid;
+            const ref = doc(firestore, "Users", userId);
+            const snap = await getDoc(ref);
+
+            if (snap.exists()) {
+                console.log("Test user document:", snap.data());
+                setUserData(snap.data() as UserData);
+                fetchUserDevices(ref);
+
+            } else {
+            console.log("No user document found for id:", userId);
+            }
+        } catch (err) {
+            console.error("Error fetching user:", err);
+        }
+    };
+
+
     /* button functions */
     function handleDeleteDevice(deviceId: string) {
         console.log("Delete device with ID:", deviceId);
-        // TODO: Implement device deletion logic
+        setCurrDevice(devices.find(device => device.id === deviceId) || null);
+
+        const modal = document.getElementById("deleteDeviceModal");
+        const span = document.getElementsByClassName("close")[0];
+        const cancelBtn = document.getElementById("cancelDeleteDevice");
+        const confirmBtn = document.getElementById("confirmDeleteDevice");
+
+        modal!.style.display = "block";
+
+        span!.addEventListener("click", () => {
+            console.log("Cancelled deletion of device ID:", deviceId);
+            modal!.style.display = "none";
+        });
+
+        window.onclick = function(event) {
+            if (event.target === modal) {
+                console.log("Cancelled deletion of device ID:", deviceId);
+                modal!.style.display = "none";
+            }   
+        };
+
+        cancelBtn!.onclick = function() {
+            console.log("Cancelled deletion of device ID:", deviceId);
+            modal!.style.display = "none";
+        };
+
+        confirmBtn!.onclick = function() {
+            const docRef = doc(firestore, "Users", "7LpcmhJK1QCWn9ETqLN5", "userDevices", deviceId); // user!.uid
+
+            deleteDoc(docRef)
+            .then(() => {
+                console.log("Document successfully deleted!");
+                modal!.style.display = "none";
+                // reload device list
+
+                const userId = "7LpcmhJK1QCWn9ETqLN5"; // user!.uid;
+                const ref = doc(firestore, "Users", userId);
+                fetchUserDevices(ref);
+
+            })
+            .catch((error) => {
+                console.error("Error removing document: ", error);
+                modal!.style.display = "none";
+                // show error modal
+            });
+
+        };
     }
 
     function handleEditDevice(deviceId: string) {
@@ -60,37 +140,8 @@ function Account() {
     }
 
 
-    /* test code fetching demo user data from firestore */
-    type UserData = { email?: string | null; [key: string]: any };
-    const [userData, setUserData] = useState<UserData | null>(null);
-    const [devices, setDevices] = useState<Array<DocumentData>>([]);
     useEffect(() => {
-        const fetchUserForTest = async () => {
-        try {
-            const testUserId = "7LpcmhJK1QCWn9ETqLN5"; // <-- replace with a real doc id for testing
-            const ref = doc(firestore, "Users", testUserId);
-            const snap = await getDoc(ref);
-
-            if (snap.exists()) {
-                console.log("Test user document:", snap.data());
-                setUserData(snap.data() as UserData);
-
-                // Fetch userDevices subcollection
-                const devicesCol = collection(ref, "userDevices");
-                const devicesSnap = await getDocs(devicesCol);
-                const devicesArr = devicesSnap.docs.map(doc => ({ id: doc.id, ...doc.data()}));
-                console.log("Devices subcollection:", devicesArr);
-                setDevices(devicesArr);
-
-            } else {
-            console.log("No user document found for id:", testUserId);
-            }
-        } catch (err) {
-            console.error("Error fetching test user:", err);
-        }
-        };
-
-        fetchUserForTest();
+        fetchUserDoc();
     }, []);
 
     return (
@@ -144,6 +195,28 @@ function Account() {
 
                 <button onClick={() => handleDeleteAccount()}>Delete Account</button>
             </div>
+
+
+            {/* modal for delete device */}
+            <div id="deleteDeviceModal" className="modal"> 
+                <div className="modal-content">
+                    <span className="close" >&times;</span>
+                    <p>Delete {currDevice?.deviceName}?</p>
+                    <p>If you delete this device, all data associated with it will be lost.</p>
+                    <div>
+                        <button id="cancelDeleteDevice">Cancel</button>
+                        <button id="confirmDeleteDevice">Confirm</button>
+                    </div>
+                </div>
+            </div>
+
+            {/* modal for edit device */}
+
+            {/* modal for edit email */}
+
+            {/* modal for edit phone */}
+
+            {/* modal for delete account */}
         </>
     );
 }
