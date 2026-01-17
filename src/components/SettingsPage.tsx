@@ -1,12 +1,9 @@
 // Settings Page Component
-// STUB
-
+import "../styles/Settings.css";
 import { Link } from "react-router";
 
 function Settings() {
 
-
-    // Page Name
     // -------------
     // Flagged Sites
     // -------------
@@ -22,15 +19,19 @@ function Settings() {
 
     return (
         <>
-            <h1>Settings Page</h1>
-            <hr></hr>
-            <Link to="/settings/flagged-sites">Flagged Sites</Link>
-            <hr></hr>
-            <Link to="/settings/site-categories">Site Categories</Link>
-            <hr></hr>
-            <Link to="/settings/notifications">Notifications</Link>
-            <hr></hr>
-            <Link to="/settings/account">Account</Link>
+            <h1 className="settings-title">Settings</h1>
+            <hr className="title-divider" />
+            <div className="settings-links">
+                <Link to="/settings/flagged-sites"> <h2>Flagged Sites</h2></Link>
+                <hr className="title-divider" />
+                <Link to="/settings/site-categories"> <h2>Site Categories</h2></Link>
+                <hr className="title-divider" />
+                <Link to="/settings/notifications"> <h2>Notifications</h2></Link>
+                <hr className="title-divider" />
+                <Link to="/settings/account"> <h2>Account</h2></Link>
+                <hr className="title-divider" />
+            </div>
+            
         </>
     )
 }
