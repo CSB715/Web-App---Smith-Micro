@@ -7,7 +7,7 @@ import { collection, doc, getDoc, getDocs, deleteDoc, updateDoc, type DocumentDa
 import "../styles/Page.css";
 
 function Account() {
-    const testID = "demoman"; //"7LpcmhJK1QCWn9ETqLN5"
+    const testID = "7LpcmhJK1QCWn9ETqLN5";
     /* auth state check - redirect to login if not logged in */
     const [user, setUser] = useState<User | null | undefined>(undefined); // undefined = checking
     const navigate = useNavigate();
@@ -35,11 +35,11 @@ function Account() {
 
     // Fetch userDevices subcollection
     async function fetchUserDevices(userRef: DocumentReference) {
-                const devicesCol = collection(userRef, "userDevices");
-                const devicesSnap = await getDocs(devicesCol);
-                const devicesArr = devicesSnap.docs.map(doc => ({ id: doc.id, ...doc.data()}));
-                console.log("Devices subcollection:", devicesArr);
-                setDevices(devicesArr);
+        const devicesCol = collection(userRef, "userDevices");
+        const devicesSnap = await getDocs(devicesCol);
+        const devicesArr = devicesSnap.docs.map(doc => ({ id: doc.id, ...doc.data()}));
+        console.log("Devices subcollection:", devicesArr);
+        setDevices(devicesArr);
     }
 
     // Fetch user document on component mount, including userDevices subcollection
@@ -61,6 +61,7 @@ function Account() {
         } catch (err) {
             console.error("Error fetching user:", err);
             // show error modal
+            showErrorModal();
         }
     };
 
@@ -112,6 +113,7 @@ function Account() {
                 console.error("Error removing device: ", error);
                 modal!.style.display = "none";
                 // show error modal
+                showErrorModal();
             });
 
         };
@@ -177,6 +179,7 @@ function Account() {
                 console.error("Error renaming device: ", error);
                 modal!.style.display = "none";
                 // show error modal
+                showErrorModal();
             });
         }
     }
@@ -227,7 +230,7 @@ function Account() {
 
             const data = { userEmail: newEmail };
 
-            // trigger sending email to authenticate new address, then change 
+            // trigger sending email to authenticate new address, then change after confirmation link is clicked
         }
     }
 
@@ -280,16 +283,13 @@ function Account() {
                 console.log("Phone number successfully updated");
                 modal!.style.display = "none";
                 // reload phone number display
-
-                const userId = testID; // user!.uid;
-                const ref = doc(firestore, "Users", userId);
                 fetchUserDoc();
-
             })
             .catch((error) => {
                 console.error("Error updating phone number: ", error);
                 modal!.style.display = "none";
                 // show error modal
+                showErrorModal();
             });
         }
     }
@@ -346,13 +346,47 @@ function Account() {
             }).catch((error) => {
                 console.error("Error signing out: ", error);
                 // show error modal
+                showErrorModal();
             });
         };
     }
 
     function handleResetPassword() {
         console.log("Reset password button clicked");
-        // TODO: Implement email prompt for password reset
+
+        const modal = document.getElementById("resetPasswordAlert");
+        const span = document.getElementsByClassName("close")[5];
+
+        modal!.style.display = "block";
+
+        span!.addEventListener("click", () => {
+            modal!.style.display = "none";
+        });
+
+        window.onclick = function(event) {
+            if (event.target === modal) {
+                modal!.style.display = "none";
+            }
+        };
+
+        // TODO: trigger password reset email
+    }
+
+    function showErrorModal() {
+        const modal = document.getElementById("errorAlert");
+        const span = document.getElementsByClassName("close")[6];
+
+        modal!.style.display = "block";
+
+        span!.addEventListener("click", () => {
+            modal!.style.display = "none";
+        });
+
+        window.onclick = function(event) {
+            if (event.target === modal) {
+                modal!.style.display = "none";
+            }
+        };
     }
 
 
@@ -481,9 +515,22 @@ function Account() {
                 </div>
             </div>
 
-            {/* error alert */}
-
             {/* reset password alert */}
+            <div id="resetPasswordAlert" className="modal">
+                <div className="modal-content">
+                    <span className="close" >&times;</span>
+                    <p>A password reset link has been sent to your inbox.</p>
+                </div>
+            </div>
+
+            {/* error alert */}
+            <div id="errorAlert" className="modal"> 
+                <div className="modal-content">
+                    <span className="close" >&times;</span>
+                    <p>We're sorry, an error occurred. Please try again later.</p>
+                </div>
+            </div>
+
         </>
     );
 }
