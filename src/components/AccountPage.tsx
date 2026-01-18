@@ -7,9 +7,10 @@ import { collection, doc, getDoc, getDocs, deleteDoc, updateDoc, type DocumentDa
 import "../styles/Page.css";
 
 function Account() {
+    const testID = "demoman"; //"7LpcmhJK1QCWn9ETqLN5"
     /* auth state check - redirect to login if not logged in */
     const [user, setUser] = useState<User | null | undefined>(undefined); // undefined = checking
-    // const navigate = useNavigate();
+    const navigate = useNavigate();
 
     // useEffect(() => {
     //     const auth = getAuth();
@@ -44,7 +45,7 @@ function Account() {
     // Fetch user document on component mount, including userDevices subcollection
     async function fetchUserDoc() {
         try {
-            const userId = "7LpcmhJK1QCWn9ETqLN5"; // user!.uid;
+            const userId = testID; // user!.uid;
             const ref = doc(firestore, "Users", userId);
             const snap = await getDoc(ref);
 
@@ -55,9 +56,11 @@ function Account() {
 
             } else {
             console.log("No user document found for id:", userId);
+            navigate("/login", { replace: true });
             }
         } catch (err) {
             console.error("Error fetching user:", err);
+            // show error modal
         }
     };
 
@@ -92,7 +95,7 @@ function Account() {
         };
 
         confirmBtn!.onclick = function() {
-            const docRef = doc(firestore, "Users", "7LpcmhJK1QCWn9ETqLN5", "userDevices", deviceId); // user!.uid
+            const docRef = doc(firestore, "Users", testID, "userDevices", deviceId); // user!.uid
 
             deleteDoc(docRef)
             .then(() => {
@@ -100,7 +103,7 @@ function Account() {
                 modal!.style.display = "none";
                 // reload device list
 
-                const userId = "7LpcmhJK1QCWn9ETqLN5"; // user!.uid;
+                const userId = testID; // user!.uid;
                 const ref = doc(firestore, "Users", userId);
                 fetchUserDevices(ref);
 
@@ -157,7 +160,7 @@ function Account() {
                 return;
             }
 
-            const docRef = doc(firestore, "Users", "7LpcmhJK1QCWn9ETqLN5", "userDevices", deviceId); // user!.uid
+            const docRef = doc(firestore, "Users", testID, "userDevices", deviceId); // user!.uid
 
             updateDoc(docRef, { deviceName: newName })
             .then(() => {
@@ -165,7 +168,7 @@ function Account() {
                 modal!.style.display = "none";
                 // reload device list
 
-                const userId = "7LpcmhJK1QCWn9ETqLN5"; // user!.uid;
+                const userId = testID; // user!.uid;
                 const ref = doc(firestore, "Users", userId);
                 fetchUserDevices(ref);
 
@@ -180,7 +183,6 @@ function Account() {
 
     function handleEditEmail() {
         console.log("Edit email button clicked");
-        // TODO: Implement email prompt for changing email
 
         const modal = document.getElementById("editEmailModal");
         const span = document.getElementsByClassName("close")[2];
@@ -221,7 +223,7 @@ function Account() {
                 return;
             }
 
-            const docRef = doc(firestore, "Users", "7LpcmhJK1QCWn9ETqLN5"); // user!.uid
+            const docRef = doc(firestore, "Users", testID); // user!.uid
 
             const data = { userEmail: newEmail };
 
@@ -271,7 +273,7 @@ function Account() {
                 return;
             }
 
-            const docRef = doc(firestore, "Users", "7LpcmhJK1QCWn9ETqLN5"); // user!.uid
+            const docRef = doc(firestore, "Users", testID); // user!.uid
 
             updateDoc(docRef, { primaryPhone: newPhone })
             .then(() => {
@@ -279,7 +281,7 @@ function Account() {
                 modal!.style.display = "none";
                 // reload phone number display
 
-                const userId = "7LpcmhJK1QCWn9ETqLN5"; // user!.uid;
+                const userId = testID; // user!.uid;
                 const ref = doc(firestore, "Users", userId);
                 fetchUserDoc();
 
@@ -292,14 +294,65 @@ function Account() {
         }
     }
 
+    function handleDeleteAccount() {
+        console.log("Delete account button clicked");
+
+        const modal = document.getElementById("deleteAccountModal");
+        const span = document.getElementsByClassName("close")[4];
+        const cancelBtn = document.getElementById("cancelDeleteAccount");
+        const confirmBtn = document.getElementById("confirmDeleteAccount");
+
+        modal!.style.display = "block";
+
+        span!.addEventListener("click", () => {
+            console.log("Cancelled account deletion");
+            modal!.style.display = "none";
+        });
+
+        window.onclick = function(event) {
+            if (event.target === modal) {
+                console.log("Cancelled account deletion");
+                modal!.style.display = "none";
+            }
+        };
+
+        cancelBtn!.onclick = function() {
+            console.log("Cancelled account deletion");
+            modal!.style.display = "none";
+        };
+
+        confirmBtn!.onclick = function() {
+            console.log("Confirmed account deletion");
+            
+            // sign out
+            const auth = getAuth();
+            auth.signOut().then(() => {
+                console.log("User signed out");
+
+                // then delete user document
+                deleteDoc(doc(firestore, "Users", testID)) // user!.uid
+                .then(() => {
+                    console.log("User document deleted");
+                    modal!.style.display = "none";
+
+                    // redirect to login page
+                    navigate("/login", { replace: true });
+                })
+                .catch((error) => {
+                    console.error("Error deleting user document: ", error);
+                    modal!.style.display = "none";
+                    // show error modal
+                });
+            }).catch((error) => {
+                console.error("Error signing out: ", error);
+                // show error modal
+            });
+        };
+    }
+
     function handleResetPassword() {
         console.log("Reset password button clicked");
         // TODO: Implement email prompt for password reset
-    }
-
-    function handleDeleteAccount() {
-        console.log("Delete account button clicked");
-        // TODO: Implement account deletion logic
     }
 
 
@@ -416,6 +469,17 @@ function Account() {
             </div>
 
             {/* modal for delete account */}
+            <div id="deleteAccountModal" className="modal"> 
+                <div className="modal-content">
+                    <span className="close" >&times;</span>
+                    <p>Delete Account?</p>
+                    <p>If you delete your account, all data associated with it will be lost.</p>
+                    <div>
+                        <button id="cancelDeleteAccount">Cancel</button>
+                        <button id="confirmDeleteAccount">Confirm</button>
+                    </div>
+                </div>
+            </div>
 
             {/* error alert */}
 
