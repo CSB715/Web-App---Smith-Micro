@@ -2,7 +2,7 @@
 // STUB
 import CheckBoxOutlineBlankIcon from "@mui/icons-material/CheckBoxOutlineBlank";
 import CheckBoxIcon from "@mui/icons-material/CheckBox";
-import { db, GetDoc } from "../utils/firestore";
+import { db, GetDoc, GetDocs } from "../utils/firestore";
 import { useEffect, useState } from "react";
 import SiteModal from "../components/SiteModal";
 import { type DocumentData } from "firebase/firestore";
@@ -12,17 +12,16 @@ const checkedIcon = <CheckBoxIcon fontSize="small" />;
 
 function History() {
   const [visits, setVisits] = useState<any[]>([]);
-  let data: DocumentData | null = null;
+  let dbVisits: DocumentData | null = null;
   useEffect(() => {
-    data = GetDoc(
-      "Users/7LpcmhJK1QCWn9ETqLN5/userDevices/qJDvxuD7kDWNt5EA6vJp/Visits/RTYFYd2QQR1yWqwWDGuU",
-    ).then((docSnap) => {
-      if (docSnap) {
-        console.log("Document data:", docSnap);
-        setVisits([docSnap] as any[]);
-      } else {
-        console.log("No such document!");
-      }
+    dbVisits = GetDocs(
+      "Users/7LpcmhJK1QCWn9ETqLN5/userDevices/qJDvxuD7kDWNt5EA6vJp/Visits",
+    ).then((querySnapshot) => {
+      let currVisits: any[] = [];
+      querySnapshot.forEach((doc) => {
+        currVisits.push(doc);
+      });
+      setVisits(currVisits);
     });
   }, []);
   return (

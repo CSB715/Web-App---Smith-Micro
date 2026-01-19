@@ -9,8 +9,8 @@ import {
 import { useState, useEffect } from "react";
 import CheckBoxOutlineBlankIcon from "@mui/icons-material/CheckBoxOutlineBlank";
 import CheckBoxIcon from "@mui/icons-material/CheckBox";
-import { db, GetDoc } from "../utils/firestore";
-import { getDocs, collection } from "firebase/firestore";
+import { GetDocs, SetDoc } from "../utils/firestore";
+import { type DocumentData } from "firebase/firestore";
 
 const style = {
   position: "absolute",
@@ -38,40 +38,41 @@ export default function SiteModal({
   const handleOpen = () => setOpen(true);
   const handleClose = () => setOpen(false);
 
-  const [categorization, setCategorization] = useState<{
-    categories?: string[];
-  }>({});
-  const [overrides, setOverrides] = useState<{ categories?: string[] }>({});
-  const [myOverrides, setMyOverrides] = useState<string[]>([]);
-  const key = url.replace(".", ",");
+  const [categorization, setCategorization] = useState<string[]>([]);
+  const [overrides, setOverrides] = useState<string[]>([]);
   const display_url = url.slice(12, -1);
-  getDocs(collection(db, "Categorization")).then((querySnapshot) => {
-    querySnapshot.forEach((doc) => {
-      console.log(`${doc.id} => ${doc.data()}`);
+  let dbCat: DocumentData | null = null;
+  let dbOverrides: DocumentData | null = null;
+  useEffect(() => {
+    dbCat = GetDocs("Categorization").then((querySnapshot) => {
+      querySnapshot.forEach((doc) => {
+        if (doc.siteURL === url) {
+          setCategorization(doc.categories);
+        }
+      });
     });
-  });
-
-  /*useEffect(() => {
-    get(ref(db, `categorization/${key}`)).then((snapshot) => {
-      console.debug("Categorization data:", snapshot.val());
-      setCategorization(snapshot.val() || []);
-    });
-
-    get(ref(db, `users/${user_id}/category_overrides/${key}`)).then(
-      (snapshot) => {
-        console.debug("Override data:", snapshot.val());
-        const data = snapshot.val();
-        setOverrides(data || []);
-        setMyOverrides(data?.categories || []);
+    dbOverrides = GetDocs(
+      "Users/7LpcmhJK1QCWn9ETqLN5/userDevices/qJDvxuD7kDWNt5EA6vJp/Overrides",
+    ).then((querySnapshot) => {
+      let set = false;
+      querySnapshot.forEach((doc) => {
+        console.log("Document data:", doc);
+        if (doc.siteURL === url) {
+          setOverrides(doc.categories);
+          set = true;
+        }
+      });
+      if (!set) {
+        setOverrides(categorization);
       }
-    );
-  }, [open]);*/
+    });
+  }, [open]);
 
   const handleSave = () => {
-    console.log(myOverrides);
-    const updates: Record<string, Array<string>> = {};
-    updates[`users/1/category_overrides/${key}/categories`] = myOverrides;
-    //update(ref(db), updates);
+    SetDoc(
+      `Users/7LpcmhJK1QCWn9ETqLN5/userDevices/qJDvxuD7kDWNt5EA6vJp/Overrides/${display_url}`,
+      { siteURL: url, categories: overrides, isFlagged: false },
+    );
     setOpen(false);
   };
 
@@ -92,16 +93,16 @@ export default function SiteModal({
           <Autocomplete
             multiple
             disabled
-            defaultValue={categorization.categories}
+            defaultValue={categorization}
             options={["Shopping", "Entertainment"]}
             renderInput={(params) => <TextField {...params} />}
           />
           <p>My Categories:</p>
           <Autocomplete
             multiple
-            defaultValue={overrides.categories}
+            value={overrides}
             onChange={(_: any, newValue: Array<string>) => {
-              setMyOverrides(newValue);
+              setOverrides(newValue);
             }}
             options={["Shopping", "Entertainment"]}
             renderInput={(params) => <TextField {...params} />}

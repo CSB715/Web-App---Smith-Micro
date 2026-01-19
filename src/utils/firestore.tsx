@@ -1,7 +1,8 @@
 // Import the functions you need from the SDKs you need
 import { initializeApp } from "firebase/app";
+import { get } from "firebase/database";
 import { getFirestore } from "firebase/firestore";
-import { doc, getDoc, getDocs, collection } from "firebase/firestore";
+import { doc, getDoc, getDocs, collection, setDoc } from "firebase/firestore";
 // import { getAnalytics } from "firebase/analytics";
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
@@ -36,4 +37,21 @@ async function GetDoc(path: string) {
   }
 }
 
-export { db, GetDoc };
+async function GetDocs(path: string) {
+  const colRef = collection(db, path);
+  const colSnap = await getDocs(colRef);
+  if (!colSnap.empty) {
+    const docsData = colSnap.docs.map((doc) => doc.data());
+    return docsData;
+  } else {
+    console.log("No documents found!");
+    return [];
+  }
+}
+
+async function SetDoc(path: string, data: any) {
+  const docRef = doc(db, path);
+  await setDoc(docRef, data);
+}
+
+export { db, GetDoc, GetDocs, SetDoc };
