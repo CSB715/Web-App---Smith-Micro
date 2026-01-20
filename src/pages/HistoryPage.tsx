@@ -10,12 +10,10 @@ function History() {
   const nameToIdMap: { [key: string]: string } = {};
   useEffect(() => {
     GetDocs("Users/7LpcmhJK1QCWn9ETqLN5/userDevices").then((querySnapshot) => {
-      let currDevices: any[] = [];
       querySnapshot.forEach((doc) => {
-        currDevices.push(doc);
         nameToIdMap[doc.data.deviceName] = doc.id;
       });
-      setDevices(currDevices);
+      setDevices(querySnapshot);
       if (selectedDevices.length === 0) {
         setVisits({});
         return;
