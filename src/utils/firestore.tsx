@@ -2,7 +2,14 @@
 import { initializeApp } from "firebase/app";
 import { get } from "firebase/database";
 import { getFirestore } from "firebase/firestore";
-import { doc, getDoc, getDocs, collection, setDoc } from "firebase/firestore";
+import {
+  doc,
+  getDoc,
+  getDocs,
+  collection,
+  setDoc,
+  type DocumentData,
+} from "firebase/firestore";
 // import { getAnalytics } from "firebase/analytics";
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
@@ -30,7 +37,7 @@ async function GetDoc(path: string) {
   const docRef = doc(db, path);
   const docSnap = await getDoc(docRef);
   if (docSnap.exists()) {
-    return docSnap.data();
+    return { id: docSnap.id, data: docSnap.data() };
   } else {
     console.log("No such document!");
     return null;
@@ -40,9 +47,12 @@ async function GetDoc(path: string) {
 async function GetDocs(path: string) {
   const colRef = collection(db, path);
   const colSnap = await getDocs(colRef);
+  let objects: { id: string; data: DocumentData }[] = [];
   if (!colSnap.empty) {
-    const docsData = colSnap.docs.map((doc) => doc.data());
-    return docsData;
+    colSnap.forEach((doc) => {
+      objects.push({ id: doc.id, data: doc.data() });
+    });
+    return objects;
   } else {
     console.log("No documents found!");
     return [];

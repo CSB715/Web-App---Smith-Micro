@@ -41,24 +41,21 @@ export default function SiteModal({
   const [categorization, setCategorization] = useState<string[]>([]);
   const [overrides, setOverrides] = useState<string[]>([]);
   const display_url = url.slice(12, -1);
-  let dbCat: DocumentData | null = null;
-  let dbOverrides: DocumentData | null = null;
   useEffect(() => {
-    dbCat = GetDocs("Categorization").then((querySnapshot) => {
+    GetDocs("Categorization").then((querySnapshot) => {
       querySnapshot.forEach((doc) => {
-        if (doc.siteURL === url) {
-          setCategorization(doc.categories);
+        if (doc.data.siteURL === url) {
+          setCategorization(doc.data.categories);
         }
       });
     });
-    dbOverrides = GetDocs(
+    GetDocs(
       "Users/7LpcmhJK1QCWn9ETqLN5/userDevices/qJDvxuD7kDWNt5EA6vJp/Overrides",
     ).then((querySnapshot) => {
       let set = false;
       querySnapshot.forEach((doc) => {
-        console.log("Document data:", doc);
-        if (doc.siteURL === url) {
-          setOverrides(doc.categories);
+        if (doc.data.siteURL === url) {
+          setOverrides(doc.data.categories);
           set = true;
         }
       });
@@ -77,7 +74,7 @@ export default function SiteModal({
   };
 
   return (
-    <div>
+    <>
       <Button onClick={handleOpen}>{display_url}</Button>
       <Modal
         open={open}
@@ -131,6 +128,6 @@ export default function SiteModal({
           <Button onClick={handleSave}>Save</Button>
         </Box>
       </Modal>
-    </div>
+    </>
   );
 }
