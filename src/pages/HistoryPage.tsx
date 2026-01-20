@@ -1,5 +1,3 @@
-// History Page Component
-// STUB
 import { GetDocs } from "../utils/firestore";
 import { useEffect, useState } from "react";
 import SiteModal from "../components/SiteModal";
@@ -55,8 +53,7 @@ function History() {
   }, [selectedDevices]);
   return (
     <>
-      <h1>History Page - Stub</h1>
-      {/* History Page Content */}
+      <h1>History Page</h1>
       <DeviceSelect devices={devices} setSelectedDevices={setSelectedDevices} />
       <ul style={{ listStyleType: "none", padding: 0, margin: 0 }}>
         {Object.entries(visits).map(([key, value]) => (
