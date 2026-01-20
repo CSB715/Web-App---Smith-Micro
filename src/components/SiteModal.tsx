@@ -9,8 +9,8 @@ import {
 import { useState, useEffect } from "react";
 import CheckBoxOutlineBlankIcon from "@mui/icons-material/CheckBoxOutlineBlank";
 import CheckBoxIcon from "@mui/icons-material/CheckBox";
-import { ref, get, update } from "firebase/database";
-import { db } from "../firebase-old";
+import { GetDocs, SetDoc } from "../utils/firestore";
+import { type DocumentData } from "firebase/firestore";
 
 const style = {
   position: "absolute",
@@ -27,50 +27,58 @@ const style = {
 const icon = <CheckBoxOutlineBlankIcon fontSize="small" />;
 const checkedIcon = <CheckBoxIcon fontSize="small" />;
 
-interface Site {
+export default function SiteModal({
+  url,
+  user_id,
+}: {
   url: string;
-  user_id: number;
-}
-
-export default function SiteModal({ url, user_id }: Site) {
+  user_id: string;
+}) {
   const [open, setOpen] = useState(false);
   const handleOpen = () => setOpen(true);
   const handleClose = () => setOpen(false);
 
-  const [categorization, setCategorization] = useState<{
-    categories?: string[];
-  }>({});
-  const [overrides, setOverrides] = useState<{ categories?: string[] }>({});
-  const [myOverrides, setMyOverrides] = useState<string[]>([]);
-  const key = url.replace(".", ",");
-
+  const [categorization, setCategorization] = useState<string[]>([]);
+  const [overrides, setOverrides] = useState<string[]>([]);
+  const display_url = url.slice(12, -1);
+  let dbCat: DocumentData | null = null;
+  let dbOverrides: DocumentData | null = null;
   useEffect(() => {
-    get(ref(db, `categorization/${key}`)).then((snapshot) => {
-      console.debug("Categorization data:", snapshot.val());
-      setCategorization(snapshot.val());
+    dbCat = GetDocs("Categorization").then((querySnapshot) => {
+      querySnapshot.forEach((doc) => {
+        if (doc.siteURL === url) {
+          setCategorization(doc.categories);
+        }
+      });
     });
-
-    get(ref(db, `users/${user_id}/category_overrides/${key}`)).then(
-      (snapshot) => {
-        console.debug("Override data:", snapshot.val());
-        const data = snapshot.val();
-        setOverrides(data);
-        setMyOverrides(data?.categories || []);
+    dbOverrides = GetDocs(
+      "Users/7LpcmhJK1QCWn9ETqLN5/userDevices/qJDvxuD7kDWNt5EA6vJp/Overrides",
+    ).then((querySnapshot) => {
+      let set = false;
+      querySnapshot.forEach((doc) => {
+        console.log("Document data:", doc);
+        if (doc.siteURL === url) {
+          setOverrides(doc.categories);
+          set = true;
+        }
+      });
+      if (!set) {
+        setOverrides(categorization);
       }
-    );
+    });
   }, [open]);
 
   const handleSave = () => {
-    console.log(myOverrides);
-    const updates: Record<string, Array<string>> = {};
-    updates[`users/1/category_overrides/${key}/categories`] = myOverrides;
-    update(ref(db), updates);
+    SetDoc(
+      `Users/7LpcmhJK1QCWn9ETqLN5/userDevices/qJDvxuD7kDWNt5EA6vJp/Overrides/${display_url}`,
+      { siteURL: url, categories: overrides, isFlagged: false },
+    );
     setOpen(false);
   };
 
   return (
     <div>
-      <Button onClick={handleOpen}>{url}</Button>
+      <Button onClick={handleOpen}>{display_url}</Button>
       <Modal
         open={open}
         onClose={handleClose}
@@ -78,23 +86,23 @@ export default function SiteModal({ url, user_id }: Site) {
         aria-describedby="modal-modal-description"
       >
         <Box sx={style}>
-          <h2 id="modal-modal-title">{url}</h2>
+          <h2 id="modal-modal-title">{display_url}</h2>
           <Button onClick={handleClose}>X</Button>
-          <a href="https://www.amazon.com/">visit site</a>
+          <a href={url}>visit site</a>
           <p>Original:</p>
           <Autocomplete
             multiple
             disabled
-            defaultValue={categorization.categories}
+            defaultValue={categorization}
             options={["Shopping", "Entertainment"]}
             renderInput={(params) => <TextField {...params} />}
           />
           <p>My Categories:</p>
           <Autocomplete
             multiple
-            defaultValue={overrides.categories}
+            value={overrides}
             onChange={(_: any, newValue: Array<string>) => {
-              setMyOverrides(newValue);
+              setOverrides(newValue);
             }}
             options={["Shopping", "Entertainment"]}
             renderInput={(params) => <TextField {...params} />}
