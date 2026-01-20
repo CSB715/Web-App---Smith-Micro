@@ -10,7 +10,6 @@ import { useState, useEffect } from "react";
 import CheckBoxOutlineBlankIcon from "@mui/icons-material/CheckBoxOutlineBlank";
 import CheckBoxIcon from "@mui/icons-material/CheckBox";
 import { GetDocs, SetDoc } from "../utils/firestore";
-import { type DocumentData } from "firebase/firestore";
 
 const style = {
   position: "absolute",
