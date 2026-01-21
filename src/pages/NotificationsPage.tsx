@@ -45,7 +45,10 @@ function Notifications() {
               url={notification.siteURL}
               user_id="7LpcmhJK1QCWn9ETqLN5"
             />
-            <p>{getTimeDifferenceString(notification.dateTime.toDate())} ago</p>
+            <p>
+              {getTimeDifferenceString(notification.dateTime.toDate())} ago on{" "}
+              {notification.deviceName}
+            </p>
             <p>{notification.reason}</p>
           </li>
         ))}
