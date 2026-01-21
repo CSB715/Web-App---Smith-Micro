@@ -1,33 +1,24 @@
 import "../styles/Alert.css";
+import { useRef } from "react";
 
-function showErrorModal() {
-        const modal = document.getElementById("errorAlert");
-        const span = document.getElementsByClassName("close")[6];
-
-        modal!.style.display = "block";
-
-        span!.addEventListener("click", () => {
-            modal!.style.display = "none";
-        });
-
-        window.onclick = function(event) {
-            if (event.target === modal) {
-                modal!.style.display = "none";
-            }
-        };
-    }
-
+function closeAlert() {
+    const modal = document.getElementById("errorAlert");
+    modal!.style.display = "none";
+}
 
 function ErrorAlert() {
+    const overlayRef = useRef<HTMLDivElement | null>(null);
+    
     return (
-        <div id="errorAlert" className="alert"> 
+        <div id="errorAlert" className="alert"
+        ref={overlayRef}
+        onClick={(e) => {if (e.target === overlayRef.current) closeAlert(); }}> 
             <div className="alert-content">
-                <span className="close" >&times;</span>
+                <span className="close" onClick={() => closeAlert()}>&times;</span>
                 <p>We're sorry, an error occurred. Please try again later.</p>
             </div>
-        </div>
+        </div> 
     );
 }
 
 export default ErrorAlert;
-export { showErrorModal };
