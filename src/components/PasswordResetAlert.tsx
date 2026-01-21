@@ -1,27 +1,21 @@
 import "../styles/Alert.css";
+import { useRef } from "react";
 
-function ShowPasswordResetAlert() {
+
+function closeAlert() {
     const modal = document.getElementById("resetPasswordAlert");
-    const span = document.getElementsByClassName("close")[5];
-
-    modal!.style.display = "block";
-
-    span!.addEventListener("click", () => {
-        modal!.style.display = "none";
-    });
-
-    window.onclick = function(event) {
-        if (event.target === modal) {
-            modal!.style.display = "none";
-        }
-    };
+    modal!.style.display = "none";
 }
 
 function PasswordResetAlert() {
+    const overlayRef = useRef<HTMLDivElement | null>(null);
+
     return (
-        <div id="resetPasswordAlert" className="alert">
+        <div id="resetPasswordAlert" className="alert"
+        ref={overlayRef}
+        onClick={(e) => {if (e.target === overlayRef.current) closeAlert(); }}>
             <div className="alert-content">
-                <span className="close" >&times;</span>
+                <span className="close" onClick={() => closeAlert()}>&times;</span>
                 <p>A password reset link has been sent to your inbox.</p>
             </div>
         </div>
@@ -29,4 +23,3 @@ function PasswordResetAlert() {
 }
 
 export default PasswordResetAlert;
-export { ShowPasswordResetAlert };

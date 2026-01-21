@@ -2,9 +2,11 @@
 import { useEffect, useState } from "react";
 import { getAuth, onAuthStateChanged, type User } from "firebase/auth";
 import { useNavigate } from "react-router";
-import firestore from "./firestore";
+import { db } from "../utils/firestore";
 import { collection, doc, getDoc, getDocs, deleteDoc, updateDoc, type DocumentData, type DocumentReference } from "firebase/firestore";
 import "../styles/Page.css";
+import ErrorAlert from "../components/ErrorAlert";
+import PasswordResetAlert from "../components/PasswordResetAlert";
 
 function Account() {
     const testID = "7LpcmhJK1QCWn9ETqLN5";
@@ -46,7 +48,7 @@ function Account() {
     async function fetchUserDoc() {
         try {
             const userId = testID; // user!.uid;
-            const ref = doc(firestore, "Users", userId);
+            const ref = doc(db, "Users", userId);
             const snap = await getDoc(ref);
 
             if (snap.exists()) {
@@ -96,7 +98,7 @@ function Account() {
         };
 
         confirmBtn!.onclick = function() {
-            const docRef = doc(firestore, "Users", testID, "userDevices", deviceId); // user!.uid
+            const docRef = doc(db, "Users", testID, "userDevices", deviceId); // user!.uid
 
             deleteDoc(docRef)
             .then(() => {
@@ -105,7 +107,7 @@ function Account() {
                 // reload device list
 
                 const userId = testID; // user!.uid;
-                const ref = doc(firestore, "Users", userId);
+                const ref = doc(db, "Users", userId);
                 fetchUserDevices(ref);
 
             })
@@ -162,7 +164,7 @@ function Account() {
                 return;
             }
 
-            const docRef = doc(firestore, "Users", testID, "userDevices", deviceId); // user!.uid
+            const docRef = doc(db, "Users", testID, "userDevices", deviceId); // user!.uid
 
             updateDoc(docRef, { deviceName: newName })
             .then(() => {
@@ -171,7 +173,7 @@ function Account() {
                 // reload device list
 
                 const userId = testID; // user!.uid;
-                const ref = doc(firestore, "Users", userId);
+                const ref = doc(db, "Users", userId);
                 fetchUserDevices(ref);
 
             })
@@ -226,7 +228,7 @@ function Account() {
                 return;
             }
 
-            const docRef = doc(firestore, "Users", testID); // user!.uid
+            const docRef = doc(db, "Users", testID); // user!.uid
 
             const data = { userEmail: newEmail };
 
@@ -276,7 +278,7 @@ function Account() {
                 return;
             }
 
-            const docRef = doc(firestore, "Users", testID); // user!.uid
+            const docRef = doc(db, "Users", testID); // user!.uid
 
             updateDoc(docRef, { primaryPhone: newPhone })
             .then(() => {
@@ -330,7 +332,7 @@ function Account() {
                 console.log("User signed out");
 
                 // then delete user document
-                deleteDoc(doc(firestore, "Users", testID)) // user!.uid
+                deleteDoc(doc(db, "Users", testID)) // user!.uid
                 .then(() => {
                     console.log("User document deleted");
                     modal!.style.display = "none";
@@ -352,22 +354,8 @@ function Account() {
     }
 
     function handleResetPassword() {
-        console.log("Reset password button clicked");
-
         const modal = document.getElementById("resetPasswordAlert");
-        const span = document.getElementsByClassName("close")[5];
-
-        modal!.style.display = "block";
-
-        span!.addEventListener("click", () => {
-            modal!.style.display = "none";
-        });
-
-        window.onclick = function(event) {
-            if (event.target === modal) {
-                modal!.style.display = "none";
-            }
-        };
+        modal!.style.display = "block";     
 
         // TODO: trigger password reset email
     }
@@ -516,20 +504,10 @@ function Account() {
             </div>
 
             {/* reset password alert */}
-            <div id="resetPasswordAlert" className="modal">
-                <div className="modal-content">
-                    <span className="close" >&times;</span>
-                    <p>A password reset link has been sent to your inbox.</p>
-                </div>
-            </div>
+            <PasswordResetAlert />
 
             {/* error alert */}
-            <div id="errorAlert" className="modal"> 
-                <div className="modal-content">
-                    <span className="close" >&times;</span>
-                    <p>We're sorry, an error occurred. Please try again later.</p>
-                </div>
-            </div>
+            <ErrorAlert />
 
         </>
     );
