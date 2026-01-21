@@ -1,8 +1,5 @@
-// Notifications Page Component
-// STUB
-
 import { useEffect, useState } from "react";
-import { GetDoc, GetDocs } from "../utils/firestore";
+import { GetDocs } from "../utils/firestore";
 import SiteModal from "../components/SiteModal";
 
 function getTimeDifferenceString(date: Date): string {
