@@ -2,14 +2,15 @@
 import { useEffect, useState } from "react";
 import { getAuth, onAuthStateChanged, type User } from "firebase/auth";
 import { useNavigate } from "react-router";
-import { db } from "../utils/firestore";
+import { db, GetUserDevices } from "../utils/firestore";
 import { collection, doc, getDoc, getDocs, deleteDoc, updateDoc, type DocumentData, type DocumentReference } from "firebase/firestore";
 import "../styles/Page.css";
-import ErrorAlert from "../components/ErrorAlert";
+import ErrorAlert, { showErrorModal } from "../components/ErrorAlert";
 import PasswordResetAlert from "../components/PasswordResetAlert";
+import DeleteAccountModal from "../components/DeleteAccountModal";
 
 function Account() {
-    const testID = "7LpcmhJK1QCWn9ETqLN5";
+    const testID = "demoman"; //"7LpcmhJK1QCWn9ETqLN5";
     /* auth state check - redirect to login if not logged in */
     const [user, setUser] = useState<User | null | undefined>(undefined); // undefined = checking
     const navigate = useNavigate();
@@ -35,15 +36,6 @@ function Account() {
     const [devices, setDevices] = useState<Array<DocumentData>>([]);
     const [currDevice, setCurrDevice] = useState<DocumentData | null>(null);
 
-    // Fetch userDevices subcollection
-    async function fetchUserDevices(userRef: DocumentReference) {
-        const devicesCol = collection(userRef, "userDevices");
-        const devicesSnap = await getDocs(devicesCol);
-        const devicesArr = devicesSnap.docs.map(doc => ({ id: doc.id, ...doc.data()}));
-        console.log("Devices subcollection:", devicesArr);
-        setDevices(devicesArr);
-    }
-
     // Fetch user document on component mount, including userDevices subcollection
     async function fetchUserDoc() {
         try {
@@ -54,7 +46,8 @@ function Account() {
             if (snap.exists()) {
                 console.log("Test user document:", snap.data());
                 setUserData(snap.data() as UserData);
-                fetchUserDevices(ref);
+                // Fetch userDevices subcollection
+                setDevices(await GetUserDevices(ref));
 
             } else {
             console.log("No user document found for id:", userId);
@@ -101,14 +94,14 @@ function Account() {
             const docRef = doc(db, "Users", testID, "userDevices", deviceId); // user!.uid
 
             deleteDoc(docRef)
-            .then(() => {
+            .then(async () => {
                 console.log("Device successfully deleted!");
                 modal!.style.display = "none";
                 // reload device list
 
                 const userId = testID; // user!.uid;
                 const ref = doc(db, "Users", userId);
-                fetchUserDevices(ref);
+                setDevices(await GetUserDevices(ref));
 
             })
             .catch((error) => {
@@ -167,14 +160,14 @@ function Account() {
             const docRef = doc(db, "Users", testID, "userDevices", deviceId); // user!.uid
 
             updateDoc(docRef, { deviceName: newName })
-            .then(() => {
+            .then(async () => {
                 console.log("Device successfully renamed!");
                 modal!.style.display = "none";
                 // reload device list
 
                 const userId = testID; // user!.uid;
                 const ref = doc(db, "Users", userId);
-                fetchUserDevices(ref);
+                setDevices(await GetUserDevices(ref));
 
             })
             .catch((error) => {
@@ -297,60 +290,8 @@ function Account() {
     }
 
     function handleDeleteAccount() {
-        console.log("Delete account button clicked");
-
         const modal = document.getElementById("deleteAccountModal");
-        const span = document.getElementsByClassName("close")[4];
-        const cancelBtn = document.getElementById("cancelDeleteAccount");
-        const confirmBtn = document.getElementById("confirmDeleteAccount");
-
         modal!.style.display = "block";
-
-        span!.addEventListener("click", () => {
-            console.log("Cancelled account deletion");
-            modal!.style.display = "none";
-        });
-
-        window.onclick = function(event) {
-            if (event.target === modal) {
-                console.log("Cancelled account deletion");
-                modal!.style.display = "none";
-            }
-        };
-
-        cancelBtn!.onclick = function() {
-            console.log("Cancelled account deletion");
-            modal!.style.display = "none";
-        };
-
-        confirmBtn!.onclick = function() {
-            console.log("Confirmed account deletion");
-            
-            // sign out
-            const auth = getAuth();
-            auth.signOut().then(() => {
-                console.log("User signed out");
-
-                // then delete user document
-                deleteDoc(doc(db, "Users", testID)) // user!.uid
-                .then(() => {
-                    console.log("User document deleted");
-                    modal!.style.display = "none";
-
-                    // redirect to login page
-                    navigate("/login", { replace: true });
-                })
-                .catch((error) => {
-                    console.error("Error deleting user document: ", error);
-                    modal!.style.display = "none";
-                    // show error modal
-                });
-            }).catch((error) => {
-                console.error("Error signing out: ", error);
-                // show error modal
-                showErrorModal();
-            });
-        };
     }
 
     function handleResetPassword() {
@@ -358,23 +299,6 @@ function Account() {
         modal!.style.display = "block";     
 
         // TODO: trigger password reset email
-    }
-
-    function showErrorModal() {
-        const modal = document.getElementById("errorAlert");
-        const span = document.getElementsByClassName("close")[6];
-
-        modal!.style.display = "block";
-
-        span!.addEventListener("click", () => {
-            modal!.style.display = "none";
-        });
-
-        window.onclick = function(event) {
-            if (event.target === modal) {
-                modal!.style.display = "none";
-            }
-        };
     }
 
 
@@ -491,17 +415,7 @@ function Account() {
             </div>
 
             {/* modal for delete account */}
-            <div id="deleteAccountModal" className="modal"> 
-                <div className="modal-content">
-                    <span className="close" >&times;</span>
-                    <p>Delete Account?</p>
-                    <p>If you delete your account, all data associated with it will be lost.</p>
-                    <div>
-                        <button id="cancelDeleteAccount">Cancel</button>
-                        <button id="confirmDeleteAccount">Confirm</button>
-                    </div>
-                </div>
-            </div>
+            <DeleteAccountModal uid={testID}/>
 
             {/* reset password alert */}
             <PasswordResetAlert />

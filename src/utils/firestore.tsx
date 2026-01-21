@@ -1,6 +1,6 @@
 // Import the functions you need from the SDKs you need
 import { initializeApp } from "firebase/app";
-import { getFirestore } from "firebase/firestore";
+import { getFirestore, type QueryDocumentSnapshot } from "firebase/firestore";
 import {
   doc,
   getDoc,
@@ -8,6 +8,7 @@ import {
   collection,
   setDoc,
   type DocumentData,
+  type DocumentReference
 } from "firebase/firestore";
 // import { getAnalytics } from "firebase/analytics";
 // TODO: Add SDKs for Firebase products that you want to use
@@ -63,4 +64,24 @@ async function SetDoc(path: string, data: any) {
   await setDoc(docRef, data);
 }
 
-export { db, GetDoc, GetDocs, SetDoc };
+async function GetUserDevices(userRef: DocumentReference) {
+    const devicesCol = collection(userRef, "userDevices");
+    const devicesSnap = await getDocs(devicesCol);
+    const devicesArr = devicesSnap.docs.map(doc => ({ id: doc.id, ...doc.data()}));
+    return devicesArr;
+}
+
+function DeleteUserAndSubCollections(path: string) {
+  const userRef = doc(db, path);
+
+  const devices = 0;
+  // delete user
+  // NotificationTriggers
+  // Notifications
+  // userDevices
+        // Overrides
+        // Visits
+  
+}
+
+export { db, GetDoc, GetDocs, SetDoc, GetUserDevices };

@@ -6,6 +6,11 @@ function closeAlert() {
     modal!.style.display = "none";
 }
 
+function showErrorModal() {
+    const modal = document.getElementById("errorAlert");
+    modal!.style.display = "block";
+}
+
 function ErrorAlert() {
     const overlayRef = useRef<HTMLDivElement | null>(null);
     
@@ -22,3 +27,4 @@ function ErrorAlert() {
 }
 
 export default ErrorAlert;
+export { showErrorModal };
