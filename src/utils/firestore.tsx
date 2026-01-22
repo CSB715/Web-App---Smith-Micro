@@ -1,5 +1,6 @@
 // Import the functions you need from the SDKs you need
-import { initializeApp } from "firebase/app";
+import { initializeApp, getApps } from "firebase/app";
+import { getAuth, createUserWithEmailAndPassword } from "firebase/auth";
 import { getFirestore, type QueryDocumentSnapshot } from "firebase/firestore";
 import {
   doc,
@@ -7,10 +8,10 @@ import {
   getDocs,
   collection,
   setDoc,
+  deleteDoc,
   type DocumentData,
   type DocumentReference
 } from "firebase/firestore";
-// import { getAnalytics } from "firebase/analytics";
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
 
@@ -28,10 +29,9 @@ const firebaseConfig = {
 };
 
 // Initialize Firebase
-const app = initializeApp(firebaseConfig);
-// const analytics = getAnalytics(app);
-
+const app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
 const db = getFirestore(app);
+const auth = getAuth(app);
 
 async function GetDoc(path: string) {
   const docRef = doc(db, path);
@@ -64,24 +64,65 @@ async function SetDoc(path: string, data: any) {
   await setDoc(docRef, data);
 }
 
-async function GetUserDevices(userRef: DocumentReference) {
-    const devicesCol = collection(userRef, "userDevices");
-    const devicesSnap = await getDocs(devicesCol);
-    const devicesArr = devicesSnap.docs.map(doc => ({ id: doc.id, ...doc.data()}));
-    return devicesArr;
+async function DeleteCollection(path: string) {
+  const col = collection(db, path);
+  const snap = await getDocs(col);
+  snap.forEach((doc) => {
+    deleteDoc(doc.ref);
+  });
 }
 
-function DeleteUserAndSubCollections(path: string) {
-  const userRef = doc(db, path);
+async function GetUserDevices(userRef: DocumentReference) {
+  const devicesCol = collection(userRef, "userDevices");
+  const devicesSnap = await getDocs(devicesCol);
+  const devicesArr = devicesSnap.docs.map(doc => ({ id: doc.id, ...doc.data()}));
+  return devicesArr;
+}
 
-  const devices = 0;
-  // delete user
-  // NotificationTriggers
-  // Notifications
-  // userDevices
-        // Overrides
-        // Visits
+async function CreateUser(email: string, password: string, phone: string) {
+  return createUserWithEmailAndPassword(auth, email, password).then((userCredential) => {
+      return setDoc(doc(db, "Users", userCredential.user.uid), 
+        {
+          email: email,
+          phone: phone
+        }).then(async () => {
+          return await getDoc(doc(db, "Users", userCredential.user.uid))
+        });
+  });
+}
+
+async function DeleteUser(path: string) {
+  const userRef = doc(db, path);
+  const devices : Array<DocumentData> = await GetUserDevices(userRef);
+
+  for (const device of devices) {
+
+    DeleteCollection(device.ref.path + "Visits");
+
+    DeleteCollection(device.ref.path + "Overrides");
+
+    deleteDoc(device.ref);
+  }
+
+  DeleteCollection(path + "/Notifications");
+
+  DeleteCollection(path + "/NotificationTriggers");
+  
+  deleteDoc(userRef);
+
+  auth.currentUser?.delete().then( () => {
+    if (auth.currentUser == null) {
+      console.log()
+    }
+  });
   
 }
 
-export { db, GetDoc, GetDocs, SetDoc, GetUserDevices };
+export { db, auth,
+  GetDoc, 
+  GetDocs, 
+  SetDoc, 
+  GetUserDevices, 
+  DeleteCollection, 
+  DeleteUser,
+  CreateUser };
