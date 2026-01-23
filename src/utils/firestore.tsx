@@ -1,7 +1,7 @@
 // Import the functions you need from the SDKs you need
 import { initializeApp, getApps } from "firebase/app";
 import { getAuth, createUserWithEmailAndPassword } from "firebase/auth";
-import { getFirestore, type QueryDocumentSnapshot } from "firebase/firestore";
+import { getFirestore } from "firebase/firestore";
 import {
   doc,
   getDoc,
@@ -72,8 +72,10 @@ async function DeleteCollection(path: string) {
   });
 }
 
+export type UserData = { emails?: Array<string> | null; phones?: Array<string> | null; [key: string]: any };
+
 async function GetUserDevices(userRef: DocumentReference) {
-  const devicesCol = collection(userRef, "userDevices");
+  const devicesCol = collection(userRef, "Devices");
   const devicesSnap = await getDocs(devicesCol);
   const devicesArr = devicesSnap.docs.map(doc => ({ id: doc.id, ...doc.data()}));
   return devicesArr;
@@ -81,12 +83,13 @@ async function GetUserDevices(userRef: DocumentReference) {
 
 async function CreateUser(email: string, password: string, phone: string) {
   return createUserWithEmailAndPassword(auth, email, password).then((userCredential) => {
-      return setDoc(doc(db, "Users", userCredential.user.uid), 
+    const userDoc = doc(db, "Users", userCredential.user.uid)
+      return setDoc(userDoc, 
         {
-          email: email,
-          phone: phone
+          emails: [email],
+          phones: [phone]
         }).then(async () => {
-          return await getDoc(doc(db, "Users", userCredential.user.uid))
+          return await getDoc(userDoc)
         });
   });
 }
