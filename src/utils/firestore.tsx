@@ -1,12 +1,7 @@
 // Import the functions you need from the SDKs you need
 import { initializeApp, getApps } from "firebase/app";
-import {
-  getAuth,
-  createUserWithEmailAndPassword,
-  signInWithEmailAndPassword,
-  onAuthStateChanged,
-} from "firebase/auth";
-import { getFirestore, type QueryDocumentSnapshot } from "firebase/firestore";
+import { getAuth, createUserWithEmailAndPassword } from "firebase/auth";
+import { getFirestore } from "firebase/firestore";
 import {
   doc,
   getDoc,
@@ -96,24 +91,6 @@ async function GetVisits(userId: string, deviceId: string) {
   return visitsArr;
 }
 
-async function AuthenticateUser(email: string, password: string) {
-  /*if (auth.currentUser != null) {
-    console.log("Current User", auth.currentUser);
-    return auth.currentUser.uid;
-  }
-  console.log("Signing in user...");
-  return (await signInWithEmailAndPassword(auth, email, password)).user.uid;*/
-  return onAuthStateChanged(auth, async (user) => {
-    if (user) {
-      console.log("User ID:", user.uid);
-      return user.uid;
-    } else {
-      console.log("User not signed in");
-      return (await signInWithEmailAndPassword(auth, email, password)).user.uid;
-    }
-  });
-}
-
 async function DeleteCollection(path: string) {
   const col = collection(db, path);
   const snap = await getDocs(col);
@@ -122,8 +99,14 @@ async function DeleteCollection(path: string) {
   });
 }
 
+export type UserData = {
+  emails?: Array<string> | null;
+  phones?: Array<string> | null;
+  [key: string]: any;
+};
+
 async function GetUserDevices(userRef: DocumentReference) {
-  const devicesCol = collection(userRef, "userDevices");
+  const devicesCol = collection(userRef, "Devices");
   const devicesSnap = await getDocs(devicesCol);
   const devicesArr = devicesSnap.docs.map((doc) => ({
     id: doc.id,
@@ -135,11 +118,12 @@ async function GetUserDevices(userRef: DocumentReference) {
 async function CreateUser(email: string, password: string, phone: string) {
   return createUserWithEmailAndPassword(auth, email, password).then(
     (userCredential) => {
-      return setDoc(doc(db, "Users", userCredential.user.uid), {
-        email: email,
-        phone: phone,
+      const userDoc = doc(db, "Users", userCredential.user.uid);
+      return setDoc(userDoc, {
+        emails: [email],
+        phones: [phone],
       }).then(async () => {
-        return await getDoc(doc(db, "Users", userCredential.user.uid));
+        return await getDoc(userDoc);
       });
     },
   );
@@ -182,5 +166,4 @@ export {
   CreateUser,
   GetDevices,
   GetVisits,
-  AuthenticateUser,
 };
