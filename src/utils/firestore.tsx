@@ -1,6 +1,11 @@
 // Import the functions you need from the SDKs you need
 import { initializeApp, getApps } from "firebase/app";
-import { getAuth, createUserWithEmailAndPassword } from "firebase/auth";
+import {
+  getAuth,
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  onAuthStateChanged,
+} from "firebase/auth";
 import { getFirestore, type QueryDocumentSnapshot } from "firebase/firestore";
 import {
   doc,
@@ -62,6 +67,51 @@ async function GetDocs(path: string) {
 async function SetDoc(path: string, data: any) {
   const docRef = doc(db, path);
   await setDoc(docRef, data);
+}
+
+async function GetDevices(userId: string) {
+  const devicesCol = collection(db, "Users", userId, "Devices");
+  const devicesSnap = await getDocs(devicesCol);
+  const devicesArr = devicesSnap.docs.map((doc) => ({
+    id: doc.id,
+    data: doc.data(),
+  }));
+  return devicesArr;
+}
+
+async function GetVisits(userId: string, deviceId: string) {
+  const visitsCol = collection(
+    db,
+    "Users",
+    userId,
+    "Devices",
+    deviceId,
+    "Visits",
+  );
+  const visitsSnap = await getDocs(visitsCol);
+  const visitsArr = visitsSnap.docs.map((doc) => ({
+    id: doc.id,
+    data: doc.data(),
+  }));
+  return visitsArr;
+}
+
+async function AuthenticateUser(email: string, password: string) {
+  /*if (auth.currentUser != null) {
+    console.log("Current User", auth.currentUser);
+    return auth.currentUser.uid;
+  }
+  console.log("Signing in user...");
+  return (await signInWithEmailAndPassword(auth, email, password)).user.uid;*/
+  return onAuthStateChanged(auth, async (user) => {
+    if (user) {
+      console.log("User ID:", user.uid);
+      return user.uid;
+    } else {
+      console.log("User not signed in");
+      return (await signInWithEmailAndPassword(auth, email, password)).user.uid;
+    }
+  });
 }
 
 async function DeleteCollection(path: string) {
@@ -130,4 +180,7 @@ export {
   DeleteCollection,
   DeleteUser,
   CreateUser,
+  GetDevices,
+  GetVisits,
+  AuthenticateUser,
 };

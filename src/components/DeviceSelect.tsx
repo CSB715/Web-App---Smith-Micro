@@ -21,7 +21,7 @@ export default function DeviceSelect({
         onChange={(_: any, newValue: any[]) => {
           setSelectedDevices(newValue);
         }}
-        options={devices.map((device) => device.data.deviceName)}
+        options={devices.map((device) => device.data.Name)}
         renderOption={(props, option, { selected }) => {
           const { key, ...optionProps } = props;
           return (
