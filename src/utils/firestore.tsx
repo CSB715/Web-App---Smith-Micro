@@ -75,7 +75,7 @@ async function DeleteCollection(path: string) {
 export type UserData = { emails?: Array<string> | null; phones?: Array<string> | null; [key: string]: any };
 
 async function GetUserDevices(userRef: DocumentReference) {
-  const devicesCol = collection(userRef, "userDevices");
+  const devicesCol = collection(userRef, "Devices");
   const devicesSnap = await getDocs(devicesCol);
   const devicesArr = devicesSnap.docs.map(doc => ({ id: doc.id, ...doc.data()}));
   return devicesArr;

@@ -10,6 +10,7 @@ import PasswordResetAlert from "../components/PasswordResetAlert";
 import DeleteAccountModal from "../components/DeleteAccountModal";
 import AddPhoneModal from "../components/AddPhoneModal";
 import AddEmailModal from "../components/AddEmailModal";
+import RenameDeviceModal from "../components/RenameDeviceModal";
 
 function Account() {
     const hasMounted = useRef(false);
@@ -23,6 +24,14 @@ function Account() {
     const updateUserData: (data: UserData) => void = (data) => {
         setUserData(data)
     }
+
+    const updateDevices: (data: Array<DocumentData>) => void = (data) => {
+        setDevices(data)
+    }
+
+    useEffect(() => {
+        console.log(currDevice);
+    }, [currDevice])
 
     useEffect(() => {
         if (!hasMounted.current) {
@@ -97,66 +106,12 @@ function Account() {
     }
 
     function handleRenameDevice(deviceId: string) {
-        console.log("Rename device with ID:", deviceId);
         setCurrDevice(devices.find(device => device.id === deviceId) || null);
-
         const modal = document.getElementById("renameDeviceModal");
-        const span = document.getElementsByClassName("close")[1];
-        const newNameInput = document.getElementById("newDeviceName") as HTMLInputElement;
-        const cancelBtn = document.getElementById("cancelRenameDevice");
-        const confirmBtn = document.getElementById("confirmRenameDevice");
-
         modal!.style.display = "block";
-
-        span!.addEventListener("click", () => {
-            console.log("Cancelled renaming of device ID:", deviceId);
-            modal!.style.display = "none";
-        });
-
-        window.onclick = function(event) {
-            if (event.target === modal) {
-                console.log("Cancelled renaming of device ID:", deviceId);
-                modal!.style.display = "none";
-            }   
-        };
-
-        cancelBtn!.onclick = function() {
-            console.log("Cancelled renaming of device ID:", deviceId);
-            modal!.style.display = "none";
-        };
-
-        newNameInput.addEventListener("keypress", function(event) {
-            if (event.key === "Enter") {
-                event.preventDefault();
-                confirmBtn!.click();
-            }
-        });
-
-        confirmBtn!.onclick = function() {
-            const newName = newNameInput.value.trim();
-            if (newName.trim() === "") {
-                console.log("New device name cannot be empty.");
-                return;
-            }
-
-            const docRef = doc(db, "Users", userSnap!.id, "userDevices", deviceId); // user!.uid
-
-            updateDoc(docRef, { deviceName: newName })
-            .then(async () => {
-                console.log("Device successfully renamed!");
-                modal!.style.display = "none";
-                // reload device list
-                setDevices(await GetUserDevices(userSnap!.ref))
-            })
-            .catch((error) => {
-                console.error("Error renaming device: ", error);
-                modal!.style.display = "none";
-                showErrorModal();
-            });
-        }
     }
 
-    function handleEditEmail() {
+    function handleAddEmail() {
         const modal = document.getElementById("addEmailModal");
         modal!.style.display = "block";
     }
@@ -207,7 +162,7 @@ function Account() {
                         <p style={{ marginTop: "0" }}>{auth.currentUser?.email}</p>
                     </span>
                     <button style={{ marginLeft: "auto" }} 
-                        onClick={() => handleEditEmail()}>Edit</button>
+                        onClick={() => handleAddEmail()}>Edit</button>
                 </div>
 
                 <div>
@@ -224,7 +179,7 @@ function Account() {
                     </table>
                 </div>
             
-                <button onClick={() => handleEditEmail()}>Add Contact Email</button>
+                <button onClick={() => handleAddEmail()}>Add Contact Email</button>
 
                 <br />
 
@@ -256,7 +211,7 @@ function Account() {
                     <tbody>
                     {devices.map((device) => (
                         <tr key={device.id}>
-                            <td>{device.deviceName}</td>
+                            <td>{device.name}</td>
                             <td><button onClick={() => handleDeleteDevice(device.id)}>Del</button></td>
                             <td><button onClick={()=> handleRenameDevice(device.id)}>Edit</button></td>
                         </tr>
@@ -270,11 +225,11 @@ function Account() {
             </div>
 
 
-            {/* modal for delete device */}
+            {/* modals for user dialog */}
             <div id="deleteDeviceModal" className="modal"> 
                 <div className="modal-content">
                     <span className="close" >&times;</span>
-                    <p>Delete {currDevice?.deviceName}?</p>
+                    <p>Delete {currDevice?.name}?</p>
                     <p>If you delete this device, all data associated with it will be lost.</p>
                     <div>
                         <button id="cancelDeleteDevice">Cancel</button>
@@ -283,33 +238,16 @@ function Account() {
                 </div>
             </div>
 
-            {/* modal for edit device */}
-            <div id="renameDeviceModal" className="modal"> 
-                <div className="modal-content">
-                    <span className="close" >&times;</span>
-                    <p>Rename {currDevice?.deviceName}?</p>
-                    <input type="text" id="newDeviceName" placeholder="New Name"/>
-                    <br/>
-                    <div>
-                        <button id="cancelRenameDevice">Cancel</button>
-                        <button id="confirmRenameDevice">Confirm</button>
-                    </div>
-                </div>
-            </div>
+            <RenameDeviceModal currDevice={currDevice} updateDevices={updateDevices}/>
 
-            {/* modal for edit email */}
             <AddEmailModal updateUserData={updateUserData}/>
 
-            {/* modal for edit phone */}
             <AddPhoneModal updateUserData={updateUserData}/>
 
-            {/* modal for delete account */}
             {userSnap && <DeleteAccountModal uid={userSnap!.ref.id}/>}
 
-            {/* reset password alert */}
             <PasswordResetAlert />
 
-            {/* error alert */}
             <ErrorAlert />
 
         </>
