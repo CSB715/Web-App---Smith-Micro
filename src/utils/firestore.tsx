@@ -81,12 +81,13 @@ async function GetUserDevices(userRef: DocumentReference) {
 
 async function CreateUser(email: string, password: string, phone: string) {
   return createUserWithEmailAndPassword(auth, email, password).then((userCredential) => {
-      return setDoc(doc(db, "Users", userCredential.user.uid), 
+    const userDoc = doc(db, "Users", userCredential.user.uid)
+      return setDoc(userDoc, 
         {
           email: email,
           phone: phone
         }).then(async () => {
-          return await getDoc(doc(db, "Users", userCredential.user.uid))
+          return await getDoc(userDoc)
         });
   });
 }

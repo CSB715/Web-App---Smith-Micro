@@ -1,65 +1,46 @@
 // Account Page Component
-import { useEffect, useState } from "react";
-import { getAuth, onAuthStateChanged, type User } from "firebase/auth";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router";
-import { db, GetUserDevices } from "../utils/firestore";
-import { collection, doc, getDoc, getDocs, deleteDoc, updateDoc, type DocumentData, type DocumentReference } from "firebase/firestore";
+import { createUserWithEmailAndPassword, onAuthStateChanged, signInWithEmailAndPassword, type User } from "firebase/auth";
+import { CreateUser, db, GetDoc, GetUserDevices, auth } from "../utils/firestore";
+import { doc, getDoc, deleteDoc, updateDoc, type DocumentData, DocumentSnapshot } from "firebase/firestore";
 import "../styles/Page.css";
 import ErrorAlert, { showErrorModal } from "../components/ErrorAlert";
 import PasswordResetAlert from "../components/PasswordResetAlert";
 import DeleteAccountModal from "../components/DeleteAccountModal";
 
 function Account() {
-    const testID = "demoman"; //"7LpcmhJK1QCWn9ETqLN5";
-    /* auth state check - redirect to login if not logged in */
-    const [user, setUser] = useState<User | null | undefined>(undefined); // undefined = checking
-    const navigate = useNavigate();
-
-    // useEffect(() => {
-    //     const auth = getAuth();
-    //     const unsub = onAuthStateChanged(auth, (u) => {
-    //     if (u) {
-    //         setUser(u);
-    //     } else {
-    //         setUser(null);
-    //         navigate("/login", { replace: true });
-    //     }
-    //     });
-
-    //     return () => unsub();
-    // }, [navigate]);
-
-    // if (user === undefined) return null; // or a loader
-
+    const hasMounted = useRef(false);
     type UserData = { email?: string | null; phone?: string | null; [key: string]: any };
+
+    const navigate = useNavigate();
+    const [userSnap, setUserSnap] = useState<DocumentSnapshot | null>(null);
     const [userData, setUserData] = useState<UserData | null>(null);
     const [devices, setDevices] = useState<Array<DocumentData>>([]);
     const [currDevice, setCurrDevice] = useState<DocumentData | null>(null);
 
-    // Fetch user document on component mount, including userDevices subcollection
-    async function fetchUserDoc() {
-        try {
-            const userId = testID; // user!.uid;
-            const ref = doc(db, "Users", userId);
-            const snap = await getDoc(ref);
-
-            if (snap.exists()) {
-                console.log("Test user document:", snap.data());
-                setUserData(snap.data() as UserData);
-                // Fetch userDevices subcollection
-                setDevices(await GetUserDevices(ref));
-
+    useEffect(() => {
+        if (!hasMounted.current) {
+            signInWithEmailAndPassword(auth, "spiderman@example.com", "spiders").then(() => {
+            // CreateUser("spiderman@example.com", "spiders", "(333) 333-3333").then( () => {
+            if (auth.currentUser!=null) {
+                console.log(auth.currentUser.uid)
+                getDoc(doc(db, "Users", auth.currentUser.uid)).then((snap) => {
+                    setUserSnap(snap);
+                    setUserData(snap.data() as UserData);
+                    GetUserDevices(snap.ref).then( (deviceArr) => {
+                        setDevices(deviceArr);
+                    })
+                })
             } else {
-            console.log("No user document found for id:", userId);
-            navigate("/login", { replace: true });
+                console.log("no user currently signed in");
+                setUserData(null);
+                navigate("/login", { replace: true });
             }
-        } catch (err) {
-            console.error("Error fetching user:", err);
-            // show error modal
-            showErrorModal();
+            });
+            hasMounted.current = true
         }
-    };
-
+    }, []);
 
     /* button functions */
     function handleDeleteDevice(deviceId: string) {
@@ -91,18 +72,14 @@ function Account() {
         };
 
         confirmBtn!.onclick = function() {
-            const docRef = doc(db, "Users", testID, "userDevices", deviceId); // user!.uid
+            const docRef = doc(db, userSnap!.ref.path, "userDevices", deviceId); // user!.uid
 
             deleteDoc(docRef)
             .then(async () => {
                 console.log("Device successfully deleted!");
                 modal!.style.display = "none";
                 // reload device list
-
-                const userId = testID; // user!.uid;
-                const ref = doc(db, "Users", userId);
-                setDevices(await GetUserDevices(ref));
-
+                setDevices(await GetUserDevices(userSnap!.ref));
             })
             .catch((error) => {
                 console.error("Error removing device: ", error);
@@ -157,23 +134,18 @@ function Account() {
                 return;
             }
 
-            const docRef = doc(db, "Users", testID, "userDevices", deviceId); // user!.uid
+            const docRef = doc(db, "Users", userSnap!.id, "userDevices", deviceId); // user!.uid
 
             updateDoc(docRef, { deviceName: newName })
             .then(async () => {
                 console.log("Device successfully renamed!");
                 modal!.style.display = "none";
                 // reload device list
-
-                const userId = testID; // user!.uid;
-                const ref = doc(db, "Users", userId);
-                setDevices(await GetUserDevices(ref));
-
+                setDevices(await GetUserDevices(userSnap!.ref))
             })
             .catch((error) => {
                 console.error("Error renaming device: ", error);
                 modal!.style.display = "none";
-                // show error modal
                 showErrorModal();
             });
         }
@@ -220,11 +192,6 @@ function Account() {
                 console.log("New email cannot be empty.");
                 return;
             }
-
-            const docRef = doc(db, "Users", testID); // user!.uid
-
-            const data = { userEmail: newEmail };
-
             // trigger sending email to authenticate new address, then change after confirmation link is clicked
         }
     }
@@ -271,14 +238,14 @@ function Account() {
                 return;
             }
 
-            const docRef = doc(db, "Users", testID); // user!.uid
+            const docRef = doc(db, "Users", userSnap!.id);
 
             updateDoc(docRef, { primaryPhone: newPhone })
-            .then(() => {
+            .then(async () => {
                 console.log("Phone number successfully updated");
                 modal!.style.display = "none";
                 // reload phone number display
-                fetchUserDoc();
+                setUserData((await GetDoc(userSnap!.ref.path))!.data as UserData);
             })
             .catch((error) => {
                 console.error("Error updating phone number: ", error);
@@ -289,7 +256,7 @@ function Account() {
         }
     }
 
-    function handleDeleteAccount() {
+    function showDeleteAccountModal() {
         const modal = document.getElementById("deleteAccountModal");
         modal!.style.display = "block";
     }
@@ -301,11 +268,6 @@ function Account() {
         // TODO: trigger password reset email
     }
 
-
-    useEffect(() => {
-        fetchUserDoc();
-    }, []);
-
     return (
         <>
             <h1 className="title">Account</h1>
@@ -316,7 +278,7 @@ function Account() {
                 <div style={{ display: "flex", alignItems: "center" }}>
                     <span>
                         <h3 style={{ marginBottom: "0" }}>Email</h3>
-                        <p style={{ marginTop: "0" }}>{userData?.userEmail}</p>
+                        <p style={{ marginTop: "0" }}>{userData?.email}</p>
                     </span>
                     <button style={{ marginLeft: "auto" }} 
                         onClick={() => handleEditEmail()}>Edit</button>
@@ -327,7 +289,7 @@ function Account() {
                 <div style={{ display: "flex", alignItems: "center" }}>
                     <span>
                         <h3 style={{ marginBottom: "0" }}>Phone</h3>
-                        <p style={{ marginTop: "0" }}>{userData?.primaryPhone}</p>
+                        <p style={{ marginTop: "0" }}>{userData?.phone}</p>
                     </span>
                     <button style={{ marginLeft: "auto" }}
                         onClick={() => handleEditPhone()}>Edit</button>
@@ -355,7 +317,7 @@ function Account() {
 
                 <br />
 
-                <button onClick={() => handleDeleteAccount()}>Delete Account</button>
+                <button onClick={() => showDeleteAccountModal()}>Delete Account</button>
             </div>
 
 
@@ -415,7 +377,7 @@ function Account() {
             </div>
 
             {/* modal for delete account */}
-            <DeleteAccountModal uid={testID}/>
+            {userSnap && <DeleteAccountModal uid={userSnap!.ref.id}/>}
 
             {/* reset password alert */}
             <PasswordResetAlert />
