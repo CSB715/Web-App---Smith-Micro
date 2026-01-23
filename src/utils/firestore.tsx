@@ -72,6 +72,8 @@ async function DeleteCollection(path: string) {
   });
 }
 
+export type UserData = { emails?: Array<string> | null; phones?: Array<string> | null; [key: string]: any };
+
 async function GetUserDevices(userRef: DocumentReference) {
   const devicesCol = collection(userRef, "userDevices");
   const devicesSnap = await getDocs(devicesCol);
@@ -84,8 +86,8 @@ async function CreateUser(email: string, password: string, phone: string) {
     const userDoc = doc(db, "Users", userCredential.user.uid)
       return setDoc(userDoc, 
         {
-          email: email,
-          phone: phone
+          emails: [email],
+          phones: [phone]
         }).then(async () => {
           return await getDoc(userDoc)
         });

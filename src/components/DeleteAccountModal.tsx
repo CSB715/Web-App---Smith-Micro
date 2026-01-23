@@ -1,7 +1,6 @@
 import { useRef } from "react";
 import { signOut } from "firebase/auth";
-import { doc } from "firebase/firestore";
-import { db, auth, DeleteUser, GetDoc } from "../utils/firestore";
+import { auth, DeleteUser } from "../utils/firestore";
 import { showErrorModal } from "./ErrorAlert";
 import "../styles/Modal.css";
 import { useNavigate, type NavigateFunction } from "react-router";

@@ -1,23 +1,27 @@
 // Account Page Component
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router";
-import { createUserWithEmailAndPassword, onAuthStateChanged, signInWithEmailAndPassword, type User } from "firebase/auth";
-import { CreateUser, db, GetDoc, GetUserDevices, auth } from "../utils/firestore";
+import { signInWithEmailAndPassword } from "firebase/auth";
+import { db, GetDoc, GetUserDevices, CreateUser, type UserData, auth } from "../utils/firestore";
 import { doc, getDoc, deleteDoc, updateDoc, type DocumentData, DocumentSnapshot } from "firebase/firestore";
 import "../styles/Page.css";
 import ErrorAlert, { showErrorModal } from "../components/ErrorAlert";
 import PasswordResetAlert from "../components/PasswordResetAlert";
 import DeleteAccountModal from "../components/DeleteAccountModal";
+import AddPhoneModal from "../components/AddPhoneModal";
 
 function Account() {
     const hasMounted = useRef(false);
-    type UserData = { email?: string | null; phone?: string | null; [key: string]: any };
 
     const navigate = useNavigate();
     const [userSnap, setUserSnap] = useState<DocumentSnapshot | null>(null);
     const [userData, setUserData] = useState<UserData | null>(null);
     const [devices, setDevices] = useState<Array<DocumentData>>([]);
     const [currDevice, setCurrDevice] = useState<DocumentData | null>(null);
+
+    const updateUserData: (data: UserData) => void = (data) => {
+        setUserData(data)
+    }
 
     useEffect(() => {
         if (!hasMounted.current) {
@@ -151,7 +155,7 @@ function Account() {
         }
     }
 
-    function handleEditEmail() {
+    function handleEditEmail(email?: string) {
         console.log("Edit email button clicked");
 
         const modal = document.getElementById("editEmailModal");
@@ -196,64 +200,18 @@ function Account() {
         }
     }
 
-    function handleEditPhone() {
-        console.log("Edit phone button clicked");
+    function handleDeleteEmail(email: string) {
 
-        const modal = document.getElementById("editPhoneModal");
-        const span = document.getElementsByClassName("close")[3];
-        const newPhoneInput = document.getElementById("newPhone") as HTMLInputElement;
-        const cancelBtn = document.getElementById("cancelEditPhone");
-        const confirmBtn = document.getElementById("confirmEditPhone");
+    }
 
+    function handleAddPhone() {
+        // make modal visible
+        const modal = document.getElementById("addPhoneModal");
         modal!.style.display = "block";
+    }
 
-        span!.addEventListener("click", () => {
-            console.log("Cancelled editing phone number");
-            modal!.style.display = "none";
-        });
+    function handleDeletePhone(phone: string) {
 
-        window.onclick = function(event) {
-            if (event.target === modal) {
-                console.log("Cancelled editing phone number");
-                modal!.style.display = "none";
-            }   
-        };
-
-        cancelBtn!.onclick = function() {
-            console.log("Cancelled editing phone number");
-            modal!.style.display = "none";
-        };
-
-        newPhoneInput.addEventListener("keypress", function(event) {
-            if (event.key === "Enter") {
-                event.preventDefault();
-                confirmBtn!.click();
-            }
-        });
-
-        confirmBtn!.onclick = function() {
-            const newPhone = newPhoneInput.value.trim();
-            if (newPhone.trim() === "") {
-                console.log("New phone number cannot be empty.");
-                return;
-            }
-
-            const docRef = doc(db, "Users", userSnap!.id);
-
-            updateDoc(docRef, { primaryPhone: newPhone })
-            .then(async () => {
-                console.log("Phone number successfully updated");
-                modal!.style.display = "none";
-                // reload phone number display
-                setUserData((await GetDoc(userSnap!.ref.path))!.data as UserData);
-            })
-            .catch((error) => {
-                console.error("Error updating phone number: ", error);
-                modal!.style.display = "none";
-                // show error modal
-                showErrorModal();
-            });
-        }
     }
 
     function showDeleteAccountModal() {
@@ -277,23 +235,47 @@ function Account() {
 
                 <div style={{ display: "flex", alignItems: "center" }}>
                     <span>
-                        <h3 style={{ marginBottom: "0" }}>Email</h3>
-                        <p style={{ marginTop: "0" }}>{userData?.email}</p>
+                        <h3 style={{ marginBottom: "0" }}>Account Email</h3>
+                        <p style={{ marginTop: "0" }}>{auth.currentUser?.email}</p>
                     </span>
                     <button style={{ marginLeft: "auto" }} 
                         onClick={() => handleEditEmail()}>Edit</button>
                 </div>
 
+                <div>
+                    <h3 style={{ marginBottom: "0" }}>Contact Emails</h3>
+                    <table>
+                        <tbody>
+                            {userData?.emails?.map((email) => (
+                                <tr key={email}>
+                                    <td>{email}</td>
+                                    <td><button onClick={() => handleDeleteEmail(email)}>Del</button></td>
+                                    <td><button onClick={()=> handleEditEmail(email)}>Edit</button></td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+            
+                <button onClick={() => handleEditEmail()}>Add Contact Email</button>
+
                 <br />
 
-                <div style={{ display: "flex", alignItems: "center" }}>
-                    <span>
-                        <h3 style={{ marginBottom: "0" }}>Phone</h3>
-                        <p style={{ marginTop: "0" }}>{userData?.phone}</p>
-                    </span>
-                    <button style={{ marginLeft: "auto" }}
-                        onClick={() => handleEditPhone()}>Edit</button>
+                <div>
+                    <h3 style={{ marginBottom: "0" }}>Contact Phones</h3>
+                    <table>
+                        <tbody>
+                            {userData?.phones?.map((phone) => (
+                                <tr key={phone}>
+                                    <td>{phone}</td>
+                                    <td><button onClick={() => handleDeletePhone(phone)}>Del</button></td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
                 </div>
+            
+                <button onClick={() => handleAddPhone()}>Add Phone Number</button>
 
                 <br />
 
@@ -363,18 +345,7 @@ function Account() {
             </div>
 
             {/* modal for edit phone */}
-            <div id="editPhoneModal" className="modal"> 
-                <div className="modal-content">
-                    <span className="close" >&times;</span>
-                    <p>New Phone Number</p>
-                    <input type="text" id="newPhone" placeholder="(555) 555-5555"/>
-                    <br/>
-                    <div>
-                        <button id="cancelEditPhone">Cancel</button>
-                        <button id="confirmEditPhone">Confirm</button>
-                    </div>
-                </div>
-            </div>
+            <AddPhoneModal updateUserData={updateUserData}/>
 
             {/* modal for delete account */}
             {userSnap && <DeleteAccountModal uid={userSnap!.ref.id}/>}
