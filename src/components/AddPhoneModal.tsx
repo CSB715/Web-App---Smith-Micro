@@ -5,7 +5,9 @@ import { showErrorModal } from "./ErrorAlert";
 
 function closeModal() {
     const modal = document.getElementById("addPhoneModal");
+    const newPhoneInput = document.getElementById("newPhone") as HTMLInputElement;
     modal!.style.display = "none";
+    newPhoneInput.value = ""
 }
 
 function addPhone(updateUserData : (data : UserData) => void ) {
@@ -18,7 +20,7 @@ function addPhone(updateUserData : (data : UserData) => void ) {
     }
 
     const userDoc = doc(db, "Users", auth.currentUser!.uid)
-    const userDocRef = getDoc(userDoc).then((snap) => {
+    getDoc(userDoc).then((snap) => {
         updateDoc(snap.ref, { phones: arrayUnion(newPhoneInput.value) })
         .then(async () => {
             closeModal()
@@ -30,9 +32,6 @@ function addPhone(updateUserData : (data : UserData) => void ) {
             showErrorModal();
         });
     })
-    
-    
-
 }
 
 type Props = {

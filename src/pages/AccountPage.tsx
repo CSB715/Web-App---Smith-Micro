@@ -205,13 +205,16 @@ function Account() {
     }
 
     function handleAddPhone() {
-        // make modal visible
         const modal = document.getElementById("addPhoneModal");
         modal!.style.display = "block";
     }
 
     function handleDeletePhone(phone: string) {
-
+        const phoneArray = userData!.phones!;
+        const filteredPhones = phoneArray.filter(ph => phone !== ph);
+        updateDoc(userSnap!.ref, {phones : filteredPhones}).then(async () => {
+            updateUserData((await GetDoc(userSnap!.ref.path))!.data as UserData);         // reload phone number display
+        })
     }
 
     function showDeleteAccountModal() {
