@@ -12,7 +12,6 @@ function closeModal() {
 }
 
 function renameDevice(currDevice : DocumentData, updateDevices : (data : Array<DocumentData>) => void) {
-    console.log(currDevice)
     const newDeviceNameInput = document.getElementById("newDeviceName") as HTMLInputElement;
     const newName = newDeviceNameInput.value.trim();
     if (newName.trim() === "") {
@@ -26,7 +25,6 @@ function renameDevice(currDevice : DocumentData, updateDevices : (data : Array<D
         closeModal()
         GetUserDevices(doc(db, "Users", auth.currentUser!.uid)).then((docArr) => {
             updateDevices(docArr);
-            console.log(docArr)
         })
     })
     .catch((error) => {

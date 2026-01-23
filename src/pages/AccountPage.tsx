@@ -11,6 +11,7 @@ import DeleteAccountModal from "../components/DeleteAccountModal";
 import AddPhoneModal from "../components/AddPhoneModal";
 import AddEmailModal from "../components/AddEmailModal";
 import RenameDeviceModal from "../components/RenameDeviceModal";
+import DeleteDeviceModal from "../components/DeleteDeviceModal";
 
 function Account() {
     const hasMounted = useRef(false);
@@ -28,10 +29,6 @@ function Account() {
     const updateDevices: (data: Array<DocumentData>) => void = (data) => {
         setDevices(data)
     }
-
-    useEffect(() => {
-        console.log(currDevice);
-    }, [currDevice])
 
     useEffect(() => {
         if (!hasMounted.current) {
@@ -58,51 +55,9 @@ function Account() {
 
     /* button functions */
     function handleDeleteDevice(deviceId: string) {
-        console.log("Delete device with ID:", deviceId);
         setCurrDevice(devices.find(device => device.id === deviceId) || null);
-
         const modal = document.getElementById("deleteDeviceModal");
-        const span = document.getElementsByClassName("close")[0];
-        const cancelBtn = document.getElementById("cancelDeleteDevice");
-        const confirmBtn = document.getElementById("confirmDeleteDevice");
-
         modal!.style.display = "block";
-
-        span!.addEventListener("click", () => {
-            console.log("Cancelled deletion of device ID:", deviceId);
-            modal!.style.display = "none";
-        });
-
-        window.onclick = function(event) {
-            if (event.target === modal) {
-                console.log("Cancelled deletion of device ID:", deviceId);
-                modal!.style.display = "none";
-            }   
-        };
-
-        cancelBtn!.onclick = function() {
-            console.log("Cancelled deletion of device ID:", deviceId);
-            modal!.style.display = "none";
-        };
-
-        confirmBtn!.onclick = function() {
-            const docRef = doc(db, userSnap!.ref.path, "userDevices", deviceId); // user!.uid
-
-            deleteDoc(docRef)
-            .then(async () => {
-                console.log("Device successfully deleted!");
-                modal!.style.display = "none";
-                // reload device list
-                setDevices(await GetUserDevices(userSnap!.ref));
-            })
-            .catch((error) => {
-                console.error("Error removing device: ", error);
-                modal!.style.display = "none";
-                // show error modal
-                showErrorModal();
-            });
-
-        };
     }
 
     function handleRenameDevice(deviceId: string) {
@@ -226,17 +181,7 @@ function Account() {
 
 
             {/* modals for user dialog */}
-            <div id="deleteDeviceModal" className="modal"> 
-                <div className="modal-content">
-                    <span className="close" >&times;</span>
-                    <p>Delete {currDevice?.name}?</p>
-                    <p>If you delete this device, all data associated with it will be lost.</p>
-                    <div>
-                        <button id="cancelDeleteDevice">Cancel</button>
-                        <button id="confirmDeleteDevice">Confirm</button>
-                    </div>
-                </div>
-            </div>
+            <DeleteDeviceModal currDevice={currDevice} updateDevices={updateDevices}/>
 
             <RenameDeviceModal currDevice={currDevice} updateDevices={updateDevices}/>
 
