@@ -1,4 +1,4 @@
-import "./App.css";
+import "./styles/App.css";
 import { Routes, Route } from "react-router";
 import Account from "./pages/AccountPage";
 import CreateAccount from "./pages/CreateAccountPage";
@@ -24,21 +24,14 @@ const App = () => {
             <Route path="/summary" element={<Summary />} />
             <Route path="/history" element={<History />} />
             <Route path="/settings" element={<Settings />} />
+
             {/* Settings Subpages */}
             <Route path="/settings/account" element={<Account />} />
             <Route path="/settings/flagged-sites" element={<FlaggedSites />} />
-            <Route
-              path="/settings/notifications"
-              element={<NotificationSettings />}
-            />
-            <Route
-              path="/settings/site-categories"
-              element={<SiteCategories />}
-            />
-            <Route
-              path="/settings/create-notification"
-              element={<CreateNotification />}
-            />
+            <Route path="/settings/notifications" element={<NotificationSettings />} />
+            <Route path="/settings/site-categories" element={<SiteCategories />} />
+            <Route path="/settings/create-notification" element={<CreateNotification />} />
+            
             {/* Authentication Pages */}
             <Route path="/create-account" element={<CreateAccount />} />
             <Route path="/login" element={<Login />} />

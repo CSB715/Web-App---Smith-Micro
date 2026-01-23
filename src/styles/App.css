@@ -1,4 +1,4 @@
-/* The following CSS was generated with Github Copilot */
+/* The following CSS was generated with Github Copilot with minor modifications */
 /* Ensure root fills the screen so background covers full height */
 html, body, #root {
   height: 100%;
@@ -42,7 +42,16 @@ html, body, #root {
     height: auto;
     min-height: 90vh;
     background: #ffffff;      /* white content surface */
-    padding: 24px;            /* more interior padding on desktop */
+    padding: 18px;            /* more interior padding on desktop */
     box-shadow: 0 6px 20px rgba(9, 30, 66, 0.06);
   }
+}
+
+.app-container > * {
+  flex: 0 0 auto;
+  align-self: stretch;
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  height: auto;
 }
