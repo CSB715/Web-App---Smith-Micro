@@ -2,6 +2,8 @@ import { useEffect, useRef } from "react";
 import { auth, db, GetDoc, type UserData } from "../utils/firestore";
 import { doc, getDoc, updateDoc, arrayUnion } from "firebase/firestore";
 import { showErrorModal } from "./ErrorAlert";
+import "../styles/Modal.css";
+
 
 function closeModal() {
     const modal = document.getElementById("addPhoneModal");

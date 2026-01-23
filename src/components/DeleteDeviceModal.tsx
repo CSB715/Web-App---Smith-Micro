@@ -3,6 +3,8 @@ import { useRef } from "react";
 import { showErrorModal } from "./ErrorAlert";
 import { doc, deleteDoc } from "firebase/firestore";
 import { db, auth, GetUserDevices } from "../utils/firestore";
+import "../styles/Modal.css";
+
 
 type Props = {
     currDevice : DocumentData | null,
