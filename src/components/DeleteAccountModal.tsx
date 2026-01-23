@@ -1,6 +1,5 @@
 import { useRef } from "react";
-import { signOut } from "firebase/auth";
-import { auth, DeleteUser } from "../utils/firestore";
+import { DeleteUser } from "../utils/firestore";
 import { showErrorModal } from "./ErrorAlert";
 import "../styles/Modal.css";
 import { useNavigate, type NavigateFunction } from "react-router";
@@ -11,20 +10,12 @@ function closeModal() {
 }
 
 function onConfirm(uid : string, navigate : NavigateFunction) {    
-    signOut(auth).then(() => {     // sign out
-
-        DeleteUser("Users/" + uid)         // then delete user document
-        .then(() => {
-            closeModal()
-            navigate("/login", { replace: true }); // redirect to login page
-        })
-        .catch((error) => {
-            console.log("Error Deleting User " + uid + ": " + error)
-            closeModal();
-            showErrorModal();
-        });
-    }).catch((error) => {
-        console.error("Error signing out: ", error);
+    DeleteUser("Users/" + uid).then(() => {     // delete user in database and auth
+        closeModal()
+        navigate("/login", { replace: true }); // redirect to login page
+    })
+    .catch((error) => {
+        console.log("Error Deleting User " + uid + ": " + error)
         closeModal();
         showErrorModal();
     });

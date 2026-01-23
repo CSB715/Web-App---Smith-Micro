@@ -10,7 +10,7 @@ function closeModal() {
     newEmailInput.value = ""
 }
 
-function addEmail(updateUserData : (data : UserData) => void) {
+function addEmail(updateUserData : (data : UserData) => void, isAccount : boolean) {
     const newEmailInput = document.getElementById("newEmail") as HTMLInputElement;
     const newEmail = newEmailInput.value.trim();
     if (newEmail.trim() === "") {
@@ -19,6 +19,13 @@ function addEmail(updateUserData : (data : UserData) => void) {
     }
 
     // TODO: email authentication to new address
+
+    // change the auth email
+    if (isAccount) {
+        
+    }
+
+    // add new email to contact list
     const userDoc = doc(db, "Users", auth.currentUser!.uid)
     getDoc(userDoc).then((snap) => {
         updateDoc(snap.ref, { emails: arrayUnion(newEmailInput.value) })
@@ -36,10 +43,11 @@ function addEmail(updateUserData : (data : UserData) => void) {
 }
 
 type Props = {
-    updateUserData : (data : UserData) => void
+    updateUserData : (data : UserData) => void,
+    isAccount : boolean
 }
 
-export default function AddEmailModal( {updateUserData} : Props) {
+export default function AddEmailModal( {updateUserData, isAccount} : Props) {
     const overlayRef = useRef<HTMLDivElement | null>(null);
 
     useEffect(() => {
@@ -48,7 +56,7 @@ export default function AddEmailModal( {updateUserData} : Props) {
         newEmailInput.addEventListener("keypress", function(event) {
             if (event.key === "Enter") {
                 event.preventDefault();
-                addEmail(updateUserData);
+                addEmail(updateUserData, isAccount);
             }
         });
     }, []);
@@ -64,7 +72,7 @@ export default function AddEmailModal( {updateUserData} : Props) {
                 <br/>
                 <div>
                     <button id="cancelEditEmail" onClick={() => closeModal()}>Cancel</button>
-                    <button id="confirmEditEmail" onClick={() => addEmail(updateUserData)}>Confirm</button>
+                    <button id="confirmEditEmail" onClick={() => addEmail(updateUserData, isAccount)}>Confirm</button>
                 </div>
             </div>
         </div>
