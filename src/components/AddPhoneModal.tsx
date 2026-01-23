@@ -27,7 +27,7 @@ function addPhone(updateUserData : (data : UserData) => void ) {
             updateUserData((await GetDoc(snap!.ref.path))!.data as UserData);         // reload phone number display
         })
         .catch((error) => {
-            console.error("Error updating phone number: ", error);
+            console.error("Error adding phone number: ", error);
             closeModal();
             showErrorModal();
         });

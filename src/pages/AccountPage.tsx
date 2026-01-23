@@ -9,6 +9,7 @@ import ErrorAlert, { showErrorModal } from "../components/ErrorAlert";
 import PasswordResetAlert from "../components/PasswordResetAlert";
 import DeleteAccountModal from "../components/DeleteAccountModal";
 import AddPhoneModal from "../components/AddPhoneModal";
+import AddEmailModal from "../components/AddEmailModal";
 
 function Account() {
     const hasMounted = useRef(false);
@@ -155,53 +156,17 @@ function Account() {
         }
     }
 
-    function handleEditEmail(email?: string) {
-        console.log("Edit email button clicked");
-
-        const modal = document.getElementById("editEmailModal");
-        const span = document.getElementsByClassName("close")[2];
-        const newEmailInput = document.getElementById("newEmail") as HTMLInputElement;
-        const cancelBtn = document.getElementById("cancelEditEmail");
-        const confirmBtn = document.getElementById("confirmEditEmail");
-
+    function handleEditEmail() {
+        const modal = document.getElementById("addEmailModal");
         modal!.style.display = "block";
-
-        span!.addEventListener("click", () => {
-            console.log("Cancelled editing email");
-            modal!.style.display = "none";
-        });
-
-        window.onclick = function(event) {
-            if (event.target === modal) {
-                console.log("Cancelled editing email");
-                modal!.style.display = "none";
-            }   
-        };
-
-        cancelBtn!.onclick = function() {
-            console.log("Cancelled editing email");
-            modal!.style.display = "none";
-        };
-
-        newEmailInput.addEventListener("keypress", function(event) {
-            if (event.key === "Enter") {
-                event.preventDefault();
-                confirmBtn!.click();
-            }
-        });
-
-        confirmBtn!.onclick = function() {
-            const newEmail = newEmailInput.value.trim();
-            if (newEmail.trim() === "") {
-                console.log("New email cannot be empty.");
-                return;
-            }
-            // trigger sending email to authenticate new address, then change after confirmation link is clicked
-        }
     }
 
     function handleDeleteEmail(email: string) {
-
+        const emailArray = userData!.emails!;
+        const filteredEmails = emailArray.filter(em => email !== em);
+        updateDoc(userSnap!.ref, {emails : filteredEmails}).then(async () => {
+            updateUserData((await GetDoc(userSnap!.ref.path))!.data as UserData);         // reload phone number display
+        })
     }
 
     function handleAddPhone() {
@@ -253,7 +218,6 @@ function Account() {
                                 <tr key={email}>
                                     <td>{email}</td>
                                     <td><button onClick={() => handleDeleteEmail(email)}>Del</button></td>
-                                    <td><button onClick={()=> handleEditEmail(email)}>Edit</button></td>
                                 </tr>
                             ))}
                         </tbody>
@@ -334,18 +298,7 @@ function Account() {
             </div>
 
             {/* modal for edit email */}
-            <div id="editEmailModal" className="modal"> 
-                <div className="modal-content">
-                    <span className="close" >&times;</span>
-                    <p>New Email Address</p>
-                    <input type="text" id="newEmail" placeholder="joesmith@example.com"/>
-                    <br/>
-                    <div>
-                        <button id="cancelEditEmail">Cancel</button>
-                        <button id="confirmEditEmail">Confirm</button>
-                    </div>
-                </div>
-            </div>
+            <AddEmailModal updateUserData={updateUserData}/>
 
             {/* modal for edit phone */}
             <AddPhoneModal updateUserData={updateUserData}/>
