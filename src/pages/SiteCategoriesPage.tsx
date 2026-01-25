@@ -3,6 +3,7 @@ import { doc, getDoc } from "firebase/firestore";
 import { auth, db, GetDoc, GetUserOverrides } from "../utils/firestore";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { useState, useRef, useEffect } from "react";
+import SiteCard from "../components/SiteCard";
 
 function addSite() {
 
@@ -57,7 +58,9 @@ function SiteCategories() {
             <br />
 
             {sites.map(site => (
-                <p>{site}</p>
+                <div key={site}>
+                    <SiteCard url={site} />
+                </div>
             ))}
         </>
     )
