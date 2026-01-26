@@ -4,9 +4,12 @@ import { auth, db, GetDoc, GetUserOverrides } from "../utils/firestore";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { useState, useRef, useEffect } from "react";
 import SiteCard from "../components/SiteCard";
+import AddSiteModal from "../components/AddSiteModal";
+import SiteModal from "../components/SiteModal";
 
-function addSite() {
-
+function showModal(modalId : string) {
+    const modal = document.getElementById(modalId);
+    modal!.style.display = "block";
 }
 
 async function getUniqueSites() {
@@ -31,10 +34,20 @@ async function getUniqueSites() {
 function SiteCategories() {
     const hasMounted = useRef(false);
     const [sites, setSites] = useState<string[]>([]);
+    const [modalURL, setModalURL] = useState<string>("");
+    const [showSiteModal, setShowSiteModal]  = useState<boolean>(false);
 
-    useEffect(() => {
-        console.log(sites)
-    }, [sites])
+    const updateSites: (site: string) => void = (site) => {
+        setSites([...sites, site]);
+    }
+
+    function updateModalURL(url: string) {
+        setModalURL(url);
+    }
+
+    function updateShowSiteModal(show: boolean) {
+        setShowSiteModal(show);
+    }
 
     useEffect(() => {
         if (!hasMounted.current) {
@@ -52,8 +65,7 @@ function SiteCategories() {
             <h1 className="title">Site Categories</h1>
             <hr className="divider" />
 
-            <button onClick={() => addSite()}>Set Site Category</button>
-            {/* Site Categories Page Content */}
+            <button onClick={() => showModal("addSite")}>Set Site Category</button>
 
             <br />
 
@@ -62,6 +74,11 @@ function SiteCategories() {
                     <SiteCard url={site} />
                 </div>
             ))}
+
+            <AddSiteModal updateSites={updateSites} updateModalURL={updateModalURL} updateShowSiteModal={updateShowSiteModal}/>
+
+            {showSiteModal && <SiteModal url={modalURL} user_id={auth.currentUser!.uid} />}
+
         </>
     )
 }
