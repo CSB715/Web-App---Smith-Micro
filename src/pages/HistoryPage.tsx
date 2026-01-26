@@ -1,70 +1,135 @@
-// History Page Component
-// STUB
-import CheckBoxOutlineBlankIcon from "@mui/icons-material/CheckBoxOutlineBlank";
-import CheckBoxIcon from "@mui/icons-material/CheckBox";
-import { db, GetDoc, GetDocs } from "../utils/firestore";
-import { use, useEffect, useState } from "react";
+import { auth, GetDevices, GetVisits } from "../utils/firestore";
+import { useEffect, useState, useRef } from "react";
+import { useNavigate } from "react-router";
 import SiteModal from "../components/SiteModal";
 import DeviceSelect from "../components/DeviceSelect";
-import { type DocumentData } from "firebase/firestore";
+import { signInWithEmailAndPassword } from "firebase/auth";
 
 function History() {
-  const [visits, setVisits] = useState<any[]>([]);
+  const hasMounted = useRef(false);
+  const navigate = useNavigate();
+  const [userId, setUserId] = useState<string>("");
+  const [visits, setVisits] = useState<{ [key: string]: any[] }>({});
   const [devices, setDevices] = useState<any[]>([]);
   const [selectedDevices, setSelectedDevices] = useState<any[]>([]);
-  const nameToIdMap: { [key: string]: string } = {};
-  useEffect(() => {
-    console.log("rendering");
-    GetDocs("Users/7LpcmhJK1QCWn9ETqLN5/userDevices").then((querySnapshot) => {
-      let currDevices: any[] = [];
-      querySnapshot.forEach((doc) => {
-        currDevices.push(doc);
-        nameToIdMap[doc.data.deviceName] = doc.id;
+  const [nameToIdMap, setNameToIdMap] = useState<{ [key: string]: string }>({});
+
+  function getDate(date: Date) {
+    return (
+      date.toDateString().slice(4, 7) +
+      " " +
+      date.getDate() +
+      " " +
+      date.getFullYear()
+    );
+  }
+
+  function sortVisits(currVisits: { [key: string]: any[] }) {
+    const sorted = Object.fromEntries(
+      Object.entries(currVisits).sort(([a], [b]) => {
+        return b.localeCompare(a);
+      }),
+    );
+    setVisits(sorted);
+  }
+
+  function loadDevices() {
+    GetDevices(userId)
+      .then((devicesData) => {
+        const map: { [key: string]: string } = {};
+        devicesData.forEach((doc) => {
+          map[doc.data.Name] = doc.id;
+        });
+        setNameToIdMap(map);
+        setDevices(devicesData);
+      })
+      .catch((error) => {
+        console.error("loadDevices error:", error);
       });
-      setDevices(currDevices);
-      if (selectedDevices.length === 0) {
-        setVisits([]);
-        return;
-      }
-      let currVisits: any[] = [];
-      const test: { [key: string]: any[] } = {};
-      Promise.all(
-        selectedDevices.map(async (deviceName: any) => {
-          const querySnapshot = await GetDocs(
-            `Users/7LpcmhJK1QCWn9ETqLN5/userDevices/${nameToIdMap[deviceName]}/Visits`,
-          );
-          querySnapshot.forEach((doc) => {
-            currVisits.push(doc.data);
+  }
+
+  function loadVisits() {
+    const currVisits: { [key: string]: any[] } = {};
+    Promise.all(
+      selectedDevices.map(async (deviceName: any) => {
+        const deviceId = nameToIdMap[deviceName];
+        if (!deviceId) {
+          console.error(`Device ID not found for device name: ${deviceName}`);
+          return;
+        }
+        try {
+          const visitsData = await GetVisits(userId, deviceId);
+          visitsData.forEach((doc) => {
             const date = doc.data.startDateTime.toDate();
-            const key =
-              date.toDateString().slice(4, 7) +
-              " " +
-              date.getDate() +
-              " " +
-              date.getFullYear();
-            console.log("Visit Key:", key);
+            const key = getDate(date);
             try {
-              test[key].push(doc.data);
+              currVisits[key].push(doc.data);
             } catch {
-              test[key] = [doc.data];
+              currVisits[key] = [doc.data];
             }
           });
-        }),
-      ).then(() => {
-        setVisits(currVisits);
-        console.log(test);
-      });
-    });
+        } catch (error) {
+          console.error("Error fetching visits:", error);
+        }
+      }),
+    ).then(() => sortVisits(currVisits));
+  }
+
+  /*useEffect(() => {
+    CreateUser("user@example.com", "password123", "(111) 111-1111");
+  }, []);*/
+
+  useEffect(() => {
+    if (!hasMounted.current) {
+      signInWithEmailAndPassword(auth, "user@example.com", "password123")
+        .then(() => {
+          if (auth.currentUser != null) {
+            console.log("User signed in:", auth.currentUser.uid);
+            setUserId(auth.currentUser.uid);
+          } else {
+            console.log("no user currently signed in");
+            navigate("/login", { replace: true });
+          }
+        })
+        .catch((error) => {
+          console.error("Sign-in failed:", error.message);
+          navigate("/login", { replace: true });
+        });
+      hasMounted.current = true;
+    }
+  }, [navigate]);
+
+  useEffect(() => {
+    if (userId) {
+      loadDevices();
+    }
+  }, [userId]);
+
+  useEffect(() => {
+    if (devices) {
+      loadVisits();
+    }
   }, [selectedDevices]);
+
   return (
     <>
-      <h1>History Page - Stub</h1>
-      {/* History Page Content */}
+      <h1>History Page</h1>
       <DeviceSelect devices={devices} setSelectedDevices={setSelectedDevices} />
       <ul style={{ listStyleType: "none", padding: 0, margin: 0 }}>
-        {visits.map((visit: any, index) => (
-          <li key={index}>
-            <SiteModal url={visit.siteURL} user_id={"7LpcmhJK1QCWn9ETqLN5"} />
+        {Object.entries(visits).map(([key, value]) => (
+          <li key={key}>
+            <h2>{key}</h2>
+            <ul style={{ listStyleType: "none", padding: 0, margin: 0 }}>
+              {value.map((visit: any, index) => (
+                <li key={index}>
+                  <SiteModal
+                    url={visit.siteURL}
+                    userId={userId}
+                    deviceId={key}
+                  />
+                </li>
+              ))}
+            </ul>
           </li>
         ))}
       </ul>

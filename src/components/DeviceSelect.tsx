@@ -1,10 +1,8 @@
 import Autocomplete from "@mui/material/Autocomplete";
 import Checkbox from "@mui/material/Checkbox";
 import TextField from "@mui/material/TextField";
-import { useEffect, useState } from "react";
 import CheckBoxOutlineBlankIcon from "@mui/icons-material/CheckBoxOutlineBlank";
 import CheckBoxIcon from "@mui/icons-material/CheckBox";
-import { GetDocs } from "../utils/firestore";
 
 export default function DeviceSelect({
   devices,
@@ -21,10 +19,9 @@ export default function DeviceSelect({
       <Autocomplete
         multiple
         onChange={(_: any, newValue: any[]) => {
-          console.log("New Selected Devices:", newValue);
           setSelectedDevices(newValue);
         }}
-        options={devices.map((device) => device.data.deviceName)}
+        options={devices.map((device) => device.data.Name)}
         renderOption={(props, option, { selected }) => {
           const { key, ...optionProps } = props;
           return (

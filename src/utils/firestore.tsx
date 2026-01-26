@@ -1,7 +1,6 @@
 // Import the functions you need from the SDKs you need
 import { initializeApp, getApps } from "firebase/app";
 import { getAuth, createUserWithEmailAndPassword } from "firebase/auth";
-import { DocumentSnapshot, getFirestore, QuerySnapshot } from "firebase/firestore";
 import {
   doc,
   getDoc,
@@ -10,7 +9,9 @@ import {
   setDoc,
   deleteDoc,
   type DocumentData,
-  type DocumentReference
+  type DocumentReference,
+  getFirestore,
+  QuerySnapshot,
 } from "firebase/firestore";
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
@@ -64,7 +65,106 @@ export async function SetDoc(path: string, data: any) {
   await setDoc(docRef, data);
 }
 
-export async function DeleteCollection(path: string) {
+export async function GetDevice(ref: DocumentReference) {
+  const deviceSnap = await getDoc(ref);
+  if (deviceSnap.exists()) {
+    return { id: deviceSnap.id, data: deviceSnap.data() };
+  }
+  return null;
+}
+
+export async function GetDevices(userId: string) {
+  const devicesCol = collection(db, "Users", userId, "Devices");
+  try {
+    const devicesSnap = await getDocs(devicesCol);
+    const devicesArr = devicesSnap.docs.map((doc) => ({
+      id: doc.id,
+      data: doc.data(),
+    }));
+    return devicesArr;
+  } catch (error) {
+    console.error("GetDevices error:", error);
+    throw error;
+  }
+}
+
+export async function GetVisits(userId: string, deviceId: string) {
+  const visitsCol = collection(
+    db,
+    "Users",
+    userId,
+    "Devices",
+    deviceId,
+    "Visits",
+  );
+  const visitsSnap = await getDocs(visitsCol);
+  const visitsArr = visitsSnap.docs.map((doc) => ({
+    id: doc.id,
+    data: doc.data(),
+  }));
+  return visitsArr;
+}
+
+export async function GetCategorization(url: string) {
+  const catRef = doc(db, "Categorization", url);
+  try {
+    const catSnap = await getDoc(catRef);
+    if (catSnap.exists()) {
+      return { id: catSnap.id, data: catSnap.data() };
+    }
+    return null;
+  } catch (error) {
+    console.error("GetCategorization error:", error);
+    throw error;
+  }
+}
+
+export async function GetOverrides(userId: string, deviceId: string) {
+  const overridesCol = collection(
+    db,
+    "Users",
+    userId,
+    "Devices",
+    deviceId,
+    "Overrides",
+  );
+  const overridesSnap = await getDocs(overridesCol);
+  const overridesArr = overridesSnap.docs.map((doc) => ({
+    id: doc.id,
+    data: doc.data(),
+  }));
+  return overridesArr;
+}
+
+export async function WriteOverrides(
+  userId: string,
+  deviceId: string,
+  displayURL: string,
+  overrides: any,
+) {
+  const overridesRef = doc(
+    db,
+    "Users",
+    userId,
+    "Devices",
+    deviceId,
+    "Overrides",
+    displayURL,
+  );
+  await setDoc(overridesRef, overrides);
+}
+
+export async function GetNotifications(userId: string) {
+  const notifsCol = collection(db, "Users", userId, "Notifications");
+  const notifsSnap = await getDocs(notifsCol);
+  const notifsArr = notifsSnap.docs.map((doc) => ({
+    id: doc.id,
+    data: doc.data(),
+  }));
+  return notifsArr;
+}
+
+async function DeleteCollection(path: string) {
   const col = collection(db, path);
   const snap = await getDocs(col);
   snap.forEach((doc) => {
@@ -72,46 +172,57 @@ export async function DeleteCollection(path: string) {
   });
 }
 
-export type UserData = { emails?: Array<string> | null; phones?: Array<string> | null; [key: string]: any };
+export type UserData = {
+  emails?: Array<string> | null;
+  phones?: Array<string> | null;
+  [key: string]: any;
+};
 
 export async function GetUserDevices(userRef: DocumentReference) {
   const devicesCol = collection(userRef, "Devices");
   const devicesSnap = await getDocs(devicesCol);
-  const devicesArr = devicesSnap.docs.map(doc => ({ id: doc.id, ...doc.data()}));
+  const devicesArr = devicesSnap.docs.map((doc) => ({
+    id: doc.id,
+    ...doc.data(),
+  }));
   return devicesArr;
 }
 
-export async function GetUserOverrides(userRef : DocumentReference) {
+export async function GetUserOverrides(userRef: DocumentReference) {
   const devicesCol = collection(userRef, "Devices");
   const devicesSnap = await getDocs(devicesCol);
-  const deviceOverrides : QuerySnapshot[] = []
+  const deviceOverrides: QuerySnapshot[] = [];
   for (const device of devicesSnap.docs) {
     const overrideCol = collection(device.ref, "Overrides");
     const overridesSnap = await getDocs(overrideCol);
-    deviceOverrides.push(overridesSnap)
+    deviceOverrides.push(overridesSnap);
   }
   return deviceOverrides;
 }
 
-export async function CreateUser(email: string, password: string, phone: string) {
-  return createUserWithEmailAndPassword(auth, email, password).then((userCredential) => {
-    const userDoc = doc(db, "Users", userCredential.user.uid)
-      return setDoc(userDoc, 
-        {
-          emails: [email],
-          phones: [phone]
-        }).then(async () => {
-          return await getDoc(userDoc)
-        });
-  });
+export async function CreateUser(
+  email: string,
+  password: string,
+  phone: string,
+) {
+  return createUserWithEmailAndPassword(auth, email, password).then(
+    (userCredential) => {
+      const userDoc = doc(db, "Users", userCredential.user.uid);
+      return setDoc(userDoc, {
+        emails: [email],
+        phones: [phone],
+      }).then(async () => {
+        return await getDoc(userDoc);
+      });
+    },
+  );
 }
 
 export async function DeleteUser(path: string) {
   const userRef = doc(db, path);
-  const devices : Array<DocumentData> = await GetUserDevices(userRef);
+  const devices: Array<DocumentData> = await GetUserDevices(userRef);
 
   for (const device of devices) {
-
     DeleteCollection(device.ref.path + "Visits");
 
     DeleteCollection(device.ref.path + "Overrides");
@@ -122,13 +233,12 @@ export async function DeleteUser(path: string) {
   DeleteCollection(path + "/Notifications");
 
   DeleteCollection(path + "/NotificationTriggers");
-  
+
   deleteDoc(userRef);
 
-  auth.currentUser?.delete().then( () => {
+  auth.currentUser?.delete().then(() => {
     if (auth.currentUser == null) {
-      console.log()
+      console.log();
     }
   });
-  
 }
