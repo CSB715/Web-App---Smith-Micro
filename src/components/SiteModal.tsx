@@ -1,22 +1,12 @@
-import {
-  Autocomplete,
-  Modal,
-  Button,
-  Box,
-  TextField,
-  Checkbox,
-} from "@mui/material";
+import { Autocomplete, Modal, Button, Box, TextField } from "@mui/material";
 import { useState, useEffect } from "react";
-import CheckBoxOutlineBlankIcon from "@mui/icons-material/CheckBoxOutlineBlank";
-import CheckBoxIcon from "@mui/icons-material/CheckBox";
 import {
-  GetCategorizations,
-  GetDocs,
+  GetCategorization,
   GetOverrides,
-  SetDoc,
   WriteOverrides,
+  GetDevices,
+  auth,
 } from "../utils/firestore";
-import { auth } from "../utils/firestore";
 import DeviceSelect from "./DeviceSelect";
 
 const style = {
@@ -31,77 +21,74 @@ const style = {
   p: 4,
 };
 
-const icon = <CheckBoxOutlineBlankIcon fontSize="small" />;
-const checkedIcon = <CheckBoxIcon fontSize="small" />;
-
 export default function SiteModal({
   url,
   userId,
   deviceId,
-  devices,
 }: {
   url: string;
   userId: string;
   deviceId: string;
-  devices: any;
 }) {
   const [open, setOpen] = useState(false);
   const handleOpen = () => setOpen(true);
   const handleClose = () => setOpen(false);
-
   const [categorization, setCategorization] = useState<string[]>([]);
   const [overrides, setOverrides] = useState<string[]>([]);
+  const [devices, setDevices] = useState<any[]>([]);
   const displayURL = url.slice(12, -1);
 
   function loadCategorization() {
-    GetCategorizations().then((catsData) => {
-      catsData.forEach((doc) => {
-        if (doc.data.siteURL === url) {
-          setCategorization(doc.data.categories);
+    GetCategorization(displayURL)
+      .then((catData) => {
+        if (catData) {
+          setCategorization(catData.data.categorization);
         }
+      })
+      .catch((error) => {
+        console.error("Error loading categorization:", error);
       });
-    });
   }
 
   function loadOverides() {
     if (auth.currentUser != null) {
-      GetOverrides(userId, deviceId).then((overridesData) => {
-        let set = false;
-        overridesData.forEach((doc) => {
-          if (doc.data.siteURL === url) {
-            setOverrides(doc.data.siteURL);
-            set = true;
+      GetOverrides(userId, deviceId)
+        .then((overridesData) => {
+          let set = false;
+          overridesData.forEach((doc) => {
+            if (doc.data.siteURL === url) {
+              setOverrides(doc.data.categories); // FIX: was doc.data.siteURL
+              set = true;
+            }
+          });
+          if (!set) {
+            setOverrides(categorization);
           }
+        })
+        .catch((error) => {
+          console.error("Error loading overrides:", error);
         });
-        if (!set) {
-          setOverrides(categorization);
-        }
-      });
     }
   }
+
+  function loadDevices() {
+    GetDevices(userId)
+      .then((devicesData) => {
+        setDevices(devicesData);
+      })
+      .catch((error) => {
+        console.error("loadDevices error:", error);
+      });
+  }
+
   useEffect(() => {
-    /*GetDocs("Categorization").then((querySnapshot) => {
-      querySnapshot.forEach((doc) => {
-        if (doc.data.siteURL === url) {
-          setCategorization(doc.data.categories);
-        }
-      });
-    });
-    GetDocs(
-      "Users/7LpcmhJK1QCWn9ETqLN5/userDevices/qJDvxuD7kDWNt5EA6vJp/Overrides",
-    ).then((querySnapshot) => {
-      let set = false;
-      querySnapshot.forEach((doc) => {
-        if (doc.data.siteURL === url) {
-          setOverrides(doc.data.categories);
-          set = true;
-        }
-      });
-      if (!set) {
-        setOverrides(categorization);
-      }
-    });*/
+    loadCategorization();
+    loadDevices();
   }, [open]);
+
+  useEffect(() => {
+    loadOverides();
+  }, [categorization]); // Load overrides AFTER categorization loads
 
   const handleSave = () => {
     WriteOverrides(userId, deviceId, displayURL, {
@@ -145,25 +132,6 @@ export default function SiteModal({
           />
           <p>Flagged For Devices</p>
           <DeviceSelect devices={devices} setSelectedDevices={() => {}} />
-          <Autocomplete
-            multiple
-            options={["MyPC"]}
-            renderOption={(props, option, { selected }) => {
-              const { key, ...optionProps } = props;
-              return (
-                <li key={key} {...optionProps}>
-                  <Checkbox
-                    icon={icon}
-                    checkedIcon={checkedIcon}
-                    style={{ marginRight: 8 }}
-                    checked={selected}
-                  />
-                  {option}
-                </li>
-              );
-            }}
-            renderInput={(params) => <TextField {...params} />}
-          />
           <Button onClick={handleClose}>Cancel</Button>
           <Button onClick={handleSave}>Save</Button>
         </Box>

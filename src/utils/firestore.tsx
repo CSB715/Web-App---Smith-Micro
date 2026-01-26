@@ -2,11 +2,6 @@
 import { initializeApp, getApps } from "firebase/app";
 import { getAuth, createUserWithEmailAndPassword } from "firebase/auth";
 import {
-  DocumentSnapshot,
-  getFirestore,
-  QuerySnapshot,
-} from "firebase/firestore";
-import {
   doc,
   getDoc,
   getDocs,
@@ -15,6 +10,8 @@ import {
   deleteDoc,
   type DocumentData,
   type DocumentReference,
+  getFirestore,
+  QuerySnapshot,
 } from "firebase/firestore";
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
@@ -68,8 +65,15 @@ export async function SetDoc(path: string, data: any) {
   await setDoc(docRef, data);
 }
 
+export async function GetDevice(ref: DocumentReference) {
+  const deviceSnap = await getDoc(ref);
+  if (deviceSnap.exists()) {
+    return { id: deviceSnap.id, data: deviceSnap.data() };
+  }
+  return null;
+}
+
 export async function GetDevices(userId: string) {
-  console.log("GetDevices called with userId:", userId);
   const devicesCol = collection(db, "Users", userId, "Devices");
   try {
     const devicesSnap = await getDocs(devicesCol);
@@ -77,7 +81,6 @@ export async function GetDevices(userId: string) {
       id: doc.id,
       data: doc.data(),
     }));
-    console.log("GetDevices success:", devicesArr);
     return devicesArr;
   } catch (error) {
     console.error("GetDevices error:", error);
@@ -86,8 +89,6 @@ export async function GetDevices(userId: string) {
 }
 
 export async function GetVisits(userId: string, deviceId: string) {
-  console.log("User Id:", userId);
-  //console.log("Device Id:", deviceId);
   const visitsCol = collection(
     db,
     "Users",
@@ -104,14 +105,18 @@ export async function GetVisits(userId: string, deviceId: string) {
   return visitsArr;
 }
 
-export async function GetCategorizations() {
-  const catsCol = collection(db, "Categorization");
-  const catsSnap = await getDocs(catsCol);
-  const catsArr = catsSnap.docs.map((doc) => ({
-    id: doc.id,
-    data: doc.data(),
-  }));
-  return catsArr;
+export async function GetCategorization(url: string) {
+  const catRef = doc(db, "Categorization", url);
+  try {
+    const catSnap = await getDoc(catRef);
+    if (catSnap.exists()) {
+      return { id: catSnap.id, data: catSnap.data() };
+    }
+    return null;
+  } catch (error) {
+    console.error("GetCategorization error:", error);
+    throw error;
+  }
 }
 
 export async function GetOverrides(userId: string, deviceId: string) {
@@ -147,6 +152,16 @@ export async function WriteOverrides(
     displayURL,
   );
   await setDoc(overridesRef, overrides);
+}
+
+export async function GetNotifications(userId: string) {
+  const notifsCol = collection(db, "Users", userId, "Notifications");
+  const notifsSnap = await getDocs(notifsCol);
+  const notifsArr = notifsSnap.docs.map((doc) => ({
+    id: doc.id,
+    data: doc.data(),
+  }));
+  return notifsArr;
 }
 
 async function DeleteCollection(path: string) {

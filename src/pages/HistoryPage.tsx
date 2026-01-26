@@ -1,22 +1,9 @@
-import {
-  GetDocs,
-  auth,
-  CreateUser,
-  GetUserDevices,
-  db,
-  GetDevices,
-  GetVisits,
-} from "../utils/firestore";
-import { use, useEffect, useState, useRef } from "react";
+import { auth, GetDevices, GetVisits } from "../utils/firestore";
+import { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router";
 import SiteModal from "../components/SiteModal";
 import DeviceSelect from "../components/DeviceSelect";
-import {
-  onAuthStateChanged,
-  signInWithEmailAndPassword,
-  signOut,
-} from "firebase/auth";
-import { doc, getDoc } from "firebase/firestore";
+import { signInWithEmailAndPassword } from "firebase/auth";
 
 function History() {
   const hasMounted = useRef(false);
@@ -47,88 +34,82 @@ function History() {
   }
 
   function loadDevices() {
-    if (userId) {
-      GetDevices(userId)
-        .then((devicesData) => {
-          const map: { [key: string]: string } = {};
-          devicesData.forEach((doc) => {
-            console.log(doc.data.Name);
-            map[doc.data.Name] = doc.id;
-          });
-          setNameToIdMap(map);
-          setDevices(devicesData);
-        })
-        .catch((error) => {
-          console.error("loadDevices error:", error);
+    GetDevices(userId)
+      .then((devicesData) => {
+        const map: { [key: string]: string } = {};
+        devicesData.forEach((doc) => {
+          map[doc.data.Name] = doc.id;
         });
-    } else {
-      console.log("No current user");
-      setDevices([]);
-    }
+        setNameToIdMap(map);
+        setDevices(devicesData);
+      })
+      .catch((error) => {
+        console.error("loadDevices error:", error);
+      });
   }
 
   function loadVisits() {
     const currVisits: { [key: string]: any[] } = {};
     Promise.all(
       selectedDevices.map(async (deviceName: any) => {
-        console.log("Device Name:", deviceName);
-        if (userId) {
-          console.log("Devices:", devices);
-          console.log("User Id", auth.currentUser?.uid);
-          console.log("Mapping:", nameToIdMap);
-          console.log("Selected Devices", selectedDevices);
-          const deviceId = nameToIdMap[deviceName];
-          console.log("Device Id:", deviceId);
-          if (!deviceId) {
-            console.error(`Device ID not found for device name: ${deviceName}`);
-            return;
-          }
-          try {
-            const visitsData = await GetVisits(userId, deviceId);
-            visitsData.forEach((doc) => {
-              const date = doc.data.startDateTime.toDate();
-              const key = getDate(date);
-              try {
-                currVisits[key].push(doc.data);
-              } catch {
-                currVisits[key] = [doc.data];
-              }
-            });
-          } catch (error) {
-            console.error("Error fetching visits:", error);
-          }
+        const deviceId = nameToIdMap[deviceName];
+        if (!deviceId) {
+          console.error(`Device ID not found for device name: ${deviceName}`);
+          return;
+        }
+        try {
+          const visitsData = await GetVisits(userId, deviceId);
+          visitsData.forEach((doc) => {
+            const date = doc.data.startDateTime.toDate();
+            const key = getDate(date);
+            try {
+              currVisits[key].push(doc.data);
+            } catch {
+              currVisits[key] = [doc.data];
+            }
+          });
+        } catch (error) {
+          console.error("Error fetching visits:", error);
         }
       }),
     ).then(() => sortVisits(currVisits));
   }
+
   /*useEffect(() => {
     CreateUser("user@example.com", "password123", "(111) 111-1111");
   }, []);*/
+
   useEffect(() => {
     if (!hasMounted.current) {
-      signInWithEmailAndPassword(auth, "user@example.com", "password123").then(
-        () => {
-          // CreateUser("spiderman@example.com", "spiders", "(333) 333-3333").then( () => {
+      signInWithEmailAndPassword(auth, "user@example.com", "password123")
+        .then(() => {
           if (auth.currentUser != null) {
-            console.log(auth.currentUser.uid);
+            console.log("User signed in:", auth.currentUser.uid);
             setUserId(auth.currentUser.uid);
-            loadDevices();
-            loadVisits();
           } else {
             console.log("no user currently signed in");
             navigate("/login", { replace: true });
           }
-        },
-      );
+        })
+        .catch((error) => {
+          console.error("Sign-in failed:", error.message);
+          navigate("/login", { replace: true });
+        });
       hasMounted.current = true;
     }
-  }, []);
+  }, [navigate]);
 
   useEffect(() => {
-    console.log("Mapping1:", nameToIdMap);
-    loadVisits();
-    console.log("Visits:", visits);
-  }, [selectedDevices, nameToIdMap]);
+    if (userId) {
+      loadDevices();
+    }
+  }, [userId]);
+
+  useEffect(() => {
+    if (devices) {
+      loadVisits();
+    }
+  }, [selectedDevices]);
 
   return (
     <>
@@ -145,7 +126,6 @@ function History() {
                     url={visit.siteURL}
                     userId={userId}
                     deviceId={key}
-                    devices={devices}
                   />
                 </li>
               ))}

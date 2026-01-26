@@ -1,6 +1,8 @@
-import { useEffect, useState } from "react";
-import { GetDocs } from "../utils/firestore";
+import { useEffect, useState, useRef } from "react";
+import { useNavigate } from "react-router";
+import { GetNotifications, auth, GetDevice } from "../utils/firestore";
 import SiteModal from "../components/SiteModal";
+import { signInWithEmailAndPassword } from "firebase/auth";
 
 function getTimeDifferenceString(date: Date): string {
   const now = new Date();
@@ -21,17 +23,54 @@ function getTimeDifferenceString(date: Date): string {
 }
 
 function Notifications() {
+  const hasMounted = useRef(false);
+  const navigate = useNavigate();
+  const [userId, setUserId] = useState<string>("");
   const [notifications, setNotifications] = useState<any[]>([]);
+
   useEffect(() => {
-    GetDocs("Users/7LpcmhJK1QCWn9ETqLN5/Notifications").then(
-      (querySnapshot) => {
-        const notificationsData = querySnapshot.map(
-          (notification) => notification.data,
-        );
-        setNotifications(notificationsData);
-      },
-    );
-  }, []);
+    if (!hasMounted.current) {
+      signInWithEmailAndPassword(auth, "user@example.com", "password123")
+        .then(() => {
+          if (auth.currentUser != null) {
+            console.log("User signed in:", auth.currentUser.uid);
+            setUserId(auth.currentUser.uid);
+          } else {
+            console.log("no user currently signed in");
+            navigate("/login", { replace: true });
+          }
+        })
+        .catch((error) => {
+          console.error("Sign-in failed:", error.message);
+          navigate("/login", { replace: true });
+        });
+      hasMounted.current = true;
+    }
+  }, [navigate]);
+
+  useEffect(() => {
+    if (userId) {
+      GetNotifications(userId).then((notifsData) => {
+        const notifs = notifsData.map((notification) => notification.data);
+        Promise.all(
+          notifs.map(async (notification) => {
+            const device = await GetDevice(notification.device);
+            if (device) {
+              return {
+                ...notification,
+                deviceId: device.id,
+                deviceName: device.data.Name,
+              };
+            }
+            return null;
+          }),
+        ).then((updatedNotifs) => {
+          setNotifications(updatedNotifs.filter((n) => n !== null));
+        });
+      });
+    }
+  }, [userId]);
+
   return (
     <>
       <h1>Notification History</h1>
@@ -40,7 +79,8 @@ function Notifications() {
           <li key={index}>
             <SiteModal
               url={notification.siteURL}
-              user_id="7LpcmhJK1QCWn9ETqLN5"
+              userId={userId}
+              deviceId={notification.deviceId}
             />
             <p>
               {getTimeDifferenceString(notification.dateTime.toDate())} ago on{" "}
