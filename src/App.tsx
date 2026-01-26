@@ -30,7 +30,7 @@ const App = () => {
             <Route path="/settings/flagged-sites" element={<FlaggedSites />} />
             <Route path="/settings/notifications" element={<NotificationSettings />} />
             <Route path="/settings/site-categories" element={<SiteCategories />} />
-            <Route path="/settings/create-notification" element={<CreateNotification />} />
+            <Route path="/settings/notifications/create-notification" element={<CreateNotification />} />
             
             {/* Authentication Pages */}
             <Route path="/create-account" element={<CreateAccount />} />
