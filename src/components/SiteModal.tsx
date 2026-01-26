@@ -9,7 +9,15 @@ import {
 import { useState, useEffect } from "react";
 import CheckBoxOutlineBlankIcon from "@mui/icons-material/CheckBoxOutlineBlank";
 import CheckBoxIcon from "@mui/icons-material/CheckBox";
-import { GetDocs, SetDoc } from "../utils/firestore";
+import {
+  GetCategorizations,
+  GetDocs,
+  GetOverrides,
+  SetDoc,
+  WriteOverrides,
+} from "../utils/firestore";
+import { auth } from "../utils/firestore";
+import DeviceSelect from "./DeviceSelect";
 
 const style = {
   position: "absolute",
@@ -28,10 +36,14 @@ const checkedIcon = <CheckBoxIcon fontSize="small" />;
 
 export default function SiteModal({
   url,
-  user_id,
+  userId,
+  deviceId,
+  devices,
 }: {
   url: string;
-  user_id: string;
+  userId: string;
+  deviceId: string;
+  devices: any;
 }) {
   const [open, setOpen] = useState(false);
   const handleOpen = () => setOpen(true);
@@ -39,9 +51,36 @@ export default function SiteModal({
 
   const [categorization, setCategorization] = useState<string[]>([]);
   const [overrides, setOverrides] = useState<string[]>([]);
-  const display_url = url.slice(12, -1);
+  const displayURL = url.slice(12, -1);
+
+  function loadCategorization() {
+    GetCategorizations().then((catsData) => {
+      catsData.forEach((doc) => {
+        if (doc.data.siteURL === url) {
+          setCategorization(doc.data.categories);
+        }
+      });
+    });
+  }
+
+  function loadOverides() {
+    if (auth.currentUser != null) {
+      GetOverrides(userId, deviceId).then((overridesData) => {
+        let set = false;
+        overridesData.forEach((doc) => {
+          if (doc.data.siteURL === url) {
+            setOverrides(doc.data.siteURL);
+            set = true;
+          }
+        });
+        if (!set) {
+          setOverrides(categorization);
+        }
+      });
+    }
+  }
   useEffect(() => {
-    GetDocs("Categorization").then((querySnapshot) => {
+    /*GetDocs("Categorization").then((querySnapshot) => {
       querySnapshot.forEach((doc) => {
         if (doc.data.siteURL === url) {
           setCategorization(doc.data.categories);
@@ -61,20 +100,21 @@ export default function SiteModal({
       if (!set) {
         setOverrides(categorization);
       }
-    });
+    });*/
   }, [open]);
 
   const handleSave = () => {
-    SetDoc(
-      `Users/7LpcmhJK1QCWn9ETqLN5/userDevices/qJDvxuD7kDWNt5EA6vJp/Overrides/${display_url}`,
-      { siteURL: url, categories: overrides, isFlagged: false },
-    );
+    WriteOverrides(userId, deviceId, displayURL, {
+      siteURL: url,
+      categories: overrides,
+      isFlagged: false,
+    });
     setOpen(false);
   };
 
   return (
     <>
-      <Button onClick={handleOpen}>{display_url}</Button>
+      <Button onClick={handleOpen}>{displayURL}</Button>
       <Modal
         open={open}
         onClose={handleClose}
@@ -82,7 +122,7 @@ export default function SiteModal({
         aria-describedby="modal-modal-description"
       >
         <Box sx={style}>
-          <h2 id="modal-modal-title">{display_url}</h2>
+          <h2 id="modal-modal-title">{displayURL}</h2>
           <Button onClick={handleClose}>X</Button>
           <a href={url}>visit site</a>
           <p>Original:</p>
@@ -104,6 +144,7 @@ export default function SiteModal({
             renderInput={(params) => <TextField {...params} />}
           />
           <p>Flagged For Devices</p>
+          <DeviceSelect devices={devices} setSelectedDevices={() => {}} />
           <Autocomplete
             multiple
             options={["MyPC"]}

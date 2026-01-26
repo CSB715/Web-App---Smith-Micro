@@ -65,16 +65,25 @@ async function SetDoc(path: string, data: any) {
 }
 
 async function GetDevices(userId: string) {
+  console.log("GetDevices called with userId:", userId);
   const devicesCol = collection(db, "Users", userId, "Devices");
-  const devicesSnap = await getDocs(devicesCol);
-  const devicesArr = devicesSnap.docs.map((doc) => ({
-    id: doc.id,
-    data: doc.data(),
-  }));
-  return devicesArr;
+  try {
+    const devicesSnap = await getDocs(devicesCol);
+    const devicesArr = devicesSnap.docs.map((doc) => ({
+      id: doc.id,
+      data: doc.data(),
+    }));
+    console.log("GetDevices success:", devicesArr);
+    return devicesArr;
+  } catch (error) {
+    console.error("GetDevices error:", error);
+    throw error;
+  }
 }
 
 async function GetVisits(userId: string, deviceId: string) {
+  console.log("User Id:", userId);
+  //console.log("Device Id:", deviceId);
   const visitsCol = collection(
     db,
     "Users",
@@ -89,6 +98,51 @@ async function GetVisits(userId: string, deviceId: string) {
     data: doc.data(),
   }));
   return visitsArr;
+}
+
+async function GetCategorizations() {
+  const catsCol = collection(db, "Categorization");
+  const catsSnap = await getDocs(catsCol);
+  const catsArr = catsSnap.docs.map((doc) => ({
+    id: doc.id,
+    data: doc.data(),
+  }));
+  return catsArr;
+}
+
+async function GetOverrides(userId: string, deviceId: string) {
+  const overridesCol = collection(
+    db,
+    "Users",
+    userId,
+    "Devices",
+    deviceId,
+    "Overrides",
+  );
+  const overridesSnap = await getDocs(overridesCol);
+  const overridesArr = overridesSnap.docs.map((doc) => ({
+    id: doc.id,
+    data: doc.data(),
+  }));
+  return overridesArr;
+}
+
+async function WriteOverrides(
+  userId: string,
+  deviceId: string,
+  displayURL: string,
+  overrides: any,
+) {
+  const overridesRef = doc(
+    db,
+    "Users",
+    userId,
+    "Devices",
+    deviceId,
+    "Overrides",
+    displayURL,
+  );
+  await setDoc(overridesRef, overrides);
 }
 
 async function DeleteCollection(path: string) {
@@ -166,4 +220,7 @@ export {
   CreateUser,
   GetDevices,
   GetVisits,
+  GetCategorizations,
+  GetOverrides,
+  WriteOverrides,
 };
