@@ -1,7 +1,11 @@
 // Import the functions you need from the SDKs you need
 import { initializeApp, getApps } from "firebase/app";
 import { getAuth, createUserWithEmailAndPassword } from "firebase/auth";
-import { getFirestore } from "firebase/firestore";
+import {
+  DocumentSnapshot,
+  getFirestore,
+  QuerySnapshot,
+} from "firebase/firestore";
 import {
   doc,
   getDoc,
@@ -30,10 +34,10 @@ const firebaseConfig = {
 
 // Initialize Firebase
 const app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
-const db = getFirestore(app);
-const auth = getAuth(app);
+export const db = getFirestore(app);
+export const auth = getAuth(app);
 
-async function GetDoc(path: string) {
+export async function GetDoc(path: string) {
   const docRef = doc(db, path);
   const docSnap = await getDoc(docRef);
   if (docSnap.exists()) {
@@ -44,7 +48,7 @@ async function GetDoc(path: string) {
   }
 }
 
-async function GetDocs(path: string) {
+export async function GetDocs(path: string) {
   const colRef = collection(db, path);
   const colSnap = await getDocs(colRef);
   let objects: { id: string; data: DocumentData }[] = [];
@@ -59,12 +63,12 @@ async function GetDocs(path: string) {
   }
 }
 
-async function SetDoc(path: string, data: any) {
+export async function SetDoc(path: string, data: any) {
   const docRef = doc(db, path);
   await setDoc(docRef, data);
 }
 
-async function GetDevices(userId: string) {
+export async function GetDevices(userId: string) {
   console.log("GetDevices called with userId:", userId);
   const devicesCol = collection(db, "Users", userId, "Devices");
   try {
@@ -81,7 +85,7 @@ async function GetDevices(userId: string) {
   }
 }
 
-async function GetVisits(userId: string, deviceId: string) {
+export async function GetVisits(userId: string, deviceId: string) {
   console.log("User Id:", userId);
   //console.log("Device Id:", deviceId);
   const visitsCol = collection(
@@ -100,7 +104,7 @@ async function GetVisits(userId: string, deviceId: string) {
   return visitsArr;
 }
 
-async function GetCategorizations() {
+export async function GetCategorizations() {
   const catsCol = collection(db, "Categorization");
   const catsSnap = await getDocs(catsCol);
   const catsArr = catsSnap.docs.map((doc) => ({
@@ -110,7 +114,7 @@ async function GetCategorizations() {
   return catsArr;
 }
 
-async function GetOverrides(userId: string, deviceId: string) {
+export async function GetOverrides(userId: string, deviceId: string) {
   const overridesCol = collection(
     db,
     "Users",
@@ -127,7 +131,7 @@ async function GetOverrides(userId: string, deviceId: string) {
   return overridesArr;
 }
 
-async function WriteOverrides(
+export async function WriteOverrides(
   userId: string,
   deviceId: string,
   displayURL: string,
@@ -159,7 +163,7 @@ export type UserData = {
   [key: string]: any;
 };
 
-async function GetUserDevices(userRef: DocumentReference) {
+export async function GetUserDevices(userRef: DocumentReference) {
   const devicesCol = collection(userRef, "Devices");
   const devicesSnap = await getDocs(devicesCol);
   const devicesArr = devicesSnap.docs.map((doc) => ({
@@ -169,7 +173,23 @@ async function GetUserDevices(userRef: DocumentReference) {
   return devicesArr;
 }
 
-async function CreateUser(email: string, password: string, phone: string) {
+export async function GetUserOverrides(userRef: DocumentReference) {
+  const devicesCol = collection(userRef, "Devices");
+  const devicesSnap = await getDocs(devicesCol);
+  const deviceOverrides: QuerySnapshot[] = [];
+  for (const device of devicesSnap.docs) {
+    const overrideCol = collection(device.ref, "Overrides");
+    const overridesSnap = await getDocs(overrideCol);
+    deviceOverrides.push(overridesSnap);
+  }
+  return deviceOverrides;
+}
+
+export async function CreateUser(
+  email: string,
+  password: string,
+  phone: string,
+) {
   return createUserWithEmailAndPassword(auth, email, password).then(
     (userCredential) => {
       const userDoc = doc(db, "Users", userCredential.user.uid);
@@ -183,7 +203,7 @@ async function CreateUser(email: string, password: string, phone: string) {
   );
 }
 
-async function DeleteUser(path: string) {
+export async function DeleteUser(path: string) {
   const userRef = doc(db, path);
   const devices: Array<DocumentData> = await GetUserDevices(userRef);
 
@@ -207,20 +227,3 @@ async function DeleteUser(path: string) {
     }
   });
 }
-
-export {
-  db,
-  auth,
-  GetDoc,
-  GetDocs,
-  SetDoc,
-  GetUserDevices,
-  DeleteCollection,
-  DeleteUser,
-  CreateUser,
-  GetDevices,
-  GetVisits,
-  GetCategorizations,
-  GetOverrides,
-  WriteOverrides,
-};

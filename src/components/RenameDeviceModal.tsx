@@ -3,6 +3,7 @@ import { useRef } from "react";
 import { updateDoc, doc } from "firebase/firestore";
 import { db, auth, GetUserDevices } from "../utils/firestore";
 import { showErrorModal } from "./ErrorAlert";
+import "../styles/Modal.css";
 
 function closeModal() {
     const modal = document.getElementById("renameDeviceModal");
