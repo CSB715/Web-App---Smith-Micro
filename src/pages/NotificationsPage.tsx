@@ -58,8 +58,7 @@ function Notifications() {
             if (device) {
               return {
                 ...notification,
-                deviceId: device.id,
-                deviceName: device.data.Name,
+                deviceName: device.data.name,
               };
             }
             return null;
@@ -77,11 +76,7 @@ function Notifications() {
       <ul style={{ listStyleType: "none", padding: 0, margin: 0 }}>
         {notifications.map((notification, index) => (
           <li key={index}>
-            <SiteModal
-              url={notification.siteURL}
-              userId={userId}
-              deviceId={notification.deviceId}
-            />
+            <SiteModal url={notification.siteURL} userId={userId} />
             <p>
               {getTimeDifferenceString(notification.dateTime.toDate())} ago on{" "}
               {notification.deviceName}
