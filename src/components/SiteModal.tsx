@@ -101,7 +101,9 @@ export default function SiteModal({
         <Box sx={style}>
           <h2 id="modal-modal-title">{displayURL}</h2>
           <Button onClick={handleClose}>X</Button>
-          <a href={url}>visit site</a>
+          <a href={url} target="_blank" rel="noopener noreferrer">
+            visit site
+          </a>
           <p>Original:</p>
           <Autocomplete
             multiple
@@ -121,7 +123,11 @@ export default function SiteModal({
             renderInput={(params) => <TextField {...params} />}
           />
           <p>Flagged For Devices</p>
-          <DeviceSelect devices={devices} setSelectedDevices={() => {}} />
+          <DeviceSelect
+            devices={devices}
+            selectedDevices={[]}
+            setSelectedDevices={() => {}}
+          />
           <Button onClick={handleClose}>Cancel</Button>
           <Button onClick={handleSave}>Save</Button>
         </Box>
