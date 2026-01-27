@@ -99,11 +99,24 @@ export default function SiteModal({
         aria-describedby="modal-modal-description"
       >
         <Box sx={style}>
-          <h2 id="modal-modal-title">{displayURL}</h2>
-          <Button onClick={handleClose}>X</Button>
-          <a href={url} target="_blank" rel="noopener noreferrer">
-            visit site
-          </a>
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              mb: 2,
+              borderBottom: "3px solid #000",
+              padding: 2,
+            }}
+          >
+            <h2 id="modal-modal-title">{displayURL}</h2>
+            <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+              <Button onClick={handleClose}>X</Button>
+              <a href={url} target="_blank" rel="noopener noreferrer">
+                visit site
+              </a>
+            </Box>
+          </Box>
           <p>Original:</p>
           <Autocomplete
             multiple
@@ -128,8 +141,16 @@ export default function SiteModal({
             selectedDevices={[]}
             setSelectedDevices={() => {}}
           />
-          <Button onClick={handleClose}>Cancel</Button>
-          <Button onClick={handleSave}>Save</Button>
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+            }}
+          >
+            <Button onClick={handleClose}>Cancel</Button>
+            <Button onClick={handleSave}>Save</Button>
+          </Box>
         </Box>
       </Modal>
     </>
