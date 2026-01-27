@@ -38,10 +38,15 @@ function History() {
       .then((devicesData) => {
         const map: { [key: string]: string } = {};
         devicesData.forEach((doc) => {
-          map[doc.data.Name] = doc.id;
+          map[doc.data.name] = doc.id;
         });
         setNameToIdMap(map);
-        setDevices(devicesData);
+        // Map devices to include label property
+        const mappedDevices = devicesData.map((doc) => ({
+          id: doc.id,
+          ...doc.data,
+        }));
+        setDevices(mappedDevices);
       })
       .catch((error) => {
         console.error("loadDevices error:", error);
@@ -106,10 +111,10 @@ function History() {
   }, [userId]);
 
   useEffect(() => {
-    if (devices) {
+    if (selectedDevices.length > 0 && Object.keys(nameToIdMap).length > 0) {
       loadVisits();
     }
-  }, [selectedDevices]);
+  }, [selectedDevices, nameToIdMap]);
 
   return (
     <>
@@ -122,11 +127,7 @@ function History() {
             <ul style={{ listStyleType: "none", padding: 0, margin: 0 }}>
               {value.map((visit: any, index) => (
                 <li key={index}>
-                  <SiteModal
-                    url={visit.siteURL}
-                    userId={userId}
-                    deviceId={key}
-                  />
+                  <SiteModal url={visit.siteURL} userId={userId} />
                 </li>
               ))}
             </ul>
