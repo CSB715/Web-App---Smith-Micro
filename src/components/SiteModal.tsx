@@ -2,8 +2,8 @@ import { Autocomplete, Modal, Button, Box, TextField } from "@mui/material";
 import { useState, useEffect } from "react";
 import {
   GetCategorization,
-  GetOverrides,
-  WriteOverrides,
+  GetOverride,
+  WriteOverride,
   GetDevices,
   auth,
 } from "../utils/firestore";
@@ -24,11 +24,9 @@ const style = {
 export default function SiteModal({
   url,
   userId,
-  deviceId,
 }: {
   url: string;
   userId: string;
-  deviceId: string;
 }) {
   const [open, setOpen] = useState(false);
   const handleOpen = () => setOpen(true);
@@ -52,17 +50,10 @@ export default function SiteModal({
 
   function loadOverides() {
     if (auth.currentUser != null) {
-      GetOverrides(userId, deviceId)
-        .then((overridesData) => {
-          let set = false;
-          overridesData.forEach((doc) => {
-            if (doc.data.siteURL === url) {
-              setOverrides(doc.data.categories); // FIX: was doc.data.siteURL
-              set = true;
-            }
-          });
-          if (!set) {
-            setOverrides(categorization);
+      GetOverride(userId, displayURL)
+        .then((overrideData) => {
+          if (overrideData) {
+            setOverrides(overrideData.data.categories);
           }
         })
         .catch((error) => {
@@ -91,10 +82,9 @@ export default function SiteModal({
   }, [categorization]); // Load overrides AFTER categorization loads
 
   const handleSave = () => {
-    WriteOverrides(userId, deviceId, displayURL, {
-      siteURL: url,
+    WriteOverride(userId, displayURL, {
       categories: overrides,
-      isFlagged: false,
+      flaggedFor: [],
     });
     setOpen(false);
   };
