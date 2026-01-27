@@ -7,7 +7,7 @@ import { useNavigate, type NavigateFunction } from "react-router";
 
 async function getNotifications() {
     const notifications : DocumentSnapshot[] = []
-    const snap = await getDocs(collection(db, "Users", auth.currentUser!.uid, "Notifications"))
+    const snap = await getDocs(collection(db, "Users", auth.currentUser!.uid, "NotificationTriggers"))
     for (const doc of snap.docs) {
         notifications.push(doc)
     }

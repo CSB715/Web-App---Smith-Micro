@@ -77,7 +77,7 @@ function SiteCategories() {
 
             <AddSiteModal updateSites={updateSites} updateModalURL={updateModalURL} updateShowSiteModal={updateShowSiteModal}/>
 
-            {showSiteModal && <SiteModal url={modalURL} user_id={auth.currentUser!.uid} />}
+            {showSiteModal && <SiteModal url={modalURL} userId={auth.currentUser!.uid} deviceId={""}/>}
 
         </>
     )
