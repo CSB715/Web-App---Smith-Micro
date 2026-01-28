@@ -12,6 +12,7 @@ import PasswordReset from "./pages/PasswordResetPage";
 import Settings from "./pages/SettingsPage";
 import SiteCategories from "./pages/SiteCategoriesPage";
 import Summary from "./pages/SummaryPage";
+import SignUp from "./mui-templates/sign-up/SignUp";
 
 const App = () => {
   return (
@@ -34,7 +35,8 @@ const App = () => {
             
             {/* Authentication Pages */}
             <Route path="/create-account" element={<CreateAccount />} />
-            <Route path="/login" element={<Login />} />
+            <Route path="/login" element={<Login />} /> 
+            <Route path="/signup" element={<SignUp />} />
             <Route path="/password-reset" element={<PasswordReset />} />
           </Routes>
         </div>
