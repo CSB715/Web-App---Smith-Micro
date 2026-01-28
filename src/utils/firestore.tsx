@@ -119,38 +119,21 @@ export async function GetCategorization(url: string) {
   }
 }
 
-export async function GetOverrides(userId: string, deviceId: string) {
-  const overridesCol = collection(
-    db,
-    "Users",
-    userId,
-    "Devices",
-    deviceId,
-    "Overrides",
-  );
-  const overridesSnap = await getDocs(overridesCol);
-  const overridesArr = overridesSnap.docs.map((doc) => ({
-    id: doc.id,
-    data: doc.data(),
-  }));
-  return overridesArr;
+export async function GetOverride(userId: string, url: string) {
+  const overridesCol = doc(db, "Users", userId, "Overrides", url);
+  const overridesSnap = await getDoc(overridesCol);
+  if (overridesSnap.exists()) {
+    return { id: overridesSnap.id, data: overridesSnap.data() };
+  }
+  return null;
 }
 
-export async function WriteOverrides(
+export async function WriteOverride(
   userId: string,
-  deviceId: string,
   displayURL: string,
   overrides: any,
 ) {
-  const overridesRef = doc(
-    db,
-    "Users",
-    userId,
-    "Devices",
-    deviceId,
-    "Overrides",
-    displayURL,
-  );
+  const overridesRef = doc(db, "Users", userId, "Overrides", displayURL);
   await setDoc(overridesRef, overrides);
 }
 

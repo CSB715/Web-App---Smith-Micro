@@ -2,8 +2,8 @@ import { Autocomplete, Modal, Button, Box, TextField } from "@mui/material";
 import { useState, useEffect } from "react";
 import {
   GetCategorization,
-  GetOverrides,
-  WriteOverrides,
+  GetOverride,
+  WriteOverride,
   GetDevices,
   auth,
 } from "../utils/firestore";
@@ -24,11 +24,9 @@ const style = {
 export default function SiteModal({
   url,
   userId,
-  deviceId,
 }: {
   url: string;
   userId: string;
-  deviceId: string;
 }) {
   const [open, setOpen] = useState(false);
   const handleOpen = () => setOpen(true);
@@ -36,7 +34,7 @@ export default function SiteModal({
   const [categorization, setCategorization] = useState<string[]>([]);
   const [overrides, setOverrides] = useState<string[]>([]);
   const [devices, setDevices] = useState<any[]>([]);
-  const displayURL = url.slice(12, -1);
+  const displayURL = url.replace("https://", "").replace("www.", "");
 
   function loadCategorization() {
     GetCategorization(displayURL)
@@ -52,17 +50,10 @@ export default function SiteModal({
 
   function loadOverides() {
     if (auth.currentUser != null) {
-      GetOverrides(userId, deviceId)
-        .then((overridesData) => {
-          let set = false;
-          overridesData.forEach((doc) => {
-            if (doc.data.siteURL === url) {
-              setOverrides(doc.data.categories); // FIX: was doc.data.siteURL
-              set = true;
-            }
-          });
-          if (!set) {
-            setOverrides(categorization);
+      GetOverride(userId, displayURL)
+        .then((overrideData) => {
+          if (overrideData) {
+            setOverrides(overrideData.data.categories);
           }
         })
         .catch((error) => {
@@ -91,10 +82,9 @@ export default function SiteModal({
   }, [categorization]); // Load overrides AFTER categorization loads
 
   const handleSave = () => {
-    WriteOverrides(userId, deviceId, displayURL, {
-      siteURL: url,
+    WriteOverride(userId, displayURL, {
       categories: overrides,
-      isFlagged: false,
+      flaggedFor: [],
     });
     setOpen(false);
   };
@@ -109,9 +99,24 @@ export default function SiteModal({
         aria-describedby="modal-modal-description"
       >
         <Box sx={style}>
-          <h2 id="modal-modal-title">{displayURL}</h2>
-          <Button onClick={handleClose}>X</Button>
-          <a href={url}>visit site</a>
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              mb: 2,
+              borderBottom: "3px solid #000",
+              padding: 2,
+            }}
+          >
+            <h2 id="modal-modal-title">{displayURL}</h2>
+            <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+              <Button onClick={handleClose}>X</Button>
+              <a href={url} target="_blank" rel="noopener noreferrer">
+                visit site
+              </a>
+            </Box>
+          </Box>
           <p>Original:</p>
           <Autocomplete
             multiple
@@ -131,9 +136,21 @@ export default function SiteModal({
             renderInput={(params) => <TextField {...params} />}
           />
           <p>Flagged For Devices</p>
-          <DeviceSelect devices={devices} setSelectedDevices={() => {}} />
-          <Button onClick={handleClose}>Cancel</Button>
-          <Button onClick={handleSave}>Save</Button>
+          <DeviceSelect
+            devices={devices}
+            selectedDevices={[]}
+            setSelectedDevices={() => {}}
+          />
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+            }}
+          >
+            <Button onClick={handleClose}>Cancel</Button>
+            <Button onClick={handleSave}>Save</Button>
+          </Box>
         </Box>
       </Modal>
     </>

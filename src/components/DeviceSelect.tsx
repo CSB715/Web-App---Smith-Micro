@@ -6,22 +6,44 @@ import CheckBoxIcon from "@mui/icons-material/CheckBox";
 
 export default function DeviceSelect({
   devices,
+  selectedDevices,
   setSelectedDevices,
 }: {
   devices: any[];
+  selectedDevices: any[];
   setSelectedDevices: (devices: any[]) => void;
 }) {
   const icon = <CheckBoxOutlineBlankIcon fontSize="small" />;
   const checkedIcon = <CheckBoxIcon fontSize="small" />;
+  const deviceNames = devices.map((device) => device.data.name);
+
+  const handleChange = (_: any, newValue: any[]) => {
+    const hasSelectAll = newValue.includes("Select All");
+    const filteredValue = newValue.filter((item) => item !== "Select All");
+    const hadSelectAll = selectedDevices.includes("Select All");
+
+    if (hasSelectAll && filteredValue.length === deviceNames.length) {
+      // All devices are selected, show "Select All" + all devices
+      setSelectedDevices(["Select All", ...deviceNames]);
+    } else if (hasSelectAll && !hadSelectAll) {
+      // "Select All" was just clicked, select all devices
+      setSelectedDevices(["Select All", ...deviceNames]);
+    } else if (!hasSelectAll && hadSelectAll) {
+      // "Select All" was unchecked, clear everything
+      setSelectedDevices([]);
+    } else {
+      // Individual device was unchecked, remove "Select All" and keep selected devices
+      setSelectedDevices(filteredValue);
+    }
+  };
 
   return (
     <>
       <Autocomplete
         multiple
-        onChange={(_: any, newValue: any[]) => {
-          setSelectedDevices(newValue);
-        }}
-        options={devices.map((device) => device.data.Name)}
+        value={selectedDevices}
+        onChange={handleChange}
+        options={["Select All", ...deviceNames]}
         renderOption={(props, option, { selected }) => {
           const { key, ...optionProps } = props;
           return (
