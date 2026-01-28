@@ -76,13 +76,13 @@ function Notifications() {
       <h1>Notification History</h1>
       <ul style={{ listStyleType: "none", padding: 0, margin: 0 }}>
         {notifications.map((notification, index) => (
-          <Box
+          <Box key={index}
             sx={{
               borderBottom: "3px solid #000",
               borderTop: "3px solid #000",
             }}
           >
-            <li key={index}>
+            <li >
               <SiteModal url={notification.siteURL} userId={userId} />
               <p>
                 {getTimeDifferenceString(notification.dateTime.toDate())} ago on{" "}
