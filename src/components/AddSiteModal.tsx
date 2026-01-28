@@ -11,9 +11,7 @@ function closeModal() {
     newSiteInput.value = ""
 }
 
-async function addSite(updateSites : (site : string) => void, 
-                    updateModalURL: (url: string) => void,
-                    updateShowSiteModal: (show: boolean) => void) {
+async function addSite(updateSites : (site : string) => void) {
 
     const newSiteInput = document.getElementById("newSite") as HTMLInputElement;
 
@@ -25,23 +23,17 @@ async function addSite(updateSites : (site : string) => void,
         // TODO: query classifier to get results
     }
 
-    // set modalURL
-    updateModalURL(docSnap.id);
-
     // close this modal
     closeModal();
 
     // open Site Modal with this site
-    updateShowSiteModal(true);
 }
 
 type Props = {
-    updateSites : (site : string) => void,
-    updateModalURL: (url: string) => void,
-    updateShowSiteModal: (show: boolean) => void
+    updateSites : (site : string) => void
 }
 
-export default function AddSiteModal( { updateSites, updateModalURL, updateShowSiteModal } : Props) {
+export default function AddSiteModal( { updateSites } : Props) {
     const overlayRef = useRef<HTMLDivElement | null>(null);
 
     useEffect(() => {
@@ -50,7 +42,7 @@ export default function AddSiteModal( { updateSites, updateModalURL, updateShowS
         newSiteInput.addEventListener("keypress", function(event) {
             if (event.key === "Enter") {
                 event.preventDefault();
-                addSite(updateSites, updateModalURL, updateShowSiteModal);
+                addSite(updateSites);
             }
         });
     }, []);
@@ -67,7 +59,7 @@ export default function AddSiteModal( { updateSites, updateModalURL, updateShowS
                     <br/>
                     <div>
                         <button id="cancelAddSite" onClick={() => closeModal()}>Cancel</button>
-                        <button id="confirmAddSite" onClick={() => addSite(updateSites, updateModalURL, updateShowSiteModal)}>Confirm</button>
+                        <button id="confirmAddSite" onClick={() => addSite(updateSites)}>Confirm</button>
                     </div>
                 </div>
             </div>
