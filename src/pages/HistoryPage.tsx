@@ -4,6 +4,7 @@ import { useNavigate } from "react-router";
 import SiteModal from "../components/SiteModal";
 import DeviceSelect from "../components/DeviceSelect";
 import { signInWithEmailAndPassword } from "firebase/auth";
+import NavBar from "../components/NavBar";
 
 function History() {
   const hasMounted = useRef(false);
@@ -144,6 +145,7 @@ function History() {
           </li>
         ))}
       </ul>
+      <NavBar />
     </>
   );
 }
