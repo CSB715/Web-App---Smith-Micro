@@ -44,9 +44,12 @@ function History() {
         // Map devices to include label property
         const mappedDevices = devicesData.map((doc) => ({
           id: doc.id,
-          ...doc.data,
+          data: doc.data,
         }));
         setDevices(mappedDevices);
+        // Set all devices as selected by default
+        const allDeviceNames = mappedDevices.map((device) => device.data.name);
+        setSelectedDevices(allDeviceNames);
       })
       .catch((error) => {
         console.error("loadDevices error:", error);
@@ -55,8 +58,9 @@ function History() {
 
   function loadVisits() {
     const currVisits: { [key: string]: any[] } = {};
+    const devicesToLoad = selectedDevices.filter((d) => d !== "Select All");
     Promise.all(
-      selectedDevices.map(async (deviceName: any) => {
+      devicesToLoad.map(async (deviceName: any) => {
         const deviceId = nameToIdMap[deviceName];
         if (!deviceId) {
           console.error(`Device ID not found for device name: ${deviceName}`);
@@ -113,13 +117,19 @@ function History() {
   useEffect(() => {
     if (selectedDevices.length > 0 && Object.keys(nameToIdMap).length > 0) {
       loadVisits();
+    } else {
+      setVisits({}); // Clear visits when no devices selected
     }
   }, [selectedDevices, nameToIdMap]);
 
   return (
     <>
       <h1>History Page</h1>
-      <DeviceSelect devices={devices} setSelectedDevices={setSelectedDevices} />
+      <DeviceSelect
+        devices={devices}
+        selectedDevices={selectedDevices}
+        setSelectedDevices={setSelectedDevices}
+      />
       <ul style={{ listStyleType: "none", padding: 0, margin: 0 }}>
         {Object.entries(visits).map(([key, value]) => (
           <li key={key}>
