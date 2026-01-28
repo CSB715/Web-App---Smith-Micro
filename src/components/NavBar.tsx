@@ -2,15 +2,7 @@ import { BottomNavigation, BottomNavigationAction } from "@mui/material";
 import { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router";
 
-export default function NavBar({
-  width = 400,
-  centered = true,
-  position = "fixed",
-}: {
-  width?: number | string;
-  centered?: boolean;
-  position?: "fixed" | "absolute" | "relative" | "static" | "sticky";
-}) {
+export default function NavBar() {
   const navigate = useNavigate();
   const location = useLocation();
   const [value, setValue] = useState<string>(location.pathname);
@@ -20,12 +12,12 @@ export default function NavBar({
   }, [location.pathname]);
 
   const navSx = {
-    position: position,
+    position: "fixed",
     bottom: 0,
-    left: centered ? "50%" : 0,
-    right: centered ? "auto" : 0,
-    transform: centered ? "translateX(-50%)" : "none",
-    width: typeof width === "number" ? `${width}px` : width,
+    left: "50%",
+    right: "auto",
+    transform: "translateX(-50%)",
+    width: 425,
     zIndex: 1200,
   };
 

@@ -103,7 +103,7 @@ function Notifications() {
             </Box>
           ))}
         </ul>
-        <NavBar position="absolute" centered={false} width="100%" />
+        <NavBar />
       </Box>
     </>
   );
