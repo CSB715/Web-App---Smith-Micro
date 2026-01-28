@@ -34,7 +34,7 @@ export default function SiteModal({
   const [categorization, setCategorization] = useState<string[]>([]);
   const [overrides, setOverrides] = useState<string[]>([]);
   const [devices, setDevices] = useState<any[]>([]);
-  const displayURL = url.slice(12, -1);
+  const displayURL = url.replace("https://", "").replace("www.", "");
 
   function loadCategorization() {
     GetCategorization(displayURL)
