@@ -12,13 +12,14 @@ export default function NavBar() {
   }, [location.pathname]);
 
   const navSx = {
-    position: "fixed",
+    position: "fixed" as const,
     bottom: 0,
     left: "50%",
-    right: "auto",
     transform: "translateX(-50%)",
-    width: 425,
+    width: 426,
     zIndex: 1200,
+    backgroundColor: "background.paper",
+    borderTop: "1px solid #ccc",
   };
 
   return (

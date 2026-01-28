@@ -74,14 +74,7 @@ function Notifications() {
 
   return (
     <>
-      <Box
-        sx={{
-          width: 400,
-          margin: "0 auto",
-          position: "relative",
-          paddingBottom: "72px",
-        }}
-      >
+      <Box sx={{ paddingBottom: "72px" }}>
         <h1>Notification History</h1>
         <ul style={{ listStyleType: "none", padding: 0, margin: 0 }}>
           {notifications.map((notification, index) => (
@@ -103,8 +96,8 @@ function Notifications() {
             </Box>
           ))}
         </ul>
-        <NavBar />
       </Box>
+      <NavBar />
     </>
   );
 }
