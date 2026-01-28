@@ -3,7 +3,6 @@ import { doc, getDoc } from "firebase/firestore";
 import { auth, db, GetDoc, GetUserOverrides } from "../utils/firestore";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { useState, useRef, useEffect } from "react";
-import SiteCard from "../components/SiteCard";
 import AddSiteModal from "../components/AddSiteModal";
 import SiteModal from "../components/SiteModal";
 
@@ -34,20 +33,14 @@ async function getUniqueSites() {
 function SiteCategories() {
     const hasMounted = useRef(false);
     const [sites, setSites] = useState<string[]>([]);
-    const [modalURL, setModalURL] = useState<string>("");
-    const [showSiteModal, setShowSiteModal]  = useState<boolean>(false);
 
     const updateSites: (site: string) => void = (site) => {
         setSites([...sites, site]);
     }
 
-    function updateModalURL(url: string) {
-        setModalURL(url);
-    }
-
-    function updateShowSiteModal(show: boolean) {
-        setShowSiteModal(show);
-    }
+    useEffect(() => {
+        console.log(sites);
+    }, [sites]);
 
     useEffect(() => {
         if (!hasMounted.current) {
@@ -71,14 +64,11 @@ function SiteCategories() {
 
             {sites.map(site => (
                 <div key={site}>
-                    <SiteCard url={site} />
+                    {site && auth.currentUser ? (<SiteModal url={site} userId={auth.currentUser.uid}/>) : (<p>Unhappiness...</p>)}
                 </div>
             ))}
 
-            <AddSiteModal updateSites={updateSites} updateModalURL={updateModalURL} updateShowSiteModal={updateShowSiteModal}/>
-
-            {showSiteModal && <SiteModal url={modalURL} user_id={auth.currentUser!.uid} />}
-
+            <AddSiteModal updateSites={updateSites}/>
         </>
     )
 }
