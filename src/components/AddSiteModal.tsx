@@ -25,8 +25,6 @@ async function addSite(updateSites : (site : string) => void) {
 
     // close this modal
     closeModal();
-
-    // open Site Modal with this site
 }
 
 type Props = {
