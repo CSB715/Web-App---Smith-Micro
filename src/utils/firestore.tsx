@@ -186,14 +186,14 @@ export async function GetUserOverrides(userRef: DocumentReference) {
 export async function CreateUser(
   email: string,
   password: string,
-  phone: string,
+  phone?: string,
 ) {
   return createUserWithEmailAndPassword(auth, email, password).then(
     (userCredential) => {
       const userDoc = doc(db, "Users", userCredential.user.uid);
       return setDoc(userDoc, {
         emails: [email],
-        phones: [phone],
+        phones: phone ? [phone] : [],
       }).then(async () => {
         return await getDoc(userDoc);
       });

@@ -2,8 +2,8 @@ import { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router";
 import { GetNotifications, auth, GetDevice } from "../utils/firestore";
 import SiteModal from "../components/SiteModal";
-import { signInWithEmailAndPassword } from "firebase/auth";
 import { Box } from "@mui/material";
+import { onAuthStateChanged } from "firebase/auth";
 
 function getTimeDifferenceString(date: Date): string {
   const now = new Date();
@@ -31,20 +31,15 @@ function Notifications() {
 
   useEffect(() => {
     if (!hasMounted.current) {
-      signInWithEmailAndPassword(auth, "user@example.com", "password123")
-        .then(() => {
-          if (auth.currentUser != null) {
-            console.log("User signed in:", auth.currentUser.uid);
-            setUserId(auth.currentUser.uid);
-          } else {
-            console.log("no user currently signed in");
-            navigate("/login", { replace: true });
-          }
-        })
-        .catch((error) => {
-          console.error("Sign-in failed:", error.message);
+      onAuthStateChanged(auth, (user) => {
+        if (user) {
+          console.log("User signed in:", user.uid);
+          setUserId(user.uid);
+        } else {
+          console.log("no user currently signed in");
           navigate("/login", { replace: true });
-        });
+        }
+      });
       hasMounted.current = true;
     }
   }, [navigate]);

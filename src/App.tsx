@@ -1,7 +1,6 @@
 import "./styles/App.css";
 import { Routes, Route } from "react-router";
 import Account from "./pages/AccountPage";
-import CreateAccount from "./pages/CreateAccountPage";
 import CreateNotification from "./pages/CreateNotificationPage";
 import FlaggedSites from "./pages/FlaggedSitesPage";
 import History from "./pages/HistoryPage";
@@ -35,9 +34,8 @@ const App = () => {
             <Route path="/settings/notifications/create-notification" element={<CreateNotification />} />
             
             {/* Authentication Pages */}
-            <Route path="/create-account" element={<CreateAccount />} />
             <Route path="/login" element={<SignIn />} /> 
-            <Route path="/signup" element={<SignUp />} />
+            <Route path="/sign-up" element={<SignUp />} />
             <Route path="/password-reset" element={<PasswordReset />} />
           </Routes>
         </div>
