@@ -1,15 +1,23 @@
 import { useEffect, useState, useRef } from "react";
-import "../styles/Page.css"
-import { DocumentSnapshot, getDocs, collection, deleteDoc } from "firebase/firestore";
+import "../styles/Page.css";
+import {
+  DocumentSnapshot,
+  getDocs,
+  collection,
+  deleteDoc,
+} from "firebase/firestore";
 import { db, auth } from "../utils/firestore";
 import { useNavigate, type NavigateFunction } from "react-router";
+import NavBar from "../components/NavBar";
 import { onAuthStateChanged } from "firebase/auth";
 
 async function getNotifications() {
-  const notifications : DocumentSnapshot[] = []
-  const snap = await getDocs(collection(db, "Users", auth.currentUser!.uid, "NotificationTriggers"))
+  const notifications: DocumentSnapshot[] = [];
+  const snap = await getDocs(
+    collection(db, "Users", auth.currentUser!.uid, "NotificationTriggers"),
+  );
   for (const doc of snap.docs) {
-    notifications.push(doc)
+    notifications.push(doc);
   }
   return notifications;
 }
@@ -25,7 +33,7 @@ function NotificationSettings() {
         if (user) {
           console.log("User signed in:", user.uid);
           getNotifications().then((notifs) => {
-            setNotifications(notifs)
+            setNotifications(notifs);
           });
         } else {
           console.log("no user currently signed in");
@@ -38,15 +46,17 @@ function NotificationSettings() {
 
   const handleDeleteNotification = (notification: DocumentSnapshot) => {
     deleteDoc(notification.ref).then(async () => {
-      setNotifications( await getNotifications());
+      setNotifications(await getNotifications());
     });
-  }
+  };
 
-
-  const handleEditNotification = (notification: DocumentSnapshot, navigate: NavigateFunction) => {
+  const handleEditNotification = (
+    notification: DocumentSnapshot,
+    navigate: NavigateFunction,
+  ) => {
     // redirect to Notification Create page and load current information
     navigate("/settings/notifications/create-notification");
-  }
+  };
 
   return (
     <>
@@ -61,17 +71,37 @@ function NotificationSettings() {
             {notifications.map((notification) => (
               <tr key={notification.id}>
                 <td>{notification.data()!.name}</td>
-                <td><button onClick={() => handleDeleteNotification(notification)}>Del</button></td>
-                <td><button onClick={()=> handleEditNotification(notification, navigate)}>Edit</button></td>
+                <td>
+                  <button
+                    onClick={() => handleDeleteNotification(notification)}
+                  >
+                    Del
+                  </button>
+                </td>
+                <td>
+                  <button
+                    onClick={() =>
+                      handleEditNotification(notification, navigate)
+                    }
+                  >
+                    Edit
+                  </button>
+                </td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
 
-      <button onClick={() => navigate("/settings/notifications/create-notification")}>New Notification</button>
+      <button
+        onClick={() => navigate("/settings/notifications/create-notification")}
+      >
+        New Notification
+      </button>
+
+      <NavBar />
     </>
-  )
+  );
 }
 
 export default NotificationSettings;

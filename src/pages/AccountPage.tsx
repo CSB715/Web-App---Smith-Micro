@@ -1,8 +1,20 @@
 // Account Page Component
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router";
-import { db, GetDoc, GetUserDevices, type UserData, auth } from "../utils/firestore";
-import { doc, getDoc, updateDoc, type DocumentData, DocumentSnapshot } from "firebase/firestore";
+import {
+  db,
+  GetDoc,
+  GetUserDevices,
+  type UserData,
+  auth,
+} from "../utils/firestore";
+import {
+  doc,
+  getDoc,
+  updateDoc,
+  type DocumentData,
+  DocumentSnapshot,
+} from "firebase/firestore";
 import { onAuthStateChanged } from "firebase/auth";
 import ErrorAlert from "../components/ErrorAlert";
 import PasswordResetAlert from "../components/PasswordResetAlert";
@@ -11,6 +23,7 @@ import AddPhoneModal from "../components/AddPhoneModal";
 import AddEmailModal from "../components/AddEmailModal";
 import RenameDeviceModal from "../components/RenameDeviceModal";
 import DeleteDeviceModal from "../components/DeleteDeviceModal";
+import NavBar from "../components/NavBar";
 import "../styles/Page.css";
 
 
@@ -26,11 +39,11 @@ function Account() {
 
   const updateUserData: (data: UserData) => void = (data) => {
     setUserData(data);
-  }
+  };
 
   const updateDevices: (data: Array<DocumentData>) => void = (data) => {
-    setDevices(data)
-  }
+    setDevices(data);
+  };
 
   useEffect(() => {
     if (!hasMounted.current) {
@@ -50,48 +63,46 @@ function Account() {
           navigate("/login", { replace: true });
         }
       });
+      hasMounted.current = true;
     }
   }, []);
 
   /* button functions */
   function handleDeleteDevice(deviceId: string) {
-    setCurrDevice(devices.find(device => device.id === deviceId) || null);
-    showModal("deleteDeviceModal")
+    setCurrDevice(devices.find((device) => device.id === deviceId) || null);
+    showModal("deleteDeviceModal");
   }
 
   function handleRenameDevice(deviceId: string) {
-    setCurrDevice(devices.find(device => device.id === deviceId) || null);
+    setCurrDevice(devices.find((device) => device.id === deviceId) || null);
     showModal("renameDeviceModal");
   }
 
-  function showModal(modalId : string) {
+  function showModal(modalId: string) {
     const modal = document.getElementById(modalId);
     modal!.style.display = "block";
   }
 
   function handleDeleteEmail(email: string) {
     const emailArray = userData!.emails!;
-    const filteredEmails = emailArray.filter(em => email !== em);
-    updateDoc(userSnap!.ref, {emails : filteredEmails}).then(async () => {
-      updateUserData((await GetDoc(userSnap!.ref.path))!.data as UserData);         // reload phone number display
-    })
+    const filteredEmails = emailArray.filter((em) => email !== em);
+    updateDoc(userSnap!.ref, { emails: filteredEmails }).then(async () => {
+      updateUserData((await GetDoc(userSnap!.ref.path))!.data as UserData); // reload phone number display
+    });
   }
 
   function handleDeletePhone(phone: string) {
     const phoneArray = userData!.phones!;
-    const filteredPhones = phoneArray.filter(ph => phone !== ph);
-    updateDoc(userSnap!.ref, {phones : filteredPhones}).then(async () => {
-      updateUserData((await GetDoc(userSnap!.ref.path))!.data as UserData);         // reload phone number display
-    })
+    const filteredPhones = phoneArray.filter((ph) => phone !== ph);
+    updateDoc(userSnap!.ref, { phones: filteredPhones }).then(async () => {
+      updateUserData((await GetDoc(userSnap!.ref.path))!.data as UserData); // reload phone number display
+    });
   }
 
   function handleResetPassword() {
-    showModal("resetPasswordAlert")  
+    showModal("resetPasswordAlert");
 
     // TODO: trigger password reset email
-  }
-
-  function signOut() {
   }
 
   return (
@@ -106,31 +117,43 @@ function Account() {
             <h3 style={{ marginBottom: "0" }}>Account Email</h3>
             <p style={{ marginTop: "0" }}>{auth.currentUser?.email}</p>
           </span>
-          <button style={{ marginLeft: "auto" }} 
+          <button
+            style={{ marginLeft: "auto" }}
             onClick={() => {
-            setIsAccount(true);
-            showModal("addEmailModal");
-            }}>Edit</button>
-          </div>
+              setIsAccount(true);
+              showModal("addEmailModal");
+            }}
+          >
+            Edit
+          </button>
+        </div>
 
-          <div>
+        <div>
           <h3 style={{ marginBottom: "0" }}>Contact Emails</h3>
           <table>
             <tbody>
               {userData?.emails?.map((email) => (
                 <tr key={email}>
                   <td>{email}</td>
-                  <td><button onClick={() => handleDeleteEmail(email)}>Del</button></td>
+                  <td>
+                    <button onClick={() => handleDeleteEmail(email)}>
+                      Del
+                    </button>
+                  </td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
-            
-        <button onClick={() => {
-          setIsAccount(false)
-          showModal("addEmailModal")
-        }}>Add Contact Email</button>
+
+        <button
+          onClick={() => {
+            setIsAccount(false);
+            showModal("addEmailModal");
+          }}
+        >
+          Add Contact Email
+        </button>
 
         <br />
 
@@ -141,14 +164,20 @@ function Account() {
               {userData?.phones?.map((phone) => (
                 <tr key={phone}>
                   <td>{phone}</td>
-                  <td><button onClick={() => handleDeletePhone(phone)}>Del</button></td>
+                  <td>
+                    <button onClick={() => handleDeletePhone(phone)}>
+                      Del
+                    </button>
+                  </td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
-            
-        <button onClick={() => showModal("addPhoneModal")}>Add Phone Number</button>
+
+        <button onClick={() => showModal("addPhoneModal")}>
+          Add Phone Number
+        </button>
 
         <br />
 
@@ -163,8 +192,16 @@ function Account() {
             {devices.map((device) => (
               <tr key={device.id}>
                 <td>{device.name}</td>
-                <td><button onClick={() => handleDeleteDevice(device.id)}>Del</button></td>
-                <td><button onClick={()=> handleRenameDevice(device.id)}>Edit</button></td>
+                <td>
+                  <button onClick={() => handleDeleteDevice(device.id)}>
+                    Del
+                  </button>
+                </td>
+                <td>
+                  <button onClick={() => handleRenameDevice(device.id)}>
+                    Edit
+                  </button>
+                </td>
               </tr>
             ))}
           </tbody>
@@ -172,25 +209,33 @@ function Account() {
 
         <br />
 
-        <button onClick={() => showModal("deleteAccountModal")}>Delete Account</button>
+        <button onClick={() => showModal("deleteAccountModal")}>
+          Delete Account
+        </button>
       </div>
 
-
       {/* modals for user dialog */}
-      <DeleteDeviceModal currDevice={currDevice} updateDevices={updateDevices}/>
+      <DeleteDeviceModal
+        currDevice={currDevice}
+        updateDevices={updateDevices}
+      />
 
-      <RenameDeviceModal currDevice={currDevice} updateDevices={updateDevices}/>
+      <RenameDeviceModal
+        currDevice={currDevice}
+        updateDevices={updateDevices}
+      />
 
-      <AddEmailModal updateUserData={updateUserData} isAccount={isAccount}/>
+      <AddEmailModal updateUserData={updateUserData} isAccount={isAccount} />
 
-      <AddPhoneModal updateUserData={updateUserData}/>
+      <AddPhoneModal updateUserData={updateUserData} />
 
-      {userSnap && <DeleteAccountModal uid={userSnap!.ref.id}/>}
+      {userSnap && <DeleteAccountModal uid={userSnap!.ref.id} />}
 
       <PasswordResetAlert />
 
       <ErrorAlert />
 
+      <NavBar />
     </>
   );
 }

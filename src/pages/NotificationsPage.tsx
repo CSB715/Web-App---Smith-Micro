@@ -3,6 +3,7 @@ import { useNavigate } from "react-router";
 import { GetNotifications, auth, GetDevice } from "../utils/firestore";
 import SiteModal from "../components/SiteModal";
 import { Box } from "@mui/material";
+import NavBar from "../components/NavBar";
 import { onAuthStateChanged } from "firebase/auth";
 
 function getTimeDifferenceString(date: Date): string {
@@ -68,26 +69,30 @@ function Notifications() {
 
   return (
     <>
-      <h1>Notification History</h1>
-      <ul style={{ listStyleType: "none", padding: 0, margin: 0 }}>
-        {notifications.map((notification, index) => (
-          <Box key={index}
-            sx={{
-              borderBottom: "3px solid #000",
-              borderTop: "3px solid #000",
-            }}
-          >
-            <li >
-              <SiteModal url={notification.siteURL} userId={userId} />
-              <p>
-                {getTimeDifferenceString(notification.dateTime.toDate())} ago on{" "}
-                {notification.deviceName}
-              </p>
-              <p>{notification.reason}</p>
-            </li>
-          </Box>
-        ))}
-      </ul>
+      <Box sx={{ paddingBottom: "72px" }}>
+        <h1>Notification History</h1>
+        <ul style={{ listStyleType: "none", padding: 0, margin: 0 }}>
+          {notifications.map((notification, index) => (
+            <Box
+              sx={{
+                borderBottom: "3px solid #000",
+                borderTop: "3px solid #000",
+              }}
+              key={index}
+            >
+              <li key={index}>
+                <SiteModal url={notification.siteURL} userId={userId} />
+                <p>
+                  {getTimeDifferenceString(notification.dateTime.toDate())} ago
+                  on {notification.deviceName}
+                </p>
+                <p>{notification.reason}</p>
+              </li>
+            </Box>
+          ))}
+        </ul>
+      </Box>
+      <NavBar />
     </>
   );
 }

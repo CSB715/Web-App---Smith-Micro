@@ -4,6 +4,7 @@ import { useNavigate } from "react-router";
 import SiteModal from "../components/SiteModal";
 import DeviceSelect from "../components/DeviceSelect";
 import { onAuthStateChanged } from "firebase/auth";
+import NavBar from "../components/NavBar";
 
 function History() {
   const hasMounted = useRef(false);
@@ -84,10 +85,6 @@ function History() {
     ).then(() => sortVisits(currVisits));
   }
 
-  /*useEffect(() => {
-    CreateUser("user@example.com", "password123", "(111) 111-1111");
-  }, []);*/
-
   useEffect(() => {
     if (!hasMounted.current) {
       onAuthStateChanged(auth, (user) => {
@@ -139,6 +136,7 @@ function History() {
           </li>
         ))}
       </ul>
+      <NavBar />
     </>
   );
 }
