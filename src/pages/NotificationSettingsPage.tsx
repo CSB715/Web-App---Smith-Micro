@@ -6,10 +6,10 @@ import {
   collection,
   deleteDoc,
 } from "firebase/firestore";
-import { signInWithEmailAndPassword } from "firebase/auth";
 import { db, auth } from "../utils/firestore";
 import { useNavigate, type NavigateFunction } from "react-router";
 import NavBar from "../components/NavBar";
+import { onAuthStateChanged } from "firebase/auth";
 
 async function getNotifications() {
   const notifications: DocumentSnapshot[] = [];
@@ -28,13 +28,18 @@ function NotificationSettings() {
   const [notifications, setNotifications] = useState<DocumentSnapshot[]>([]);
 
   useEffect(() => {
-    if (!hasMounted.current) {
-      signInWithEmailAndPassword(auth, "spiderman@example.com", "spiders").then(
-        async () => {
-          setNotifications(await getNotifications());
-        },
-      );
-
+    if(!hasMounted.current) {
+      onAuthStateChanged(auth, (user) => {
+        if (user) {
+          console.log("User signed in:", user.uid);
+          getNotifications().then((notifs) => {
+            setNotifications(notifs);
+          });
+        } else {
+          console.log("no user currently signed in");
+          navigate("/login", { replace: true });
+        }
+      });
       hasMounted.current = true;
     }
   }, []);

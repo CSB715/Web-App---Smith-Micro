@@ -11,7 +11,6 @@ import {
   type DocumentData,
   type DocumentReference,
   getFirestore,
-  QuerySnapshot,
 } from "firebase/firestore";
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
@@ -172,28 +171,28 @@ export async function GetUserDevices(userRef: DocumentReference) {
 }
 
 export async function GetUserOverrides(userRef: DocumentReference) {
-  const devicesCol = collection(userRef, "Devices");
-  const devicesSnap = await getDocs(devicesCol);
-  const deviceOverrides: QuerySnapshot[] = [];
-  for (const device of devicesSnap.docs) {
-    const overrideCol = collection(device.ref, "Overrides");
-    const overridesSnap = await getDocs(overrideCol);
-    deviceOverrides.push(overridesSnap);
-  }
-  return deviceOverrides;
+  const overrideCol = collection(userRef, "Overrides");
+  const overridesSnap = await getDocs(overrideCol);
+  return overridesSnap;
+}
+
+export async function GetUserRef(uid: string) {
+  const userDoc = doc(db, "Users", uid);
+  const userSnap = await getDoc(userDoc);
+  return userSnap.ref;
 }
 
 export async function CreateUser(
   email: string,
   password: string,
-  phone: string,
+  phone?: string,
 ) {
   return createUserWithEmailAndPassword(auth, email, password).then(
     (userCredential) => {
       const userDoc = doc(db, "Users", userCredential.user.uid);
       return setDoc(userDoc, {
         emails: [email],
-        phones: [phone],
+        phones: phone ? [phone] : [],
       }).then(async () => {
         return await getDoc(userDoc);
       });

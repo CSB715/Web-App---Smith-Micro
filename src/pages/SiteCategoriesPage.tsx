@@ -1,36 +1,20 @@
 import "../styles/Page.css";
-import { doc, getDoc } from "firebase/firestore";
-import { auth, db, GetDoc, GetUserOverrides } from "../utils/firestore";
-import { signInWithEmailAndPassword } from "firebase/auth";
+import { auth, GetUserRef, GetUserOverrides } from "../utils/firestore";
 import { useState, useRef, useEffect } from "react";
 import AddSiteModal from "../components/AddSiteModal";
 import SiteModal from "../components/SiteModal";
 import NavBar from "../components/NavBar";
+import { useNavigate } from "react-router";
+import { onAuthStateChanged } from "firebase/auth";
 
 function showModal(modalId: string) {
   const modal = document.getElementById(modalId);
   modal!.style.display = "block";
 }
 
-async function getUniqueSites() {
-  const sites: Set<string> = new Set();
-
-  const snap = await getDoc(doc(db, "Users", auth.currentUser!.uid));
-  const overridesSnaps = await GetUserOverrides(snap.ref);
-  for (const snap of overridesSnaps) {
-    const overrides = snap.docs.map((d) => d.ref);
-    for (const override of overrides) {
-      const doc = await GetDoc(override.path);
-      sites.add(doc!.id);
-    }
-  }
-
-  const array: string[] = Array.from(sites);
-  return array;
-}
-
 function SiteCategories() {
   const hasMounted = useRef(false);
+  const navigate = useNavigate();
   const [sites, setSites] = useState<string[]>([]);
 
   const updateSites: (site: string) => void = (site) => {
@@ -38,22 +22,28 @@ function SiteCategories() {
   };
 
   useEffect(() => {
-    console.log(sites);
-  }, [sites]);
-
-  useEffect(() => {
     if (!hasMounted.current) {
-      signInWithEmailAndPassword(auth, "spiderman@example.com", "spiders").then(
-        () => {
-          getUniqueSites().then((sitesArr) => {
-            setSites([...sitesArr]);
+      onAuthStateChanged(auth, (user) => {
+        if (user) {
+          console.log("User signed in:", user.uid);
+          GetUserRef(user.uid).then((userRef) => {
+            GetUserOverrides(userRef).then((sitesArr) => {
+              const siteURLS = []
+              for (const site of sitesArr.docs) {
+                siteURLS.push(site.id)
+              }
+              setSites(siteURLS);
+            });
           });
-        },
-      );
-      hasMounted.current = true;
+        } else {
+          console.log("no user currently signed in");
+          navigate("/login", { replace: true });
+        }
+      });
+      hasMounted.current = true
     }
   }, []);
-
+    
   return (
     <>
       <h1 className="title">Site Categories</h1>

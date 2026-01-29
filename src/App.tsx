@@ -1,17 +1,18 @@
 import "./styles/App.css";
 import { Routes, Route } from "react-router";
 import Account from "./pages/AccountPage";
-import CreateAccount from "./pages/CreateAccountPage";
 import CreateNotification from "./pages/CreateNotificationPage";
 import FlaggedSites from "./pages/FlaggedSitesPage";
 import History from "./pages/HistoryPage";
-import Login from "./pages/LoginPage";
 import Notifications from "./pages/NotificationsPage";
 import NotificationSettings from "./pages/NotificationSettingsPage";
 import PasswordReset from "./pages/PasswordResetPage";
 import Settings from "./pages/SettingsPage";
 import SiteCategories from "./pages/SiteCategoriesPage";
 import Summary from "./pages/SummaryPage";
+import SignIn from "./mui-templates/sign-in/SignIn";
+import SignUp from "./mui-templates/sign-up/SignUp";
+
 
 const App = () => {
   return (
@@ -33,8 +34,8 @@ const App = () => {
             <Route path="/settings/notifications/create-notification" element={<CreateNotification />} />
             
             {/* Authentication Pages */}
-            <Route path="/create-account" element={<CreateAccount />} />
-            <Route path="/login" element={<Login />} />
+            <Route path="/login" element={<SignIn />} /> 
+            <Route path="/sign-up" element={<SignUp />} />
             <Route path="/password-reset" element={<PasswordReset />} />
           </Routes>
         </div>
