@@ -91,10 +91,14 @@ function Account() {
     // TODO: trigger password reset email
   }
 
+  function signOut() {
+  }
+
   return (
     <>
       <h1 className="title">Account</h1>
       <hr className="divider" />
+      <button onClick={() => auth.signOut()}>Sign Out</button>
 
       <div>
         <div style={{ display: "flex", alignItems: "center" }}>
