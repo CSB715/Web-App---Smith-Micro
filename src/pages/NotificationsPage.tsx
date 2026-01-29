@@ -4,6 +4,7 @@ import { GetNotifications, auth, GetDevice } from "../utils/firestore";
 import SiteModal from "../components/SiteModal";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { Box } from "@mui/material";
+import NavBar from "../components/NavBar";
 
 function getTimeDifferenceString(date: Date): string {
   const now = new Date();
@@ -73,26 +74,30 @@ function Notifications() {
 
   return (
     <>
-      <h1>Notification History</h1>
-      <ul style={{ listStyleType: "none", padding: 0, margin: 0 }}>
-        {notifications.map((notification, index) => (
-          <Box
-            sx={{
-              borderBottom: "3px solid #000",
-              borderTop: "3px solid #000",
-            }}
-          >
-            <li key={index}>
-              <SiteModal url={notification.siteURL} userId={userId} />
-              <p>
-                {getTimeDifferenceString(notification.dateTime.toDate())} ago on{" "}
-                {notification.deviceName}
-              </p>
-              <p>{notification.reason}</p>
-            </li>
-          </Box>
-        ))}
-      </ul>
+      <Box sx={{ paddingBottom: "72px" }}>
+        <h1>Notification History</h1>
+        <ul style={{ listStyleType: "none", padding: 0, margin: 0 }}>
+          {notifications.map((notification, index) => (
+            <Box
+              sx={{
+                borderBottom: "3px solid #000",
+                borderTop: "3px solid #000",
+              }}
+              key={index}
+            >
+              <li key={index}>
+                <SiteModal url={notification.siteURL} userId={userId} />
+                <p>
+                  {getTimeDifferenceString(notification.dateTime.toDate())} ago
+                  on {notification.deviceName}
+                </p>
+                <p>{notification.reason}</p>
+              </li>
+            </Box>
+          ))}
+        </ul>
+      </Box>
+      <NavBar />
     </>
   );
 }
