@@ -3,15 +3,16 @@ import Checkbox from "@mui/material/Checkbox";
 import TextField from "@mui/material/TextField";
 import CheckBoxOutlineBlankIcon from "@mui/icons-material/CheckBoxOutlineBlank";
 import CheckBoxIcon from "@mui/icons-material/CheckBox";
+import type { DocumentData } from "firebase/firestore";
 
 export default function DeviceSelect({
   devices,
   selectedDevices,
   setSelectedDevices,
 }: {
-  devices: any[];
-  selectedDevices: any[];
-  setSelectedDevices: (devices: any[]) => void;
+  devices: { id: string; data: DocumentData }[];
+  selectedDevices: string[];
+  setSelectedDevices: (devices: string[]) => void;
 }) {
   const icon = <CheckBoxOutlineBlankIcon fontSize="small" />;
   const checkedIcon = <CheckBoxIcon fontSize="small" />;
