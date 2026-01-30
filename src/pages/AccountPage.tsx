@@ -1,12 +1,10 @@
 // Account Page Component
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router";
-import { signInWithEmailAndPassword } from "firebase/auth";
 import {
   db,
   GetDoc,
   GetUserDevices,
-  CreateUser,
   type UserData,
   auth,
 } from "../utils/firestore";
@@ -17,7 +15,7 @@ import {
   type DocumentData,
   DocumentSnapshot,
 } from "firebase/firestore";
-import "../styles/Page.css";
+import { onAuthStateChanged } from "firebase/auth";
 import ErrorAlert from "../components/ErrorAlert";
 import PasswordResetAlert from "../components/PasswordResetAlert";
 import DeleteAccountModal from "../components/DeleteAccountModal";
@@ -26,6 +24,8 @@ import AddEmailModal from "../components/AddEmailModal";
 import RenameDeviceModal from "../components/RenameDeviceModal";
 import DeleteDeviceModal from "../components/DeleteDeviceModal";
 import NavBar from "../components/NavBar";
+import "../styles/Page.css";
+
 
 function Account() {
   const hasMounted = useRef(false);
@@ -47,25 +47,22 @@ function Account() {
 
   useEffect(() => {
     if (!hasMounted.current) {
-      signInWithEmailAndPassword(auth, "spiderman@example.com", "spiders").then(
-        () => {
-          // CreateUser("spiderman@example.com", "spiders", "(333) 333-3333").then( () => {
-          if (auth.currentUser != null) {
-            console.log(auth.currentUser.uid);
-            getDoc(doc(db, "Users", auth.currentUser.uid)).then((snap) => {
-              setUserSnap(snap);
-              setUserData(snap.data() as UserData);
-              GetUserDevices(snap.ref).then((deviceArr) => {
-                setDevices(deviceArr);
-              });
-            });
-          } else {
-            console.log("no user currently signed in");
-            setUserData(null);
-            navigate("/login", { replace: true });
-          }
-        },
-      );
+      onAuthStateChanged(auth, (user) => {
+        if (user) {
+          console.log(user.uid)
+          getDoc(doc(db, "Users", user.uid)).then((snap) => {
+            setUserSnap(snap);
+            setUserData(snap.data() as UserData);
+            GetUserDevices(snap.ref).then( (deviceArr) => {
+              setDevices(deviceArr);
+            })
+          })
+        } else {
+          console.log("no user currently signed in");
+          setUserData(null);
+          navigate("/login", { replace: true });
+        }
+      });
       hasMounted.current = true;
     }
   }, []);
@@ -112,6 +109,7 @@ function Account() {
     <>
       <h1 className="title">Account</h1>
       <hr className="divider" />
+      <button onClick={() => auth.signOut()}>Sign Out</button>
 
       <div>
         <div style={{ display: "flex", alignItems: "center" }}>

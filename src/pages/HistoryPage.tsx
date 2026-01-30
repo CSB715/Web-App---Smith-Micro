@@ -3,7 +3,7 @@ import { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router";
 import SiteModal from "../components/SiteModal";
 import DeviceSelect from "../components/DeviceSelect";
-import { signInWithEmailAndPassword } from "firebase/auth";
+import { onAuthStateChanged } from "firebase/auth";
 import NavBar from "../components/NavBar";
 import type { DocumentData } from "firebase/firestore";
 
@@ -90,26 +90,17 @@ function History() {
     ).then(() => sortVisits(currVisits));
   }
 
-  /*useEffect(() => {
-    CreateUser("user@example.com", "password123", "(111) 111-1111");
-  }, []);*/
-
   useEffect(() => {
     if (!hasMounted.current) {
-      signInWithEmailAndPassword(auth, "user@example.com", "password123")
-        .then(() => {
-          if (auth.currentUser != null) {
-            console.log("User signed in:", auth.currentUser.uid);
-            setUserId(auth.currentUser.uid);
-          } else {
-            console.log("no user currently signed in");
-            navigate("/login", { replace: true });
-          }
-        })
-        .catch((error) => {
-          console.error("Sign-in failed:", error.message);
+      onAuthStateChanged(auth, (user) => {
+        if (user) {
+          console.log("User signed in:", user.uid);
+          setUserId(user.uid);
+        } else {
+          console.log("no user currently signed in");
           navigate("/login", { replace: true });
-        });
+        }
+      });
       hasMounted.current = true;
     }
   }, [navigate]);
