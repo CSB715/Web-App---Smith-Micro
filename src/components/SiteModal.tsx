@@ -8,6 +8,7 @@ import {
   auth,
 } from "../utils/firestore";
 import DeviceSelect from "./DeviceSelect";
+import type { DocumentData } from "firebase/firestore";
 
 const style = {
   position: "absolute",
@@ -33,7 +34,9 @@ export default function SiteModal({
   const handleClose = () => setOpen(false);
   const [categorization, setCategorization] = useState<string[]>([]);
   const [overrides, setOverrides] = useState<string[]>([]);
-  const [devices, setDevices] = useState<any[]>([]);
+  const [devices, setDevices] = useState<{ id: string; data: DocumentData }[]>(
+    [],
+  );
   const displayURL = url.replace("https://", "").replace("www.", "");
 
   function loadCategorization() {
