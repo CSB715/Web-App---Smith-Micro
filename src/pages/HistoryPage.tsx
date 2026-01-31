@@ -5,14 +5,17 @@ import SiteModal from "../components/SiteModal";
 import DeviceSelect from "../components/DeviceSelect";
 import { onAuthStateChanged } from "firebase/auth";
 import NavBar from "../components/NavBar";
+import type { DocumentData } from "firebase/firestore";
 
 function History() {
   const hasMounted = useRef(false);
   const navigate = useNavigate();
   const [userId, setUserId] = useState<string>("");
   const [visits, setVisits] = useState<{ [key: string]: any[] }>({});
-  const [devices, setDevices] = useState<any[]>([]);
-  const [selectedDevices, setSelectedDevices] = useState<any[]>([]);
+  const [devices, setDevices] = useState<{ id: string; data: DocumentData }[]>(
+    [],
+  );
+  const [selectedDevices, setSelectedDevices] = useState<string[]>([]);
   const [nameToIdMap, setNameToIdMap] = useState<{ [key: string]: string }>({});
 
   function getDate(date: Date) {
@@ -49,7 +52,9 @@ function History() {
         }));
         setDevices(mappedDevices);
         // Set all devices as selected by default
-        const allDeviceNames = mappedDevices.map((device) => device.data.name);
+        const allDeviceNames: string[] = mappedDevices.map(
+          (device) => device.data.name,
+        );
         setSelectedDevices(allDeviceNames);
       })
       .catch((error) => {
