@@ -1,7 +1,7 @@
 import "./styles/App.css";
 import { Routes, Route } from "react-router";
 import Account from "./pages/AccountPage";
-import CreateNotification from "./pages/CreateNotificationPage";
+import CreateNotificationTriggerPage from "./pages/CreateNotificationTriggerPage";
 import FlaggedSites from "./pages/FlaggedSitesPage";
 import History from "./pages/HistoryPage";
 import Notifications from "./pages/NotificationsPage";
@@ -31,7 +31,7 @@ const App = () => {
             <Route path="/settings/flagged-sites" element={<FlaggedSites />} />
             <Route path="/settings/notifications" element={<NotificationSettings />} />
             <Route path="/settings/site-categories" element={<SiteCategories />} />
-            <Route path="/settings/notifications/create-notification" element={<CreateNotification />} />
+            <Route path="/settings/notifications/create-notification" element={<CreateNotificationTriggerPage />} />
             
             {/* Authentication Pages */}
             <Route path="/login" element={<SignIn />} /> 

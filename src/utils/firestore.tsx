@@ -7,6 +7,7 @@ import {
   getDocs,
   collection,
   setDoc,
+  addDoc,
   deleteDoc,
   type DocumentData,
   type DocumentReference,
@@ -32,6 +33,8 @@ const firebaseConfig = {
 const app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
 export const db = getFirestore(app);
 export const auth = getAuth(app);
+
+/* Database Interaction Functions */
 
 export async function GetDoc(path: string) {
   const docRef = doc(db, path);
@@ -222,5 +225,13 @@ export async function DeleteUser(path: string) {
     if (auth.currentUser == null) {
       console.log();
     }
+  });
+}
+
+export function CreateNotificationTrigger(uid : string, name : string, deviceIds : string[], categories : string[]) {
+  addDoc(collection(db, "Users", uid, "NotificationTriggers"), {
+    name : name,
+    devices : deviceIds,
+    categories : categories
   });
 }
