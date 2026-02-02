@@ -34,12 +34,6 @@ const app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
 export const db = getFirestore(app);
 export const auth = getAuth(app);
 
-
-export type Device = {
-  id : string,
-  name : string
-}
-
 /* Database Interaction Functions */
 
 export async function GetDoc(path: string) {
@@ -234,10 +228,10 @@ export async function DeleteUser(path: string) {
   });
 }
 
-export function CreateNotificationTrigger(uid : string, name : string, deviceArr : Device[], categories : string[]) {
+export function CreateNotificationTrigger(uid : string, name : string, deviceIds : string[], categories : string[]) {
   addDoc(collection(db, "Users", uid, "NotificationTriggers"), {
     name : name,
-    devices : deviceArr,
+    devices : deviceIds,
     categories : categories
   });
 }
