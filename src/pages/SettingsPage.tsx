@@ -2,13 +2,12 @@
 import { useEffect, useRef } from "react";
 import "../styles/Page.css";
 import { Link, useNavigate } from "react-router";
-import NavBar from "../components/NavBar";
 import { auth } from "../utils/firestore";
 import { onAuthStateChanged } from "firebase/auth";
 
 function Settings() {
-    const navigate = useNavigate();
-    const hasMounted = useRef(false);
+  const navigate = useNavigate();
+  const hasMounted = useRef(false);
 
   useEffect(() => {
     if (!hasMounted.current) {
@@ -45,7 +44,6 @@ function Settings() {
         </Link>
         <hr className="divider" />
       </div>
-      <NavBar />
     </>
   );
 }

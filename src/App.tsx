@@ -12,7 +12,7 @@ import SiteCategories from "./pages/SiteCategoriesPage";
 import Summary from "./pages/SummaryPage";
 import SignIn from "./mui-templates/sign-in/SignIn";
 import SignUp from "./mui-templates/sign-up/SignUp";
-
+import NavBar from "./components/NavBar";
 
 const App = () => {
   return (
@@ -25,19 +25,27 @@ const App = () => {
             <Route path="/summary" element={<Summary />} />
             <Route path="/history" element={<History />} />
             <Route path="/settings" element={<Settings />} />
-
             {/* Settings Subpages */}
             <Route path="/settings/account" element={<Account />} />
             <Route path="/settings/flagged-sites" element={<FlaggedSites />} />
-            <Route path="/settings/notifications" element={<NotificationSettings />} />
-            <Route path="/settings/site-categories" element={<SiteCategories />} />
-            <Route path="/settings/notifications/create-notification" element={<CreateNotificationTriggerPage />} />
-            
+            <Route
+              path="/settings/notifications"
+              element={<NotificationSettings />}
+            />
+            <Route
+              path="/settings/site-categories"
+              element={<SiteCategories />}
+            />
+            <Route
+              path="/settings/notifications/create-notification"
+              element={<CreateNotificationTriggerPage />}
+            />
             {/* Authentication Pages */}
-            <Route path="/login" element={<SignIn />} /> 
+            <Route path="/login" element={<SignIn />} />
             <Route path="/sign-up" element={<SignUp />} />
             <Route path="/password-reset" element={<PasswordReset />} />
           </Routes>
+          <NavBar />
         </div>
       </div>
     </>

@@ -37,13 +37,18 @@ export default function SiteModal({
   const [devices, setDevices] = useState<{ id: string; data: DocumentData }[]>(
     [],
   );
-  const displayURL = url.replace("https://", "").replace("www.", "");
+  const displayURL = url
+    .replace("https://", "")
+    .replace("www.", "")
+    .split("/")[0];
 
   function loadCategorization() {
     GetCategorization(displayURL)
       .then((catData) => {
         if (catData) {
           setCategorization(catData.data.categorization);
+        } else {
+          setCategorization(["Unknown"]);
         }
       })
       .catch((error) => {
@@ -57,6 +62,10 @@ export default function SiteModal({
         .then((overrideData) => {
           if (overrideData) {
             setOverrides(overrideData.data.categories);
+          } else if (categorization && categorization[0] === "Unknown") {
+            setOverrides([]);
+          } else {
+            setOverrides(categorization);
           }
         })
         .catch((error) => {

@@ -16,7 +16,7 @@ export default function NavBar() {
     bottom: 0,
     left: "50%",
     transform: "translateX(-50%)",
-    width: 426,
+    width: "100%",
     zIndex: 1200,
     backgroundColor: "background.paper",
     borderTop: "1px solid #ccc",
@@ -30,7 +30,6 @@ export default function NavBar() {
         setValue(newValue);
         navigate(newValue);
       }}
-      sx={navSx}
     >
       <BottomNavigationAction label="Notifications" value="/" />
       <BottomNavigationAction label="Summary" value="/summary" />

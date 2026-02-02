@@ -8,7 +8,6 @@ import {
 } from "firebase/firestore";
 import { db, auth } from "../utils/firestore";
 import { useNavigate, type NavigateFunction } from "react-router";
-import NavBar from "../components/NavBar";
 import { onAuthStateChanged } from "firebase/auth";
 
 async function getNotifications() {
@@ -28,7 +27,7 @@ function NotificationSettings() {
   const [notifications, setNotifications] = useState<DocumentSnapshot[]>([]);
 
   useEffect(() => {
-    if(!hasMounted.current) {
+    if (!hasMounted.current) {
       onAuthStateChanged(auth, (user) => {
         if (user) {
           console.log("User signed in:", user.uid);
@@ -98,8 +97,6 @@ function NotificationSettings() {
       >
         New Notification
       </button>
-
-      <NavBar />
     </>
   );
 }

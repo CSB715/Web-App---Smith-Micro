@@ -23,9 +23,7 @@ import AddPhoneModal from "../components/AddPhoneModal";
 import AddEmailModal from "../components/AddEmailModal";
 import RenameDeviceModal from "../components/RenameDeviceModal";
 import DeleteDeviceModal from "../components/DeleteDeviceModal";
-import NavBar from "../components/NavBar";
 import "../styles/Page.css";
-
 
 function Account() {
   const hasMounted = useRef(false);
@@ -49,14 +47,14 @@ function Account() {
     if (!hasMounted.current) {
       onAuthStateChanged(auth, (user) => {
         if (user) {
-          console.log(user.uid)
+          console.log(user.uid);
           getDoc(doc(db, "Users", user.uid)).then((snap) => {
             setUserSnap(snap);
             setUserData(snap.data() as UserData);
-            GetUserDevices(snap.ref).then( (deviceArr) => {
+            GetUserDevices(snap.ref).then((deviceArr) => {
               setDevices(deviceArr);
-            })
-          })
+            });
+          });
         } else {
           console.log("no user currently signed in");
           setUserData(null);
@@ -234,8 +232,6 @@ function Account() {
       <PasswordResetAlert />
 
       <ErrorAlert />
-
-      <NavBar />
     </>
   );
 }
