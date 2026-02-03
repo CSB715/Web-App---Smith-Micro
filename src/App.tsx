@@ -19,6 +19,7 @@ const App = () => {
     <>
       <div className="app-viewport">
         <div className="app-container">
+          <NavBar />
           <Routes>
             {/* Main Pages */}
             <Route path="/" element={<Notifications />} /> {/* Default route */}
@@ -45,7 +46,6 @@ const App = () => {
             <Route path="/sign-up" element={<SignUp />} />
             <Route path="/password-reset" element={<PasswordReset />} />
           </Routes>
-          <NavBar />
         </div>
       </div>
     </>
