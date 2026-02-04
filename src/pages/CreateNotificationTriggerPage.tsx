@@ -1,14 +1,15 @@
 import { useRef, useEffect, useState } from "react";
-import { useNavigate } from "react-router";
+import { useLocation, useNavigate } from "react-router";
 import { onAuthStateChanged } from "firebase/auth";
-import { auth, CreateNotificationTrigger, GetDevices } from "../utils/firestore";
+import { auth, CreateNotificationTrigger, GetDevices, GetDoc, db } from "../utils/firestore";
 import NavBar from "../components/NavBar";
-import type { DocumentData } from "firebase/firestore";
+import { doc, type DocumentData } from "firebase/firestore";
 import DeviceSelect from "../components/DeviceSelect";
 import { Autocomplete, Button, TextField } from "@mui/material";
 
 
 export default function CreateNotificationTriggerPage() {
+  const { notifID } = ( useLocation().state === null || useLocation().state === "" ) ? "" : useLocation().state;
   const hasMounted = useRef(false);
   const navigate = useNavigate();
 
@@ -17,11 +18,30 @@ export default function CreateNotificationTriggerPage() {
   const [selectedDevices, setSelectedDevices] = useState<string[]>([]);
   const [ uid, setUid] = useState<string>("");
 
+  useEffect(() => {
+    console.log(categories);
+  }, [categories]);
+
+  useEffect(() => {
+    console.log(selectedDevices);
+  }, [selectedDevices]);
+
   
   useEffect(() => {
     if (!hasMounted.current) {
       onAuthStateChanged(auth, async (user) => {
         if (user) {
+          // if we are passed an id, we edit that document, not create a new one
+          if (notifID !== "") {
+            // load selected devices and categories
+            const notifRef = doc(db, "Users", user.uid, "NotificationTriggers", notifID);
+            const notifSnap = await GetDoc(notifRef.path);
+            setCategories(notifSnap!.data.categories);
+            setSelectedDevices(notifSnap!.data.selectedDevices);
+            const nameInput = document.getElementById("newNotification") as HTMLInputElement;
+            nameInput.value = notifSnap!.data.name;
+          }
+
           setDevices(await GetDevices(user.uid));
           setUid(user.uid);
 

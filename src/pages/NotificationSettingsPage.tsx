@@ -7,7 +7,7 @@ import {
   deleteDoc,
 } from "firebase/firestore";
 import { db, auth } from "../utils/firestore";
-import { useNavigate, type NavigateFunction } from "react-router";
+import { useNavigate } from "react-router";
 import NavBar from "../components/NavBar";
 import { onAuthStateChanged } from "firebase/auth";
 
@@ -50,14 +50,6 @@ function NotificationSettings() {
     });
   };
 
-  const handleEditNotification = (
-    notification: DocumentSnapshot,
-    navigate: NavigateFunction,
-  ) => {
-    // redirect to Notification Create page and load current information
-    navigate("/settings/notifications/create-notification");
-  };
-
   return (
     <>
       <h1 className="title">Notification Settings</h1>
@@ -81,7 +73,7 @@ function NotificationSettings() {
                 <td>
                   <button
                     onClick={() =>
-                      handleEditNotification(notification, navigate)
+                      navigate("/settings/notifications/create-notification", { state : {notifID : notification.id } })
                     }
                   >
                     Edit
@@ -94,7 +86,7 @@ function NotificationSettings() {
       </div>
 
       <button
-        onClick={() => navigate("/settings/notifications/create-notification")}
+        onClick={() => navigate("/settings/notifications/create-notification", { state : {notifID : "" } })}
       >
         New Notification
       </button>
