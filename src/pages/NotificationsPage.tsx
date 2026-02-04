@@ -3,7 +3,6 @@ import { useNavigate } from "react-router";
 import { GetNotifications, auth, GetDevice } from "../utils/firestore";
 import SiteModal from "../components/SiteModal";
 import { Box } from "@mui/material";
-import NavBar from "../components/NavBar";
 import { onAuthStateChanged } from "firebase/auth";
 
 function getTimeDifferenceString(date: Date): string {
@@ -92,7 +91,6 @@ function Notifications() {
           ))}
         </ul>
       </Box>
-      <NavBar />
     </>
   );
 }

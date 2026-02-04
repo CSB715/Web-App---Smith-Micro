@@ -1,6 +1,8 @@
 /* The following CSS was generated with Github Copilot with minor modifications */
 /* Ensure root fills the screen so background covers full height */
-html, body, #root {
+html,
+body,
+#root {
   height: 100%;
   margin: 0;
 }
@@ -29,20 +31,23 @@ html, body, #root {
   max-width: 100%; /* mobile: fill */
   background: transparent; /* mobile: transparent so it feels full-bleed */
   border-radius: 8px;
-  transition: width 240ms ease, padding 240ms ease, background 240ms ease;
+  transition:
+    width 240ms ease,
+    padding 240ms ease,
+    background 240ms ease;
   overflow: visible;
 }
 
 /* Desktop: one third of viewport, with its own surface so sides show the subtle background */
 @media (min-width: 1024px) {
   .app-container {
-    width: 33.3333vw;         /* central third of viewport */
-    max-width: 1200px;        /* optional cap */
-    min-width: 360px;         /* avoid too-narrow column on medium screens */
+    width: 33.3333vw; /* central third of viewport */
+    max-width: 1200px; /* optional cap */
+    min-width: 360px; /* avoid too-narrow column on medium screens */
     height: auto;
     min-height: 90vh;
-    background: #ffffff;      /* white content surface */
-    padding: 18px;            /* more interior padding on desktop */
+    background: #ffffff; /* white content surface */
+    padding: 18px; /* more interior padding on desktop */
     box-shadow: 0 6px 20px rgba(9, 30, 66, 0.06);
   }
 }

@@ -37,13 +37,15 @@ export default function SiteModal({
   const [devices, setDevices] = useState<{ id: string; data: DocumentData }[]>(
     [],
   );
-  const displayURL = url.replace("https://", "").replace("www.", "");
+  const displayURL = url.replace("https://", "").split("/")[0];
 
   function loadCategorization() {
     GetCategorization(displayURL)
       .then((catData) => {
         if (catData) {
-          setCategorization(catData.data.categorization);
+          setCategorization(catData.data.categories);
+        } else {
+          setCategorization(["Unknown"]);
         }
       })
       .catch((error) => {
@@ -56,7 +58,14 @@ export default function SiteModal({
       GetOverride(userId, displayURL)
         .then((overrideData) => {
           if (overrideData) {
+            console.log("override");
             setOverrides(overrideData.data.categories);
+          } else if (categorization && categorization[0] === "Unknown") {
+            console.log("unknown");
+            setOverrides([]);
+          } else {
+            console.log("categorization");
+            setOverrides(categorization);
           }
         })
         .catch((error) => {
@@ -124,7 +133,7 @@ export default function SiteModal({
           <Autocomplete
             multiple
             disabled
-            defaultValue={categorization}
+            value={categorization}
             options={["Shopping", "Entertainment"]}
             renderInput={(params) => <TextField {...params} />}
           />

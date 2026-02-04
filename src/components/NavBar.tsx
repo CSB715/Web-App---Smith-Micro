@@ -1,6 +1,7 @@
 import { BottomNavigation, BottomNavigationAction } from "@mui/material";
 import { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router";
+import "../styles/NavBar.css";
 
 export default function NavBar() {
   const navigate = useNavigate();
@@ -16,7 +17,7 @@ export default function NavBar() {
     bottom: 0,
     left: "50%",
     transform: "translateX(-50%)",
-    width: 426,
+    width: "100%",
     zIndex: 1200,
     backgroundColor: "background.paper",
     borderTop: "1px solid #ccc",
@@ -30,7 +31,6 @@ export default function NavBar() {
         setValue(newValue);
         navigate(newValue);
       }}
-      sx={navSx}
     >
       <BottomNavigationAction label="Notifications" value="/" />
       <BottomNavigationAction label="Summary" value="/summary" />

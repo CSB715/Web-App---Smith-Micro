@@ -4,7 +4,6 @@ import { useNavigate } from "react-router";
 import SiteModal from "../components/SiteModal";
 import DeviceSelect from "../components/DeviceSelect";
 import { onAuthStateChanged } from "firebase/auth";
-import NavBar from "../components/NavBar";
 import type { DocumentData } from "firebase/firestore";
 
 function History() {
@@ -75,7 +74,7 @@ function History() {
         try {
           const visitsData = await GetVisits(userId, deviceId);
           visitsData.forEach((doc) => {
-            const date = doc.data.startDateTime.toDate();
+            const date = new Date(doc.data.startDateTime.stringValue);
             const key = getDate(date);
             try {
               currVisits[key].push(doc.data);
@@ -134,14 +133,13 @@ function History() {
             <ul style={{ listStyleType: "none", padding: 0, margin: 0 }}>
               {value.map((visit: any, index) => (
                 <li key={index}>
-                  <SiteModal url={visit.siteURL} userId={userId} />
+                  <SiteModal url={visit.siteUrl.stringValue} userId={userId} />
                 </li>
               ))}
             </ul>
           </li>
         ))}
       </ul>
-      <NavBar />
     </>
   );
 }

@@ -3,7 +3,6 @@ import { auth, GetUserRef, GetUserOverrides } from "../utils/firestore";
 import { useState, useRef, useEffect } from "react";
 import AddSiteModal from "../components/AddSiteModal";
 import SiteModal from "../components/SiteModal";
-import NavBar from "../components/NavBar";
 import { useNavigate } from "react-router";
 import { onAuthStateChanged } from "firebase/auth";
 
@@ -28,9 +27,9 @@ function SiteCategories() {
           console.log("User signed in:", user.uid);
           GetUserRef(user.uid).then((userRef) => {
             GetUserOverrides(userRef).then((sitesArr) => {
-              const siteURLS = []
+              const siteURLS = [];
               for (const site of sitesArr.docs) {
-                siteURLS.push(site.id)
+                siteURLS.push(site.id);
               }
               setSites(siteURLS);
             });
@@ -40,10 +39,10 @@ function SiteCategories() {
           navigate("/login", { replace: true });
         }
       });
-      hasMounted.current = true
+      hasMounted.current = true;
     }
   }, []);
-    
+
   return (
     <>
       <h1 className="title">Site Categories</h1>
@@ -64,7 +63,6 @@ function SiteCategories() {
       ))}
 
       <AddSiteModal updateSites={updateSites} />
-      <NavBar />
     </>
   );
 }
