@@ -74,7 +74,7 @@ function History() {
         try {
           const visitsData = await GetVisits(userId, deviceId);
           visitsData.forEach((doc) => {
-            const date = new Date(doc.data.startDateTime.stringValue);
+            const date = new Date(doc.data.startDateTime);
             const key = getDate(date);
             try {
               currVisits[key].push(doc.data);
@@ -133,7 +133,7 @@ function History() {
             <ul style={{ listStyleType: "none", padding: 0, margin: 0 }}>
               {value.map((visit: any, index) => (
                 <li key={index}>
-                  <SiteModal url={visit.siteUrl.stringValue} userId={userId} />
+                  <SiteModal url={visit.siteUrl} userId={userId} />
                 </li>
               ))}
             </ul>

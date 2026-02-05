@@ -67,8 +67,9 @@ export async function SetDoc(path: string, data: any) {
   await setDoc(docRef, data);
 }
 
-export async function GetDevice(ref: DocumentReference) {
-  const deviceSnap = await getDoc(ref);
+export async function GetDevice(userId: string, deviceId: string) {
+  const deviceRef = doc(db, "Users", userId, "Devices", deviceId);
+  const deviceSnap = await getDoc(deviceRef);
   if (deviceSnap.exists()) {
     return { id: deviceSnap.id, data: deviceSnap.data() };
   }
@@ -228,10 +229,15 @@ export async function DeleteUser(path: string) {
   });
 }
 
-export function CreateNotificationTrigger(uid : string, name : string, deviceIds : string[], categories : string[]) {
+export function CreateNotificationTrigger(
+  uid: string,
+  name: string,
+  deviceIds: string[],
+  categories: string[],
+) {
   addDoc(collection(db, "Users", uid, "NotificationTriggers"), {
-    name : name,
-    devices : deviceIds,
-    categories : categories
+    name: name,
+    devices: deviceIds,
+    categories: categories,
   });
 }
