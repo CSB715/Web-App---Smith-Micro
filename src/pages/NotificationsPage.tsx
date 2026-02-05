@@ -50,7 +50,7 @@ function Notifications() {
         const notifs = notifsData.map((notification) => notification.data);
         Promise.all(
           notifs.map(async (notification) => {
-            const device = await GetDevice(notification.device);
+            const device = await GetDevice(userId, notification.device);
             if (device) {
               return {
                 ...notification,
