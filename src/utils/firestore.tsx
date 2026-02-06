@@ -143,11 +143,10 @@ export async function WriteOverride(
 export async function GetNotifications(userId: string) {
   const notifsCol = collection(db, "Users", userId, "Notifications");
   const notifsSnap = await getDocs(notifsCol);
-  const notifsArr = notifsSnap.docs.map((doc) => ({
+  return notifsSnap.docs.map((doc) => ({
     id: doc.id,
     data: doc.data(),
   }));
-  return notifsArr;
 }
 
 async function DeleteCollection(path: string) {

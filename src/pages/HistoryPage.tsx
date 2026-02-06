@@ -1,19 +1,16 @@
 import { auth, GetDevices, GetVisits } from "../utils/firestore";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 import SiteModal from "../components/SiteModal";
 import DeviceSelect from "../components/DeviceSelect";
 import { onAuthStateChanged } from "firebase/auth";
-import type { DocumentData } from "firebase/firestore";
+import { type Device, type Visit } from "../utils/models";
 
 function History() {
-  const hasMounted = useRef(false);
   const navigate = useNavigate();
   const [userId, setUserId] = useState<string>("");
-  const [visits, setVisits] = useState<{ [key: string]: any[] }>({});
-  const [devices, setDevices] = useState<{ id: string; data: DocumentData }[]>(
-    [],
-  );
+  const [visits, setVisits] = useState<{ [key: string]: Visit[] }>({});
+  const [devices, setDevices] = useState<Device[]>([]);
   const [selectedDevices, setSelectedDevices] = useState<string[]>([]);
   const [nameToIdMap, setNameToIdMap] = useState<{ [key: string]: string }>({});
 
@@ -36,72 +33,52 @@ function History() {
     setVisits(sorted);
   }
 
-  function loadDevices() {
-    GetDevices(userId)
-      .then((devicesData) => {
-        const map: { [key: string]: string } = {};
-        devicesData.forEach((doc) => {
-          map[doc.data.name] = doc.id;
-        });
-        setNameToIdMap(map);
-        // Map devices to include label property
-        const mappedDevices = devicesData.map((doc) => ({
-          id: doc.id,
-          data: doc.data,
-        }));
-        setDevices(mappedDevices);
-        // Set all devices as selected by default
-        const allDeviceNames: string[] = mappedDevices.map(
-          (device) => device.data.name,
-        );
-        setSelectedDevices(allDeviceNames);
-      })
-      .catch((error) => {
-        console.error("loadDevices error:", error);
-      });
+  async function loadDevices() {
+    const devicesData = await GetDevices(userId);
+
+    const normalized: Device[] = devicesData.map((d) => ({
+      id: d.id,
+      name: d.data.name,
+    }));
+
+    setDevices(normalized);
+    setSelectedDevices(normalized.map((d) => d.name));
+    setNameToIdMap(Object.fromEntries(normalized.map((d) => [d.name, d.id])));
   }
 
-  function loadVisits() {
-    const currVisits: { [key: string]: any[] } = {};
-    const devicesToLoad = selectedDevices.filter((d) => d !== "Select All");
-    Promise.all(
-      devicesToLoad.map(async (deviceName: any) => {
-        const deviceId = nameToIdMap[deviceName];
-        if (!deviceId) {
-          console.error(`Device ID not found for device name: ${deviceName}`);
-          return;
-        }
-        try {
-          const visitsData = await GetVisits(userId, deviceId);
-          visitsData.forEach((doc) => {
-            const date = new Date(doc.data.startDateTime);
-            const key = getDate(date);
-            try {
-              currVisits[key].push(doc.data);
-            } catch {
-              currVisits[key] = [doc.data];
-            }
-          });
-        } catch (error) {
-          console.error("Error fetching visits:", error);
-        }
-      }),
-    ).then(() => sortVisits(currVisits));
+  function groupVisitsByDate(visits: Visit[]) {
+    return visits.reduce<Record<string, Visit[]>>((acc, visit) => {
+      const key = visit.startDateTime.toDateString();
+      acc[key] ??= [];
+      acc[key].push(visit);
+      return acc;
+    }, {});
+  }
+
+  async function loadVisits() {
+    const allVisits = await Promise.all(
+      selectedDevices.map((device) => GetVisits(userId, nameToIdMap[device])),
+    );
+
+    const normalizedVisits = allVisits.flat().map((v) => ({
+      id: v.id,
+      siteUrl: v.data.siteUrl,
+      startDateTime: new Date(v.data.startDateTime),
+    }));
+
+    setVisits(groupVisitsByDate(normalizedVisits));
   }
 
   useEffect(() => {
-    if (!hasMounted.current) {
-      onAuthStateChanged(auth, (user) => {
-        if (user) {
-          console.log("User signed in:", user.uid);
-          setUserId(user.uid);
-        } else {
-          console.log("no user currently signed in");
-          navigate("/login", { replace: true });
-        }
-      });
-      hasMounted.current = true;
-    }
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        setUserId(user.uid);
+      } else {
+        navigate("/login", { replace: true });
+      }
+    });
+
+    return unsubscribe;
   }, [navigate]);
 
   useEffect(() => {
@@ -131,8 +108,8 @@ function History() {
           <li key={key}>
             <h2>{key}</h2>
             <ul style={{ listStyleType: "none", padding: 0, margin: 0 }}>
-              {value.map((visit: any, index) => (
-                <li key={index}>
+              {value.map((visit: any) => (
+                <li key={visit.id}>
                   <SiteModal url={visit.siteUrl} userId={userId} />
                 </li>
               ))}
