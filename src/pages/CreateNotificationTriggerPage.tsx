@@ -64,7 +64,7 @@ export default function CreateNotificationTriggerPage() {
       <input type="text" id="newNotification" placeholder="New Notification" />
 
       <DeviceSelect
-        devices={devices}
+        devices={devices.map((d) => d.data.name)}
         selectedDevices={selectedDevices}
         setSelectedDevices={setSelectedDevices}
       />

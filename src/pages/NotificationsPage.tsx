@@ -84,7 +84,8 @@ function Notifications() {
       GetNotifications(userId).then((data) => {
         const normalized = data
           .map((n) => normalizeNotification(n))
-          .filter((n): n is Notification => n !== null);
+          .filter((n): n is Notification => n !== null)
+          .sort((a, b) => b.dateTime.getTime() - a.dateTime.getTime()); // sort newest first
 
         setNotifications(normalized);
       });
