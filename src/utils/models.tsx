@@ -17,7 +17,9 @@ export type Notification = {
 };
 
 export type Categorization = {
+  siteUrl: string;
   categories: string[];
+  isFlagged: boolean;
 };
 
 export type Override = {

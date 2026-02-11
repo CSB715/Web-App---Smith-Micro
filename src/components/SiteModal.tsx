@@ -159,7 +159,7 @@ export default function SiteModal({
             options={["Shopping", "Entertainment"]}
             renderInput={(params) => <TextField {...params} />}
           />
-          <p>Flagged For Devices</p>
+          <p>Flagged For Devices:</p>
           <DeviceSelect
             devices={devices}
             selectedDevices={selectedDevices}
