@@ -61,7 +61,7 @@ export default function SiteModal({
   function useSiteMetadata(userId: string, url: string, open: boolean) {
     const [categorization, setCategorization] = useState<string[]>([]);
     const [overrides, setOverrides] = useState<string[]>([]);
-    const [devices, setDevices] = useState<Device[]>([]);
+    const [devices, setDevices] = useState<string[]>([]);
 
     useEffect(() => {
       if (!open) return;
@@ -77,10 +77,11 @@ export default function SiteModal({
             (categories[0] === "Unknown" ? [] : categories),
         );
         const devicesData = await GetDevices(userId);
-        const devices = devicesData.map((device) => ({
+        const devices: string[] = devicesData.map((d) => d.data.name);
+        /*const devices = devicesData.map((device) => ({
           id: device.id,
           name: device.data.name,
-        }));
+        }));*/
         setDevices(devices);
       }
 
