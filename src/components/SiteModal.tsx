@@ -7,7 +7,7 @@ import {
   GetDevices,
 } from "../utils/firestore";
 import DeviceSelect from "./DeviceSelect";
-import { type Device, type Override } from "../utils/models";
+import { type Override } from "../utils/models";
 
 const style = {
   position: "absolute",
@@ -86,18 +86,8 @@ export default function SiteModal({
           };
         }
         setOverride(normalized);
-        /*const normalized = {
-          categories:
-            override?.data.categories ??
-            (categories[0] === "Unknown" ? [] : categories),
-          flaggedFor: override?.data.flaggedFor,
-        };*/
         const devicesData = await GetDevices(userId);
         const devices: string[] = devicesData.map((d) => d.data.name);
-        /*const devices = devicesData.map((device) => ({
-          id: device.id,
-          name: device.data.name,
-        }));*/
         setDevices(devices);
       }
 
