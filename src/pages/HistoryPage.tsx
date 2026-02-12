@@ -10,27 +10,16 @@ function History() {
   const navigate = useNavigate();
   const [userId, setUserId] = useState<string>("");
   const [visits, setVisits] = useState<{ [key: string]: Visit[] }>({});
-  const [devices, setDevices] = useState<Device[]>([]);
+  const [devices, setDevices] = useState<string[]>([]);
   const [selectedDevices, setSelectedDevices] = useState<string[]>([]);
   const [nameToIdMap, setNameToIdMap] = useState<{ [key: string]: string }>({});
 
-  function getDate(date: Date) {
-    return (
-      date.toDateString().slice(4, 7) +
-      " " +
-      date.getDate() +
-      " " +
-      date.getFullYear()
-    );
-  }
-
-  function sortVisits(currVisits: { [key: string]: any[] }) {
-    const sorted = Object.fromEntries(
-      Object.entries(currVisits).sort(([a], [b]) => {
+  function sortVisitsByDate(visits: { [key: string]: any[] }) {
+    return Object.fromEntries(
+      Object.entries(visits).sort(([a], [b]) => {
         return b.localeCompare(a);
       }),
     );
-    setVisits(sorted);
   }
 
   async function loadDevices() {
@@ -41,8 +30,9 @@ function History() {
       name: d.data.name,
     }));
 
-    setDevices(normalized);
-    setSelectedDevices(normalized.map((d) => d.name));
+    const deviceNames = normalized.map((d) => d.name);
+    setDevices(deviceNames);
+    setSelectedDevices(deviceNames);
     setNameToIdMap(Object.fromEntries(normalized.map((d) => [d.name, d.id])));
   }
 
@@ -66,7 +56,7 @@ function History() {
       startDateTime: new Date(v.data.startDateTime),
     }));
 
-    setVisits(groupVisitsByDate(normalizedVisits));
+    setVisits(sortVisitsByDate(groupVisitsByDate(normalizedVisits)));
   }
 
   useEffect(() => {

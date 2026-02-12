@@ -3,32 +3,30 @@ import Checkbox from "@mui/material/Checkbox";
 import TextField from "@mui/material/TextField";
 import CheckBoxOutlineBlankIcon from "@mui/icons-material/CheckBoxOutlineBlank";
 import CheckBoxIcon from "@mui/icons-material/CheckBox";
-import { type Device } from "../utils/models";
 
 export default function DeviceSelect({
   devices,
   selectedDevices,
   setSelectedDevices,
 }: {
-  devices: Device[];
+  devices: string[];
   selectedDevices: string[];
   setSelectedDevices: (devices: string[]) => void;
 }) {
   const icon = <CheckBoxOutlineBlankIcon fontSize="small" />;
   const checkedIcon = <CheckBoxIcon fontSize="small" />;
-  const deviceNames = devices.map((device) => device.name);
 
   const handleChange = (_: any, newValue: any[]) => {
     const hasSelectAll = newValue.includes("Select All");
     const filteredValue = newValue.filter((item) => item !== "Select All");
     const hadSelectAll = selectedDevices.includes("Select All");
 
-    if (hasSelectAll && filteredValue.length === deviceNames.length) {
+    if (hasSelectAll && filteredValue.length === devices.length) {
       // All devices are selected, show "Select All" + all devices
-      setSelectedDevices(["Select All", ...deviceNames]);
+      setSelectedDevices(["Select All", ...devices]);
     } else if (hasSelectAll && !hadSelectAll) {
       // "Select All" was just clicked, select all devices
-      setSelectedDevices(["Select All", ...deviceNames]);
+      setSelectedDevices(["Select All", ...devices]);
     } else if (!hasSelectAll && hadSelectAll) {
       // "Select All" was unchecked, clear everything
       setSelectedDevices([]);
@@ -44,7 +42,7 @@ export default function DeviceSelect({
         multiple
         value={selectedDevices}
         onChange={handleChange}
-        options={["Select All", ...deviceNames]}
+        options={["Select All", ...devices]}
         renderOption={(props, option, { selected }) => {
           const { key, ...optionProps } = props;
           return (
