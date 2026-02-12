@@ -12,16 +12,16 @@ export default function NavBar() {
     setValue(location.pathname);
   }, [location.pathname]);
 
-  const navSx = {
-    position: "fixed" as const,
-    bottom: 0,
-    left: "50%",
-    transform: "translateX(-50%)",
-    width: "100%",
-    zIndex: 1200,
-    backgroundColor: "background.paper",
-    borderTop: "1px solid #ccc",
-  };
+  // const navSx = {
+  //   position: "fixed" as const,
+  //   bottom: 0,
+  //   left: "50%",
+  //   transform: "translateX(-50%)",
+  //   width: "100%",
+  //   zIndex: 1200,
+  //   backgroundColor: "background.paper",
+  //   borderTop: "1px solid #ccc",
+  // };
 
   return (
     <BottomNavigation
