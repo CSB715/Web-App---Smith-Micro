@@ -16,11 +16,11 @@ export type Notification = {
   dateTime: Date;
 };
 
-// type Categorization = {
-//   categories: string[];
-// };
+type Categorization = {
+  categories: string[];
+};
 
-// type Override = {
-//   categories: string[];
-//   flaggedFor: string[];
-// };
+type Override = {
+  categories: string[];
+  flaggedFor: string[];
+};
