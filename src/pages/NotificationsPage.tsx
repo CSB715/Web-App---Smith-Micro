@@ -1,90 +1,119 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
-import { GetNotifications, auth, GetDevice } from "../utils/firestore";
+import { GetNotifications, auth } from "../utils/firestore";
 import SiteModal from "../components/SiteModal";
 import { Box } from "@mui/material";
-import NavBar from "../components/NavBar";
 import { onAuthStateChanged } from "firebase/auth";
+import { Timestamp } from "firebase/firestore";
+import { type Notification } from "../utils/models";
 
-function getTimeDifferenceString(date: Date): string {
-  const now = new Date();
-  const diffMs = now.getTime() - date.getTime();
-  if (diffMs > 1000 * 60 * 60 * 24) {
-    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-    return `${diffDays} day${diffDays !== 1 ? "s" : ""}`;
-  }
-  if (diffMs > 1000 * 60 * 60) {
-    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
-    return `${diffHours} hour${diffHours !== 1 ? "s" : ""}`;
-  }
-  if (diffMs > 1000 * 60) {
-    const diffMinutes = Math.floor(diffMs / (1000 * 60));
-    return `${diffMinutes} minute${diffMinutes !== 1 ? "s" : ""}`;
-  }
-  return `${Math.floor(diffMs / 1000)} second${Math.floor(diffMs / 1000) !== 1 ? "s" : ""}`;
-}
+type FirestoreNotification = {
+  id: string;
+  data: {
+    siteUrl?: string;
+    deviceName?: string;
+    reason?: string;
+    dateTime?: Timestamp | Date;
+  };
+};
 
 function Notifications() {
-  const hasMounted = useRef(false);
   const navigate = useNavigate();
   const [userId, setUserId] = useState<string>("");
-  const [notifications, setNotifications] = useState<any[]>([]);
+
+  function normalizeNotification(
+    d: FirestoreNotification,
+  ): Notification | null {
+    if (
+      !d.data.siteUrl ||
+      !d.data.deviceName ||
+      !d.data.reason ||
+      !d.data.dateTime
+    ) {
+      return null;
+    }
+
+    return {
+      id: d.id,
+      siteUrl: d.data.siteUrl,
+      deviceName: d.data.deviceName,
+      reason: d.data.reason,
+      dateTime:
+        d.data.dateTime instanceof Date
+          ? d.data.dateTime
+          : d.data.dateTime.toDate(),
+    };
+  }
+
+  function getTimeDifferenceString(date: Date): string {
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    if (diffMs > 1000 * 60 * 60 * 24) {
+      const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+      return `${diffDays} day${diffDays !== 1 ? "s" : ""}`;
+    }
+    if (diffMs > 1000 * 60 * 60) {
+      const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+      return `${diffHours} hour${diffHours !== 1 ? "s" : ""}`;
+    }
+    if (diffMs > 1000 * 60) {
+      const diffMinutes = Math.floor(diffMs / (1000 * 60));
+      return `${diffMinutes} minute${diffMinutes !== 1 ? "s" : ""}`;
+    }
+    return `${Math.floor(diffMs / 1000)} second${Math.floor(diffMs / 1000) !== 1 ? "s" : ""}`;
+  }
 
   useEffect(() => {
-    if (!hasMounted.current) {
-      onAuthStateChanged(auth, (user) => {
-        if (user) {
-          console.log("User signed in:", user.uid);
-          setUserId(user.uid);
-        } else {
-          console.log("no user currently signed in");
-          navigate("/login", { replace: true });
-        }
-      });
-      hasMounted.current = true;
-    }
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        setUserId(user.uid);
+      } else {
+        navigate("/login", { replace: true });
+      }
+    });
+
+    return unsubscribe;
   }, [navigate]);
 
-  useEffect(() => {
-    if (userId) {
-      GetNotifications(userId).then((notifsData) => {
-        const notifs = notifsData.map((notification) => notification.data);
-        Promise.all(
-          notifs.map(async (notification) => {
-            const device = await GetDevice(notification.device);
-            if (device) {
-              return {
-                ...notification,
-                deviceName: device.data.name,
-              };
-            }
-            return null;
-          }),
-        ).then((updatedNotifs) => {
-          setNotifications(updatedNotifs.filter((n) => n !== null));
-        });
+  function useNotifications(userId: string) {
+    const [notifications, setNotifications] = useState<Notification[]>([]);
+
+    useEffect(() => {
+      if (!userId) return;
+
+      GetNotifications(userId).then((data) => {
+        const normalized = data
+          .map((n) => normalizeNotification(n))
+          .filter((n): n is Notification => n !== null)
+          .sort((a, b) => b.dateTime.getTime() - a.dateTime.getTime()); // sort newest first
+
+        setNotifications(normalized);
       });
-    }
-  }, [userId]);
+    }, [userId]);
+
+    return notifications;
+  }
+
+  const notifications = useNotifications(userId);
 
   return (
     <>
       <Box sx={{ paddingBottom: "72px" }}>
         <h1>Notification History</h1>
         <ul style={{ listStyleType: "none", padding: 0, margin: 0 }}>
-          {notifications.map((notification, index) => (
+          {notifications.map((notification) => (
             <Box
               sx={{
                 borderBottom: "3px solid #000",
                 borderTop: "3px solid #000",
               }}
-              key={index}
+              key={notification.id}
             >
-              <li key={index}>
-                <SiteModal url={notification.siteURL} userId={userId} />
+              <li key={notification.id}>
+                <SiteModal url={notification.siteUrl} userId={userId} />
                 <p>
-                  {getTimeDifferenceString(notification.dateTime.toDate())} ago
-                  on {notification.deviceName}
+                  {getTimeDifferenceString(notification.dateTime)} ago on{" "}
+                  {notification.deviceName}
                 </p>
                 <p>{notification.reason}</p>
               </li>
@@ -92,7 +121,6 @@ function Notifications() {
           ))}
         </ul>
       </Box>
-      <NavBar />
     </>
   );
 }

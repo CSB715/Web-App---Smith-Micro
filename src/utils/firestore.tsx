@@ -67,8 +67,9 @@ export async function SetDoc(path: string, data: any) {
   await setDoc(docRef, data);
 }
 
-export async function GetDevice(ref: DocumentReference) {
-  const deviceSnap = await getDoc(ref);
+export async function GetDevice(userId: string, deviceId: string) {
+  const deviceRef = doc(db, "Users", userId, "Devices", deviceId);
+  const deviceSnap = await getDoc(deviceRef);
   if (deviceSnap.exists()) {
     return { id: deviceSnap.id, data: deviceSnap.data() };
   }
@@ -142,11 +143,10 @@ export async function WriteOverride(
 export async function GetNotifications(userId: string) {
   const notifsCol = collection(db, "Users", userId, "Notifications");
   const notifsSnap = await getDocs(notifsCol);
-  const notifsArr = notifsSnap.docs.map((doc) => ({
+  return notifsSnap.docs.map((doc) => ({
     id: doc.id,
     data: doc.data(),
   }));
-  return notifsArr;
 }
 
 async function DeleteCollection(path: string) {
@@ -228,10 +228,15 @@ export async function DeleteUser(path: string) {
   });
 }
 
-export function CreateNotificationTrigger(uid : string, name : string, deviceIds : string[], categories : string[]) {
+export function CreateNotificationTrigger(
+  uid: string,
+  name: string,
+  deviceIds: string[],
+  categories: string[],
+) {
   addDoc(collection(db, "Users", uid, "NotificationTriggers"), {
-    name : name,
-    devices : deviceIds,
-    categories : categories
+    name: name,
+    devices: deviceIds,
+    categories: categories,
   });
 }

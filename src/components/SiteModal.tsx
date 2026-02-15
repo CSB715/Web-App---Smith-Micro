@@ -5,10 +5,8 @@ import {
   GetOverride,
   WriteOverride,
   GetDevices,
-  auth,
 } from "../utils/firestore";
 import DeviceSelect from "./DeviceSelect";
-import type { DocumentData } from "firebase/firestore";
 
 const style = {
   position: "absolute",
@@ -32,69 +30,75 @@ export default function SiteModal({
   const [open, setOpen] = useState(false);
   const handleOpen = () => setOpen(true);
   const handleClose = () => setOpen(false);
-  const [categorization, setCategorization] = useState<string[]>([]);
-  const [overrides, setOverrides] = useState<string[]>([]);
-  const [devices, setDevices] = useState<{ id: string; data: DocumentData }[]>(
-    [],
-  );
-  const displayURL = url.replace("https://", "").replace("www.", "");
+  // const [saving, setSaving] = useState(false);
 
-  function loadCategorization() {
-    GetCategorization(displayURL)
-      .then((catData) => {
-        if (catData) {
-          setCategorization(catData.data.categorization);
-        }
-      })
-      .catch((error) => {
-        console.error("Error loading categorization:", error);
+  const handleSave = async () => {
+    // setSaving(true);
+    try {
+      await WriteOverride(userId, displayUrl, {
+        categories: overrides,
+        flaggedFor: [],
       });
-  }
+      setOpen(false);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      // setSaving(false);
+    }
+  };
 
-  function loadOverides() {
-    if (auth.currentUser != null) {
-      GetOverride(userId, displayURL)
-        .then((overrideData) => {
-          if (overrideData) {
-            setOverrides(overrideData.data.categories);
-          }
-        })
-        .catch((error) => {
-          console.error("Error loading overrides:", error);
-        });
+  function getDisplayUrl(url: string) {
+    try {
+      return new URL(url).hostname;
+    } catch {
+      return url;
     }
   }
 
-  function loadDevices() {
-    GetDevices(userId)
-      .then((devicesData) => {
-        setDevices(devicesData);
-      })
-      .catch((error) => {
-        console.error("loadDevices error:", error);
-      });
+  const displayUrl = getDisplayUrl(url);
+
+  function useSiteMetadata(userId: string, url: string, open: boolean) {
+    const [categorization, setCategorization] = useState<string[]>([]);
+    const [overrides, setOverrides] = useState<string[]>([]);
+    const [devices, setDevices] = useState<string[]>([]);
+
+    useEffect(() => {
+      if (!open) return;
+
+      async function load() {
+        const cat = await GetCategorization(url);
+        const categories = cat?.data.categories ?? ["Unknown"];
+        setCategorization(categories);
+
+        const override = await GetOverride(userId, url);
+        setOverrides(
+          override?.data.categories ??
+            (categories[0] === "Unknown" ? [] : categories),
+        );
+        const devicesData = await GetDevices(userId);
+        const devices: string[] = devicesData.map((d) => d.data.name);
+        /*const devices = devicesData.map((device) => ({
+          id: device.id,
+          name: device.data.name,
+        }));*/
+        setDevices(devices);
+      }
+
+      load();
+    }, [open, userId, url]);
+
+    return { categorization, overrides, setOverrides, devices };
   }
 
-  useEffect(() => {
-    loadCategorization();
-    loadDevices();
-  }, [open]);
-
-  useEffect(() => {
-    loadOverides();
-  }, [categorization]); // Load overrides AFTER categorization loads
-
-  const handleSave = () => {
-    WriteOverride(userId, displayURL, {
-      categories: overrides,
-      flaggedFor: [],
-    });
-    setOpen(false);
-  };
+  const { categorization, overrides, setOverrides, devices } = useSiteMetadata(
+    userId,
+    displayUrl,
+    open,
+  );
 
   return (
     <>
-      <Button onClick={handleOpen}>{displayURL}</Button>
+      <Button onClick={handleOpen}>{displayUrl}</Button>
       <Modal
         open={open}
         onClose={handleClose}
@@ -112,7 +116,7 @@ export default function SiteModal({
               padding: 2,
             }}
           >
-            <h2 id="modal-modal-title">{displayURL}</h2>
+            <h2 id="modal-modal-title">{displayUrl}</h2>
             <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
               <Button onClick={handleClose}>X</Button>
               <a href={url} target="_blank" rel="noopener noreferrer">
@@ -124,7 +128,7 @@ export default function SiteModal({
           <Autocomplete
             multiple
             disabled
-            defaultValue={categorization}
+            value={categorization}
             options={["Shopping", "Entertainment"]}
             renderInput={(params) => <TextField {...params} />}
           />

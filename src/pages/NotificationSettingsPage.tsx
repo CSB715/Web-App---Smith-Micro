@@ -28,7 +28,7 @@ function NotificationSettings() {
   const [notifications, setNotifications] = useState<DocumentSnapshot[]>([]);
 
   useEffect(() => {
-    if(!hasMounted.current) {
+    if (!hasMounted.current) {
       onAuthStateChanged(auth, (user) => {
         if (user) {
           console.log("User signed in:", user.uid);
@@ -90,8 +90,6 @@ function NotificationSettings() {
       >
         New Notification
       </button>
-
-      <NavBar />
     </>
   );
 }
