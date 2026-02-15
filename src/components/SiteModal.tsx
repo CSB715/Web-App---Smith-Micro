@@ -7,7 +7,6 @@ import {
   GetDevices,
 } from "../utils/firestore";
 import DeviceSelect from "./DeviceSelect";
-import { type Device } from "../utils/models";
 
 const style = {
   position: "absolute",
@@ -31,10 +30,10 @@ export default function SiteModal({
   const [open, setOpen] = useState(false);
   const handleOpen = () => setOpen(true);
   const handleClose = () => setOpen(false);
-  const [saving, setSaving] = useState(false);
+  // const [saving, setSaving] = useState(false);
 
   const handleSave = async () => {
-    setSaving(true);
+    // setSaving(true);
     try {
       await WriteOverride(userId, displayUrl, {
         categories: overrides,
@@ -44,7 +43,7 @@ export default function SiteModal({
     } catch (e) {
       console.error(e);
     } finally {
-      setSaving(false);
+      // setSaving(false);
     }
   };
 

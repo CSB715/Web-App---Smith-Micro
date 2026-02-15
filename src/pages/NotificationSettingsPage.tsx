@@ -54,6 +54,7 @@ function NotificationSettings() {
     navigate: NavigateFunction,
   ) => {
     // redirect to Notification Create page and load current information
+    notification
     navigate("/settings/notifications/create-notification");
   };
 
