@@ -8,7 +8,6 @@ import {
 } from "firebase/firestore";
 import { db, auth } from "../utils/firestore";
 import { useNavigate } from "react-router";
-import NavBar from "../components/NavBar";
 import { onAuthStateChanged } from "firebase/auth";
 
 async function getNotifications() {
@@ -31,7 +30,6 @@ function NotificationSettings() {
     if (!hasMounted.current) {
       onAuthStateChanged(auth, (user) => {
         if (user) {
-          console.log("User signed in:", user.uid);
           getNotifications().then((notifs) => {
             setNotifications(notifs);
           });

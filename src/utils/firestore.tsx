@@ -233,10 +233,21 @@ export function CreateNotificationTrigger(
   name: string,
   deviceIds: string[],
   categories: string[],
+  notifID: string
 ) {
-  addDoc(collection(db, "Users", uid, "NotificationTriggers"), {
-    name: name,
-    devices: deviceIds,
-    categories: categories,
-  });
+  if (notifID != "") {
+    // Update existing notification
+    const notifRef = doc(db, "Users", uid, "NotificationTriggers", notifID);
+    return setDoc(notifRef, {
+      name: name,
+      devices: deviceIds,
+      categories: categories,
+    });
+  } else {
+    addDoc(collection(db, "Users", uid, "NotificationTriggers"), {
+      name: name,
+      devices: deviceIds,
+      categories: categories,
+    });
+}
 }
