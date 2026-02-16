@@ -149,7 +149,7 @@ export async function GetNotifications(userId: string) {
   }));
 }
 
-async function DeleteCollection(path: string) {
+export async function DeleteCollection(path: string) {
   const col = collection(db, path);
   const snap = await getDocs(col);
   snap.forEach((doc) => {
