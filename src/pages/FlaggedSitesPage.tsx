@@ -2,7 +2,7 @@
 // STUB
 import { useEffect, useState } from "react";
 import { onAuthStateChanged } from "firebase/auth";
-import { auth, GetCategorizations } from "../utils/firestore";
+import { auth, GetCategorizations, GetOverrides } from "../utils/firestore";
 import { useNavigate } from "react-router";
 import type { Categorization } from "../utils/models";
 import SiteModal from "../components/SiteModal";
@@ -32,7 +32,6 @@ function FlaggedSites() {
       if (!userId) return;
 
       GetCategorizations().then((data) => {
-        console.log(data);
         const flagged = data
           .filter((cat) => cat.data.isFlagged === true)
           .map((cat) => ({
@@ -42,6 +41,18 @@ function FlaggedSites() {
           }));
         console.log(flagged);
         setFlaggedSites(flagged);
+      });
+
+      GetOverrides(userId).then((data) => {
+        const flagged = data
+          .filter((override) => override.data.flaggedFor.length > 0)
+          .map((override) => ({
+            siteUrl: override.id,
+            categories: override.data.categories,
+            isFlagged: true,
+          }));
+        console.log("flagged overrides", flagged);
+        setFlaggedSites((prev) => [...prev, ...flagged]);
       });
 
       // get overrides that are flagged
@@ -59,7 +70,6 @@ function FlaggedSites() {
         {flaggedSites.map((site) => (
           <li key={site.siteUrl}>
             <SiteModal url={site.siteUrl} userId={userId} />
-            <FlagIcon htmlColor="red" />
           </li>
         ))}
       </ul>

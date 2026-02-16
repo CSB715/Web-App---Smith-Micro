@@ -140,6 +140,15 @@ export async function GetOverride(userId: string, url: string) {
   return null;
 }
 
+export async function GetOverrides(userId: string) {
+  const overridesCol = collection(db, "Users", userId, "Overrides");
+  const overridesSnap = await getDocs(overridesCol);
+  return overridesSnap.docs.map((doc) => ({
+    id: doc.id,
+    data: doc.data(),
+  }));
+}
+
 export async function WriteOverride(
   userId: string,
   displayURL: string,
