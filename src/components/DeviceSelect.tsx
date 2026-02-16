@@ -54,7 +54,7 @@ export default function DeviceSelect({
             </li>
           );
         }}
-        renderInput={(params) => <TextField {...params} />}
+        renderInput={(params) => <TextField {...params} placeholder="Select Devices..."/>}
       />
     </>
   );

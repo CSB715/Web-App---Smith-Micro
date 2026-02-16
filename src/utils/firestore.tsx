@@ -167,7 +167,7 @@ export async function GetNotifications(userId: string) {
   }));
 }
 
-async function DeleteCollection(path: string) {
+export async function DeleteCollection(path: string) {
   const col = collection(db, path);
   const snap = await getDocs(col);
   snap.forEach((doc) => {
@@ -251,10 +251,26 @@ export function CreateNotificationTrigger(
   name: string,
   deviceIds: string[],
   categories: string[],
+  sites: string[],
+  alertType: string,
+  notifID: string
 ) {
-  addDoc(collection(db, "Users", uid, "NotificationTriggers"), {
-    name: name,
-    devices: deviceIds,
-    categories: categories,
-  });
+  const docObj = (alertType === "Category") ? {
+                                                name: name,
+                                                devices: deviceIds,
+                                                categories: categories,
+                                              }
+                                              : {
+                                                name: name,
+                                                devices: deviceIds,
+                                                sites: sites,
+                                              };
+
+  if (notifID != "") {
+    // For cleanness remove existing notification
+    deleteDoc(doc(db, "Users", uid, "NotificationTriggers", notifID));
+  }
+    
+  addDoc(collection(db, "Users", uid, "NotificationTriggers"), docObj);
 }
+
