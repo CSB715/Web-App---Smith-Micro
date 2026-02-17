@@ -6,6 +6,7 @@ export type Device = {
 export type Visit = {
   siteUrl: string;
   startDateTime: Date;
+  endDateTime: Date;
 };
 
 export type Notification = {
