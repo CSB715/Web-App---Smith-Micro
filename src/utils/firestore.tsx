@@ -167,6 +167,15 @@ export async function GetNotifications(userId: string) {
   }));
 }
 
+export async function GetCategories() {
+  const categoriesCol = collection(db, "Categories");
+  const categoriesSnap = await getDocs(categoriesCol);
+  return categoriesSnap.docs.map((doc) => ({
+    id: doc.id,
+    data: doc.data(),
+  }));
+}
+
 export async function DeleteCollection(path: string) {
   const col = collection(db, path);
   const snap = await getDocs(col);
@@ -253,24 +262,25 @@ export function CreateNotificationTrigger(
   categories: string[],
   sites: string[],
   alertType: string,
-  notifID: string
+  notifID: string,
 ) {
-  const docObj = (alertType === "Category") ? {
-                                                name: name,
-                                                devices: deviceIds,
-                                                categories: categories,
-                                              }
-                                              : {
-                                                name: name,
-                                                devices: deviceIds,
-                                                sites: sites,
-                                              };
+  const docObj =
+    alertType === "Category"
+      ? {
+          name: name,
+          devices: deviceIds,
+          categories: categories,
+        }
+      : {
+          name: name,
+          devices: deviceIds,
+          sites: sites,
+        };
 
   if (notifID != "") {
     // For cleanness remove existing notification
     deleteDoc(doc(db, "Users", uid, "NotificationTriggers", notifID));
   }
-    
+
   addDoc(collection(db, "Users", uid, "NotificationTriggers"), docObj);
 }
-
