@@ -122,6 +122,15 @@ export async function GetCategorization(url: string) {
   }
 }
 
+export async function GetCategorizations() {
+  const catsCol = collection(db, "Categorization");
+  const catsSnap = await getDocs(catsCol);
+  return catsSnap.docs.map((doc) => ({
+    id: doc.id,
+    data: doc.data(),
+  }));
+}
+
 export async function GetOverride(userId: string, url: string) {
   const overridesCol = doc(db, "Users", userId, "Overrides", url);
   const overridesSnap = await getDoc(overridesCol);
@@ -129,6 +138,15 @@ export async function GetOverride(userId: string, url: string) {
     return { id: overridesSnap.id, data: overridesSnap.data() };
   }
   return null;
+}
+
+export async function GetOverrides(userId: string) {
+  const overridesCol = collection(db, "Users", userId, "Overrides");
+  const overridesSnap = await getDocs(overridesCol);
+  return overridesSnap.docs.map((doc) => ({
+    id: doc.id,
+    data: doc.data(),
+  }));
 }
 
 export async function WriteOverride(

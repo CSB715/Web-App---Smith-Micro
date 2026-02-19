@@ -16,11 +16,13 @@ export type Notification = {
   dateTime: Date;
 };
 
-type Categorization = {
+export type Categorization = {
+  siteUrl: string;
   categories: string[];
+  isFlagged: boolean;
 };
 
-type Override = {
+export type Override = {
   categories: string[];
   flaggedFor: string[];
 };
