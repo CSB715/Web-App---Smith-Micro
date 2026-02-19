@@ -54,6 +54,7 @@ export default function CreateNotificationTriggerPage() {
             setSites(notifSnap!.data.sites ? notifSnap!.data.sites : [] );
             setLimit_Hr(notifSnap!.data.time_limit_hr);
             setLimit_Min(notifSnap!.data.time_limit_min);
+            setAlertType(notifSnap!.data.categories ? "Category" : "Site");
             const nameInput = document.getElementById("newNotification") as HTMLInputElement;
             nameInput.value = notifSnap!.data.name;
           }
