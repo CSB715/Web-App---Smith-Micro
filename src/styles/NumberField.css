@@ -1,0 +1,17 @@
+.numberFieldGroup {
+  display: flex;
+  align-items: stretch;
+}
+
+.numberFieldInput {
+  flex: 1;
+}
+
+.numberFieldButtons {
+  display: flex;
+  flex-direction: column;
+}
+
+.numberFieldButton {
+  flex: 1;
+}

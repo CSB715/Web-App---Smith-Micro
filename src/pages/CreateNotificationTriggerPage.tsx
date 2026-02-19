@@ -11,6 +11,10 @@ import {
 import { doc, type DocumentData } from "firebase/firestore";
 import DeviceSelect from "../components/DeviceSelect";
 import { Autocomplete, Button, FormControl, RadioGroup, TextField, FormControlLabel, Radio } from "@mui/material";
+import { NumberField } from '@base-ui/react/number-field';
+import "../styles/NumberField.css";
+
+
 
 type AlertType = "Site" | "Category";
 
@@ -28,6 +32,7 @@ export default function CreateNotificationTriggerPage() {
   const [selectedDevices, setSelectedDevices] = useState<string[]>([]);
   const [ uid, setUid] = useState<string>("");
   const [alertType, setAlertType] = useState<AlertType>("Category");
+  const [limit, setLimit] = useState<number>(0);
 
   useEffect(() => {
     if (!hasMounted.current) {
@@ -44,6 +49,7 @@ export default function CreateNotificationTriggerPage() {
             setCategories(notifSnap!.data.categories ? notifSnap!.data.categories : [] );
             setSelectedDevices(notifSnap!.data.devices);
             setSites(notifSnap!.data.sites ? notifSnap!.data.sites : [] );
+            setLimit(notifSnap!.data.time_limit);
             const nameInput = document.getElementById("newNotification") as HTMLInputElement;
             nameInput.value = notifSnap!.data.name;
           }
@@ -79,7 +85,8 @@ export default function CreateNotificationTriggerPage() {
       categories,
       sites,
       alertType,
-      notifID
+      notifID,
+      limit
     );
     navigate("/settings/notifications");
   }
@@ -136,7 +143,22 @@ export default function CreateNotificationTriggerPage() {
           />
         )}
 
-        
+        <NumberField.Root 
+          defaultValue={0} 
+          min={0} 
+          max={24} 
+          value={limit} 
+          onValueChange={(value) => setLimit(value || 0)}
+        >
+          <NumberField.Group className="numberFieldGroup">
+            <NumberField.Input className="numberFieldInput" />
+            <div className="numberFieldButtons">
+              <NumberField.Increment className="numberFieldButton" />
+              <NumberField.Decrement className="numberFieldButton" />
+            </div>
+          </NumberField.Group>
+        </NumberField.Root>
+
 
         <div>
           <Button
@@ -150,9 +172,6 @@ export default function CreateNotificationTriggerPage() {
           </Button>
         </div>
       </FormControl>
-
-
-
 
     </>
   );
