@@ -7,6 +7,7 @@ import {
   GetDevices,
 } from "../utils/firestore";
 import DeviceSelect from "./DeviceSelect";
+import { type Override } from "../utils/models";
 
 const style = {
   position: "absolute",
@@ -35,10 +36,7 @@ export default function SiteModal({
   const handleSave = async () => {
     // setSaving(true);
     try {
-      await WriteOverride(userId, displayUrl, {
-        categories: overrides,
-        flaggedFor: [],
-      });
+      await WriteOverride(userId, displayUrl, override);
       setOpen(false);
     } catch (e) {
       console.error(e);
@@ -59,8 +57,12 @@ export default function SiteModal({
 
   function useSiteMetadata(userId: string, url: string, open: boolean) {
     const [categorization, setCategorization] = useState<string[]>([]);
-    const [overrides, setOverrides] = useState<string[]>([]);
+    const [override, setOverride] = useState<Override>({
+      categories: [],
+      flaggedFor: [],
+    });
     const [devices, setDevices] = useState<string[]>([]);
+    const [selectedDevices, setSelectedDevices] = useState<string[]>([]);
 
     useEffect(() => {
       if (!open) return;
@@ -71,30 +73,45 @@ export default function SiteModal({
         setCategorization(categories);
 
         const override = await GetOverride(userId, url);
-        setOverrides(
-          override?.data.categories ??
-            (categories[0] === "Unknown" ? [] : categories),
-        );
+        let normalized: Override;
+        if (override) {
+          normalized = {
+            categories: override.data.categories,
+            flaggedFor: override.data.flaggedFor,
+          };
+        } else {
+          normalized = {
+            categories: categories[0] === "Unknown" ? [] : categories,
+            flaggedFor: [],
+          };
+        }
+        setOverride(normalized);
         const devicesData = await GetDevices(userId);
         const devices: string[] = devicesData.map((d) => d.data.name);
-        /*const devices = devicesData.map((device) => ({
-          id: device.id,
-          name: device.data.name,
-        }));*/
         setDevices(devices);
       }
 
       load();
     }, [open, userId, url]);
 
-    return { categorization, overrides, setOverrides, devices };
+    return {
+      categorization,
+      override,
+      setOverride,
+      devices,
+      selectedDevices,
+      setSelectedDevices,
+    };
   }
 
-  const { categorization, overrides, setOverrides, devices } = useSiteMetadata(
-    userId,
-    displayUrl,
-    open,
-  );
+  const {
+    categorization,
+    override,
+    setOverride,
+    devices,
+    selectedDevices,
+    setSelectedDevices,
+  } = useSiteMetadata(userId, displayUrl, open);
 
   return (
     <>
@@ -135,18 +152,18 @@ export default function SiteModal({
           <p>My Categories:</p>
           <Autocomplete
             multiple
-            value={overrides}
+            value={override.categories}
             onChange={(_: any, newValue: Array<string>) => {
-              setOverrides(newValue);
+              setOverride({ ...override, categories: newValue });
             }}
             options={["Shopping", "Entertainment"]}
             renderInput={(params) => <TextField {...params} />}
           />
-          <p>Flagged For Devices</p>
+          <p>Flagged For Devices:</p>
           <DeviceSelect
             devices={devices}
-            selectedDevices={[]}
-            setSelectedDevices={() => {}}
+            selectedDevices={selectedDevices}
+            setSelectedDevices={setSelectedDevices}
           />
           <Box
             sx={{

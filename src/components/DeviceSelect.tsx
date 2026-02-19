@@ -27,9 +27,6 @@ export default function DeviceSelect({
     } else if (hasSelectAll && !hadSelectAll) {
       // "Select All" was just clicked, select all devices
       setSelectedDevices(["Select All", ...devices]);
-    } else if (!hasSelectAll && hadSelectAll) {
-      // "Select All" was unchecked, clear everything
-      setSelectedDevices([]);
     } else {
       // Individual device was unchecked, remove "Select All" and keep selected devices
       setSelectedDevices(filteredValue);
