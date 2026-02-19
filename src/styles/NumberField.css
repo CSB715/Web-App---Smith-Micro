@@ -10,8 +10,23 @@
 .numberFieldButtons {
   display: flex;
   flex-direction: column;
+  width: 32px;
 }
 
 .numberFieldButton {
   flex: 1;
+
+}
+
+.numberFieldRow {
+  display: flex;
+  gap: 16px; /* space between them */
+  align-items: flex-start; /* or center */
+}
+
+.numberFieldLabel {
+  display: block;
+  margin-bottom: 4px;
+  font-weight: 500;
+  font-size: 14px;
 }
