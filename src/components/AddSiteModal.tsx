@@ -2,6 +2,7 @@ import { useRef, useEffect } from "react";
 import "../styles/Modal.css";
 import { doc, DocumentSnapshot, getDoc } from "firebase/firestore";
 import { db } from "../utils/firestore";
+import { classifyURL } from "../utils/classifier";
 
 
 function closeModal() {
@@ -20,7 +21,8 @@ async function addSite(updateSites : (site : string) => void) {
     // get site Categorization if exists
     const docSnap : DocumentSnapshot = await getDoc(doc(db, "Categorization", newSiteInput.value));
     if (!docSnap.exists()) {
-        // TODO: query classifier to get results
+        const result = await classifyURL(newSiteInput.value);
+        // add result to database
     }
 
     // close this modal

@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import AddSiteModal from "../components/AddSiteModal";
 import SiteModal from "../components/SiteModal";
 import { useNavigate } from "react-router";
-import { onAuthStateChanged } from "firebase/auth";
+import { onAuthStateChanged } from "firebase/auth"; 
 
 function showModal(modalId: string) {
   const modal = document.getElementById(modalId);
