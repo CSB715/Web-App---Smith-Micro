@@ -122,6 +122,15 @@ export async function GetCategorization(url: string) {
   }
 }
 
+export async function GetCategorizations() {
+  const catsCol = collection(db, "Categorization");
+  const catsSnap = await getDocs(catsCol);
+  return catsSnap.docs.map((doc) => ({
+    id: doc.id,
+    data: doc.data(),
+  }));
+}
+
 export async function GetOverride(userId: string, url: string) {
   const overridesCol = doc(db, "Users", userId, "Overrides", url);
   const overridesSnap = await getDoc(overridesCol);
@@ -129,6 +138,15 @@ export async function GetOverride(userId: string, url: string) {
     return { id: overridesSnap.id, data: overridesSnap.data() };
   }
   return null;
+}
+
+export async function GetOverrides(userId: string) {
+  const overridesCol = collection(db, "Users", userId, "Overrides");
+  const overridesSnap = await getDocs(overridesCol);
+  return overridesSnap.docs.map((doc) => ({
+    id: doc.id,
+    data: doc.data(),
+  }));
 }
 
 export async function WriteOverride(
@@ -144,6 +162,15 @@ export async function GetNotifications(userId: string) {
   const notifsCol = collection(db, "Users", userId, "Notifications");
   const notifsSnap = await getDocs(notifsCol);
   return notifsSnap.docs.map((doc) => ({
+    id: doc.id,
+    data: doc.data(),
+  }));
+}
+
+export async function GetCategories() {
+  const categoriesCol = collection(db, "Categories");
+  const categoriesSnap = await getDocs(categoriesCol);
+  return categoriesSnap.docs.map((doc) => ({
     id: doc.id,
     data: doc.data(),
   }));
@@ -235,24 +262,31 @@ export function CreateNotificationTrigger(
   categories: string[],
   sites: string[],
   alertType: string,
-  notifID: string
+  notifID: string,
+  limit_hr: number,
+  limit_min: number,
 ) {
-  const docObj = (alertType === "Category") ? {
-                                                name: name,
-                                                devices: deviceIds,
-                                                categories: categories,
-                                              }
-                                              : {
-                                                name: name,
-                                                devices: deviceIds,
-                                                sites: sites,
-                                              };
+  const docObj =
+    alertType === "Category"
+      ? {
+          name: name,
+          devices: deviceIds,
+          categories: categories,
+          time_limit_hr: limit_hr,
+          time_limit_min: limit_min,
+        }
+      : {
+          name: name,
+          devices: deviceIds,
+          sites: sites,
+          time_limit_hr: limit_hr,
+          time_limit_min: limit_min,
+        };
 
   if (notifID != "") {
     // For cleanness remove existing notification
     deleteDoc(doc(db, "Users", uid, "NotificationTriggers", notifID));
   }
-    
+
   addDoc(collection(db, "Users", uid, "NotificationTriggers"), docObj);
 }
-
