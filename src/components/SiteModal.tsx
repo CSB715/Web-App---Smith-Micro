@@ -8,7 +8,8 @@ import {
   GetCategories,
 } from "../utils/firestore";
 import DeviceSelect from "./DeviceSelect";
-import { type Override } from "../utils/models";
+import { type Categorization, type Override } from "../utils/models";
+import { getDisplayUrl } from "../utils/urls";
 
 const style = {
   position: "absolute",
@@ -46,21 +47,17 @@ export default function SiteModal({
     }
   };
 
-  function getDisplayUrl(url: string) {
-    try {
-      return new URL(url).hostname;
-    } catch {
-      return url;
-    }
-  }
-
-  const displayUrl = getDisplayUrl(url);
+  const displayUrl = getDisplayUrl(url).substring(4); // remove www. for better display
 
   function useSiteMetadata(userId: string, url: string, open: boolean) {
-    const [categorization, setCategorization] = useState<string[]>([]);
+    const [categorization, setCategorization] = useState<Categorization>({
+      siteUrl: url,
+      category: [],
+      is_flagged: false,
+    });
     const [override, setOverride] = useState<Override>({
-      categories: [],
-      flaggedFor: [],
+      category: [],
+      flagged_for: [],
     });
     const [devices, setDevices] = useState<string[]>([]);
     const [selectedDevices, setSelectedDevices] = useState<string[]>([]);
@@ -70,21 +67,25 @@ export default function SiteModal({
       if (!open) return;
 
       async function load() {
-        const cat = await GetCategorization(url);
-        const cats = cat?.data.categories ?? ["Unknown"];
-        setCategorization(cats);
+        const catData = await GetCategorization(url);
+        const cat = {
+          siteUrl: url,
+          category: catData?.data.category ?? ["Unknown"],
+          is_flagged: catData?.data.is_flagged ?? false,
+        };
+        setCategorization(cat);
 
         const override = await GetOverride(userId, url);
         let normalized: Override;
         if (override) {
           normalized = {
-            categories: override.data.categories,
-            flaggedFor: override.data.flaggedFor,
+            category: override.data.category,
+            flagged_for: override.data.flagged_for,
           };
         } else {
           normalized = {
-            categories: cats[0] === "Unknown" ? [] : cats,
-            flaggedFor: [],
+            category: cat.category[0] === "Unknown" ? [] : cat.category,
+            flagged_for: [],
           };
         }
         setOverride(normalized);
@@ -94,6 +95,7 @@ export default function SiteModal({
         const categoriesData = await GetCategories();
         const categories: string[] = categoriesData.map((c) => c.data.label);
         setCategories(categories);
+        setSelectedDevices(normalized.flagged_for);
       }
 
       load();
@@ -152,16 +154,16 @@ export default function SiteModal({
           <Autocomplete
             multiple
             disabled
-            value={categorization}
+            value={categorization.category}
             options={categories}
             renderInput={(params) => <TextField {...params} />}
           />
           <p>My Categories:</p>
           <Autocomplete
             multiple
-            value={override.categories}
+            value={override.category}
             onChange={(_: any, newValue: Array<string>) => {
-              setOverride({ ...override, categories: newValue });
+              setOverride({ ...override, category: newValue });
             }}
             options={categories}
             renderInput={(params) => <TextField {...params} />}
