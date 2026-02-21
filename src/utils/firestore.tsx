@@ -253,17 +253,23 @@ export function CreateNotificationTrigger(
   categories: string[],
   sites: string[],
   alertType: string,
-  notifID: string
+  notifID: string,
+  limit_hr: number,
+  limit_min: number
 ) {
   const docObj = (alertType === "Category") ? {
                                                 name: name,
                                                 devices: deviceIds,
                                                 categories: categories,
+                                                time_limit_hr: limit_hr,
+                                                time_limit_min: limit_min
                                               }
                                               : {
                                                 name: name,
                                                 devices: deviceIds,
                                                 sites: sites,
+                                                time_limit_hr: limit_hr,
+                                                time_limit_min: limit_min
                                               };
 
   if (notifID != "") {
