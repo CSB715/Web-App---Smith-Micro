@@ -54,6 +54,7 @@ function History() {
       id: v.id,
       siteUrl: v.data.siteUrl,
       startDateTime: new Date(v.data.startDateTime),
+      endDateTime: new Date(v.data.endDateTime),
     }));
 
     setVisits(sortVisitsByDate(groupVisitsByDate(normalizedVisits)));

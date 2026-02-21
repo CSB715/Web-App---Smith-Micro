@@ -1,6 +1,6 @@
 import { Button, Modal, Box, TextField, Autocomplete } from "@mui/material";
 import { useEffect, useState } from "react";
-import { WriteOverride, GetDevices } from "../utils/firestore";
+import { WriteOverride, GetDevices, GetCategories } from "../utils/firestore";
 import { type Override } from "../utils/models";
 
 const style = {
@@ -37,10 +37,11 @@ export default function AddFlaggedSiteModal({ userId }: { userId: string }) {
     const [categories, setCategories] = useState<string[]>([]);
     const [url, setUrl] = useState("");
     const [override, setOverride] = useState<Override>({
-      categories: [],
-      flaggedFor: [],
+      category: [],
+      flagged_for: [],
     });
     const [devices, setDevices] = useState<string[]>([]);
+    const [allCategories, setAllCategories] = useState<string[]>([]);
 
     useEffect(() => {
       if (!open) return;
@@ -49,6 +50,9 @@ export default function AddFlaggedSiteModal({ userId }: { userId: string }) {
         const devicesData = await GetDevices(userId);
         const devices: string[] = devicesData.map((d) => d.data.name);
         setDevices(devices);
+        const categoriesData = await GetCategories();
+        const allCategories: string[] = categoriesData.map((c) => c.data.label);
+        setAllCategories(allCategories);
       }
 
       load();
@@ -57,7 +61,7 @@ export default function AddFlaggedSiteModal({ userId }: { userId: string }) {
     useEffect(() => {
       if (!open) return;
 
-      setOverride({ categories: categories, flaggedFor: devices });
+      setOverride({ category: categories, flagged_for: devices });
     }, [categories]);
 
     return {
@@ -66,13 +70,12 @@ export default function AddFlaggedSiteModal({ userId }: { userId: string }) {
       url,
       setUrl,
       override,
+      allCategories,
     };
   }
 
-  const { categories, setCategories, url, setUrl, override } = useData(
-    userId,
-    open,
-  );
+  const { categories, setCategories, url, setUrl, override, allCategories } =
+    useData(userId, open);
 
   return (
     <>
@@ -112,7 +115,7 @@ export default function AddFlaggedSiteModal({ userId }: { userId: string }) {
             onChange={(_: any, newValue: Array<string>) => {
               setCategories(newValue);
             }}
-            options={["Shopping", "Entertainment"]}
+            options={allCategories}
             renderInput={(params) => <TextField {...params} />}
           />
           <Button onClick={handleSave}>Save</Button>
