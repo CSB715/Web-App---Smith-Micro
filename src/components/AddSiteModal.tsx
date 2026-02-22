@@ -21,12 +21,12 @@ async function addSite(updateSites : (site : string) => void) {
     // get site Categorization if exists
     const docSnap : DocumentSnapshot = await getDoc(doc(db, "Categorization", newSiteInput.value));
     if (!docSnap.exists()) {
-        const result = await classifyURL(newSiteInput.value);
-        // add result to database
+        classifyURL(newSiteInput.value);
     }
 
     // close this modal
     closeModal();
+    // open site modal
 }
 
 type Props = {
