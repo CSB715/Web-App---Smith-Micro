@@ -6,6 +6,7 @@ export type Device = {
 export type Visit = {
   siteUrl: string;
   startDateTime: Date;
+  endDateTime: Date;
 };
 
 export type Notification = {
@@ -16,11 +17,13 @@ export type Notification = {
   dateTime: Date;
 };
 
-type Categorization = {
-  categories: string[];
+export type Categorization = {
+  siteUrl: string;
+  category: string[];
+  is_flagged: boolean;
 };
 
-type Override = {
-  categories: string[];
-  flaggedFor: string[];
+export type Override = {
+  category: string[];
+  flagged_for: string[];
 };

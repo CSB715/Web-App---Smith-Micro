@@ -5,9 +5,11 @@ import {
   GetOverride,
   WriteOverride,
   GetDevices,
+  GetCategories,
 } from "../utils/firestore";
 import DeviceSelect from "./DeviceSelect";
-import { type Device } from "../utils/models";
+import { type Categorization, type Override } from "../utils/models";
+import { getDisplayUrl } from "../utils/urls";
 
 const style = {
   position: "absolute",
@@ -31,71 +33,94 @@ export default function SiteModal({
   const [open, setOpen] = useState(false);
   const handleOpen = () => setOpen(true);
   const handleClose = () => setOpen(false);
-  const [saving, setSaving] = useState(false);
+  // const [saving, setSaving] = useState(false);
 
   const handleSave = async () => {
-    setSaving(true);
+    // setSaving(true);
     try {
-      await WriteOverride(userId, displayUrl, {
-        categories: overrides,
-        flaggedFor: [],
-      });
+      await WriteOverride(userId, displayUrl, override);
       setOpen(false);
     } catch (e) {
       console.error(e);
     } finally {
-      setSaving(false);
+      // setSaving(false);
     }
   };
 
-  function getDisplayUrl(url: string) {
-    try {
-      return new URL(url).hostname;
-    } catch {
-      return url;
-    }
-  }
-
-  const displayUrl = getDisplayUrl(url);
+  const displayUrl = getDisplayUrl(url).substring(4); // remove www. for better display
 
   function useSiteMetadata(userId: string, url: string, open: boolean) {
-    const [categorization, setCategorization] = useState<string[]>([]);
-    const [overrides, setOverrides] = useState<string[]>([]);
+    const [categorization, setCategorization] = useState<Categorization>({
+      siteUrl: url,
+      category: [],
+      is_flagged: false,
+    });
+    const [override, setOverride] = useState<Override>({
+      category: [],
+      flagged_for: [],
+    });
     const [devices, setDevices] = useState<string[]>([]);
+    const [selectedDevices, setSelectedDevices] = useState<string[]>([]);
+    const [categories, setCategories] = useState<string[]>([]);
 
     useEffect(() => {
       if (!open) return;
 
       async function load() {
-        const cat = await GetCategorization(url);
-        const categories = cat?.data.categories ?? ["Unknown"];
-        setCategorization(categories);
+        const catData = await GetCategorization(url);
+        const cat = {
+          siteUrl: url,
+          category: catData?.data.category ?? ["Unknown"],
+          is_flagged: catData?.data.is_flagged ?? false,
+        };
+        setCategorization(cat);
 
         const override = await GetOverride(userId, url);
-        setOverrides(
-          override?.data.categories ??
-            (categories[0] === "Unknown" ? [] : categories),
-        );
+        let normalized: Override;
+        if (override) {
+          normalized = {
+            category: override.data.category,
+            flagged_for: override.data.flagged_for,
+          };
+        } else {
+          normalized = {
+            category: cat.category[0] === "Unknown" ? [] : cat.category,
+            flagged_for: [],
+          };
+        }
+        setOverride(normalized);
         const devicesData = await GetDevices(userId);
         const devices: string[] = devicesData.map((d) => d.data.name);
-        /*const devices = devicesData.map((device) => ({
-          id: device.id,
-          name: device.data.name,
-        }));*/
         setDevices(devices);
+        const categoriesData = await GetCategories();
+        const categories: string[] = categoriesData.map((c) => c.data.label);
+        setCategories(categories);
+        setSelectedDevices(normalized.flagged_for);
       }
 
       load();
     }, [open, userId, url]);
 
-    return { categorization, overrides, setOverrides, devices };
+    return {
+      categorization,
+      override,
+      setOverride,
+      devices,
+      selectedDevices,
+      setSelectedDevices,
+      categories,
+    };
   }
 
-  const { categorization, overrides, setOverrides, devices } = useSiteMetadata(
-    userId,
-    displayUrl,
-    open,
-  );
+  const {
+    categorization,
+    override,
+    setOverride,
+    devices,
+    selectedDevices,
+    setSelectedDevices,
+    categories,
+  } = useSiteMetadata(userId, displayUrl, open);
 
   return (
     <>
@@ -129,25 +154,25 @@ export default function SiteModal({
           <Autocomplete
             multiple
             disabled
-            value={categorization}
-            options={["Shopping", "Entertainment"]}
+            value={categorization.category}
+            options={categories}
             renderInput={(params) => <TextField {...params} />}
           />
           <p>My Categories:</p>
           <Autocomplete
             multiple
-            value={overrides}
+            value={override.category}
             onChange={(_: any, newValue: Array<string>) => {
-              setOverrides(newValue);
+              setOverride({ ...override, category: newValue });
             }}
-            options={["Shopping", "Entertainment"]}
+            options={categories}
             renderInput={(params) => <TextField {...params} />}
           />
-          <p>Flagged For Devices</p>
+          <p>Flagged For Devices:</p>
           <DeviceSelect
             devices={devices}
-            selectedDevices={[]}
-            setSelectedDevices={() => {}}
+            selectedDevices={selectedDevices}
+            setSelectedDevices={setSelectedDevices}
           />
           <Box
             sx={{

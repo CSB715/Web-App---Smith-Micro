@@ -2,7 +2,7 @@ import type { DocumentData } from "firebase/firestore";
 import { useRef } from "react";
 import { showErrorModal } from "./ErrorAlert";
 import { doc, deleteDoc } from "firebase/firestore";
-import { db, auth, GetUserDevices } from "../utils/firestore";
+import { db, auth, GetUserDevices, DeleteCollection } from "../utils/firestore";
 import "../styles/Modal.css";
 
 
@@ -19,17 +19,19 @@ function closeModal() {
 function deleteDevice(currDevice : DocumentData, updateDevices : (data: Array<DocumentData>) => void) {
     const docRef = doc(db, "Users", auth.currentUser!.uid, "Devices", currDevice.id);
 
-    deleteDoc(docRef)
-    .then(async () => {
-        closeModal()
-        GetUserDevices(doc(db, "Users", auth.currentUser!.uid)).then((docArr) => {
-            updateDevices(docArr)
+    DeleteCollection(docRef.path + "/Visits").then(() => {
+        deleteDoc(docRef)
+        .then(async () => {
+            closeModal()
+            GetUserDevices(doc(db, "Users", auth.currentUser!.uid)).then((docArr) => {
+                updateDevices(docArr)
+            });
+        })
+        .catch((error) => {
+            console.error("Error removing device: ", error);
+            closeModal()
+            showErrorModal();                // show error modal
         });
-    })
-    .catch((error) => {
-        console.error("Error removing device: ", error);
-        closeModal()
-        showErrorModal();                // show error modal
     });
 }
 
