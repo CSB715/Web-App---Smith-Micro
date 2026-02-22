@@ -12,28 +12,31 @@ function closeModal() {
     newSiteInput.value = ""
 }
 
-async function addSite(updateSites : (site : string) => void) {
+async function addSite(showThisModal : (modalId : string) => void) {
 
     const newSiteInput = document.getElementById("newSite") as HTMLInputElement;
-
-    updateSites(newSiteInput.value);
+    const url = newSiteInput.value;
 
     // get site Categorization if exists
-    const docSnap : DocumentSnapshot = await getDoc(doc(db, "Categorization", newSiteInput.value));
+    let docSnap : DocumentSnapshot = await getDoc(doc(db, "Categorization", url));
     if (!docSnap.exists()) {
-        classifyURL(newSiteInput.value);
+        console.log("No categorization found, classifying...");
+        classifyURL(url);
+        // at this point, the site should be in the database
+        docSnap = await getDoc(doc(db, "Categorization", url));
     }
 
     // close this modal
     closeModal();
     // open site modal
+    showThisModal(url);
 }
 
 type Props = {
-    updateSites : (site : string) => void
+    showThisModal : (modalId : string) => void
 }
 
-export default function AddSiteModal( { updateSites } : Props) {
+export default function AddSiteModal( { showThisModal } : Props) {
     const overlayRef = useRef<HTMLDivElement | null>(null);
 
     useEffect(() => {
@@ -42,7 +45,7 @@ export default function AddSiteModal( { updateSites } : Props) {
         newSiteInput.addEventListener("keypress", function(event) {
             if (event.key === "Enter") {
                 event.preventDefault();
-                addSite(updateSites);
+                addSite(showThisModal);
             }
         });
     }, []);
@@ -59,7 +62,7 @@ export default function AddSiteModal( { updateSites } : Props) {
                     <br/>
                     <div>
                         <button id="cancelAddSite" onClick={() => closeModal()}>Cancel</button>
-                        <button id="confirmAddSite" onClick={() => addSite(updateSites)}>Confirm</button>
+                        <button id="confirmAddSite" onClick={() => addSite(showThisModal)}>Confirm</button>
                     </div>
                 </div>
             </div>

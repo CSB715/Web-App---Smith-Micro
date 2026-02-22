@@ -155,7 +155,9 @@ export async function WriteOverride(
   overrides: any,
 ) {
   const overridesRef = doc(db, "Users", userId, "Overrides", displayURL);
-  await setDoc(overridesRef, overrides);
+  await setDoc(overridesRef, {
+    overrides : overrides
+  });
 }
 
 export async function GetNotifications(userId: string) {

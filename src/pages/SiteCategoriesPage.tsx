@@ -11,29 +11,38 @@ function showModal(modalId: string) {
   modal!.style.display = "block";
 }
 
+async function loadOverrides(uid: string) {
+  const userRef = await GetUserRef(uid);
+  const sitesArr = await GetUserOverrides(userRef);
+  const siteURLS = [];
+  for (const site of sitesArr.docs) {
+    siteURLS.push(site.id);
+  }
+  return siteURLS;
+}
+
 function SiteCategories() {
   const hasMounted = useRef(false);
   const navigate = useNavigate();
   const [sites, setSites] = useState<string[]>([]);
 
-  const updateSites: (site: string) => void = (site) => {
-    setSites([...sites, site]);
+  const showThisSiteModal = async (siteURL: string) => {
+    setSites(prev =>
+      prev.includes(siteURL) ? prev : [...prev, siteURL]
+    );
   };
 
   useEffect(() => {
+    console.log("sites: ", sites);
+  }, [sites]);
+
+
+  useEffect(() => {
     if (!hasMounted.current) {
-      onAuthStateChanged(auth, (user) => {
+      onAuthStateChanged(auth, async (user) => {
         if (user) {
-          console.log("User signed in:", user.uid);
-          GetUserRef(user.uid).then((userRef) => {
-            GetUserOverrides(userRef).then((sitesArr) => {
-              const siteURLS = [];
-              for (const site of sitesArr.docs) {
-                siteURLS.push(site.id);
-              }
-              setSites(siteURLS);
-            });
-          });
+          const siteURLS = await loadOverrides(user.uid);
+          setSites(siteURLS);
         } else {
           console.log("no user currently signed in");
           navigate("/login", { replace: true });
@@ -57,12 +66,12 @@ function SiteCategories() {
           {site && auth.currentUser ? (
             <SiteModal url={site} userId={auth.currentUser.uid} />
           ) : (
-            <p>Unhappiness...</p>
+            <p>...</p>
           )}
         </div>
       ))}
 
-      <AddSiteModal updateSites={updateSites} />
+      <AddSiteModal showThisModal={showThisSiteModal} />
     </>
   );
 }
