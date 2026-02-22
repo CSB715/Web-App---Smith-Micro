@@ -15,7 +15,7 @@ import {
   type DocumentData,
   DocumentSnapshot,
 } from "firebase/firestore";
-import { onAuthStateChanged } from "firebase/auth";
+import { onAuthStateChanged, sendPasswordResetEmail} from "firebase/auth";
 import ErrorAlert from "../components/ErrorAlert";
 import PasswordResetAlert from "../components/PasswordResetAlert";
 import DeleteAccountModal from "../components/DeleteAccountModal";
@@ -24,6 +24,7 @@ import AddEmailModal from "../components/AddEmailModal";
 import RenameDeviceModal from "../components/RenameDeviceModal";
 import DeleteDeviceModal from "../components/DeleteDeviceModal";
 import "../styles/Page.css";
+
 
 function Account() {
   const hasMounted = useRef(false);
@@ -34,6 +35,7 @@ function Account() {
   const [devices, setDevices] = useState<Array<DocumentData>>([]);
   const [currDevice, setCurrDevice] = useState<DocumentData | null>(null);
   const [isAccount, setIsAccount] = useState<boolean>(false);
+  const [lastResetEmailDateTime, setLastResetEmailDateTime] = useState<number | null>(null);
 
   const updateUserData: (data: UserData) => void = (data) => {
     setUserData(data);
@@ -97,11 +99,21 @@ function Account() {
     });
   }
 
-  function handleResetPassword() {
-    showModal("resetPasswordAlert");
-
-    // TODO: trigger password reset email
+  async function handleResetPassword() {
+    try {
+        if(lastResetEmailDateTime && new Date().getTime() - lastResetEmailDateTime < 120000) {
+            const secondsLeft = Math.ceil((120000 - (new Date().getTime() - lastResetEmailDateTime)) / 1000);
+            alert(`Please wait ${secondsLeft} seconds before sending another password reset email.`);
+            return;
+        }
+        await sendPasswordResetEmail(auth, auth.currentUser!.email!);
+        setLastResetEmailDateTime(new Date().getTime());
+        showModal("resetPasswordAlert");
+    } catch (error: any) {
+        alert(`Error: ${error.message}`);
+    }
   }
+
 
   return (
     <>

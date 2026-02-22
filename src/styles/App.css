@@ -60,3 +60,9 @@ body,
   box-sizing: border-box;
   height: auto;
 }
+
+ /* Override for full-width pages */
+  .app-container.full-width {
+    width: 100%;
+    max-width: none;
+  }
