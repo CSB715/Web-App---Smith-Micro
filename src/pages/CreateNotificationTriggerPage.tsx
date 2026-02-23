@@ -7,6 +7,7 @@ import {
   auth,
   CreateNotificationTrigger,
   GetDevices,
+  GetCategoriesArray,
 } from "../utils/firestore";
 import { doc, type DocumentData } from "firebase/firestore";
 import DeviceSelect from "../components/DeviceSelect";
@@ -19,6 +20,8 @@ import "../styles/NumberField.css";
 
 
 type AlertType = "Site" | "Category";
+
+const CATEGORY_ARR = await GetCategoriesArray();
 
 export default function CreateNotificationTriggerPage() {
   const notifID  = useLocation().state ? (useLocation().state as { notifID: string }).notifID : "";
@@ -131,7 +134,7 @@ export default function CreateNotificationTriggerPage() {
             onChange={(_: any, newValue: Array<string>) => {
               setCategories(newValue);
             }}
-            options={["Shopping", "Entertainment"]}
+            options={CATEGORY_ARR}
             renderInput={(params) => <TextField {...params} placeholder="Pick categories"/>}
           />
         )}

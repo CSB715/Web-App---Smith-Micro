@@ -155,7 +155,9 @@ export async function WriteOverride(
   overrides: any,
 ) {
   const overridesRef = doc(db, "Users", userId, "Overrides", displayURL);
-  await setDoc(overridesRef, overrides);
+  await setDoc(overridesRef, {
+    overrides : overrides
+  });
 }
 
 export async function GetNotifications(userId: string) {
@@ -289,4 +291,22 @@ export function CreateNotificationTrigger(
   }
 
   addDoc(collection(db, "Users", uid, "NotificationTriggers"), docObj);
+}
+
+export async function AddNewClassification(url : string, category : string[], is_flagged : boolean) {
+  await setDoc(doc(db, "Categorization_Test", url), {
+    category: category,
+    is_flagged: is_flagged,
+    url : url
+  });
+  console.log(`Added classification for ${url} with category ${category} and flagged status ${is_flagged}`);
+}
+
+export async function GetCategoriesArray() {
+  const categories = await GetCategories();
+  const categoryArr: string[] = [];
+  categories.forEach((cat) => {
+    categoryArr.push(cat.data.label);
+  });
+  return categoryArr;
 }
