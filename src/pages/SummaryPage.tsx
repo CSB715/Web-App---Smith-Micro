@@ -173,8 +173,7 @@ function Summary() {
               {category}: {(time / (1000 * 60 * 60)).toFixed(2)} hrs
               {time < timePerCategoryPrev[category] ? (
                 <ArrowUpwardIcon />
-              ) : timePerCategoryCurr[category] >
-                timePerCategoryPrev[category] ? (
+              ) : time > timePerCategoryPrev[category] ? (
                 <ArrowDownwardIcon />
               ) : null}
             </li>
