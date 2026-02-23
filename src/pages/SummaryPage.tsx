@@ -1,4 +1,4 @@
-import { Box } from "@mui/material";
+import { Box, ToggleButton, ToggleButtonGroup } from "@mui/material";
 import { onAuthStateChanged } from "firebase/auth";
 import { useEffect, useState } from "react";
 import {
@@ -10,10 +10,13 @@ import {
 import { useNavigate } from "react-router";
 import { type Categorization, type Visit } from "../utils/models";
 import { getDisplayUrl } from "../utils/urls";
+import ArrowUpwardIcon from "@mui/icons-material/ArrowUpward";
+import ArrowDownwardIcon from "@mui/icons-material/ArrowDownward";
 
 function Summary() {
   const navigate = useNavigate();
   const [userId, setUserId] = useState<string>("");
+  const [timeFrame, setTimeFrame] = useState<7 | 30 | 90>(7);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
@@ -28,10 +31,14 @@ function Summary() {
   }, [navigate]);
 
   function useData() {
-    const [timePerCategory, setTimePerCategory] = useState<
+    const [timePerCategoryCurr, setTimePerCategoryCurr] = useState<
+      Record<string, number>
+    >({});
+    const [timePerCategoryPrev, setTimePerCategoryPrev] = useState<
       Record<string, number>
     >({});
     const [timePerSite, setTimePerSite] = useState<Record<string, number>>({});
+    const [newSites, setNewSites] = useState<Set<string>>(new Set());
 
     useEffect(() => {
       if (!userId) return;
@@ -53,8 +60,14 @@ function Summary() {
           endDateTime: new Date(v.data.endDateTime),
         }));
 
-        const timePerCategory: Record<string, number> = {};
+        const timePerCategoryCurr: Record<string, number> = {};
+        const timePerCategoryPrev: Record<string, number> = {};
         const timePerSite: Record<string, number> = {};
+        const sitesVisitedCurr = new Set<string>();
+        const sitesVisitedPrev = new Set<string>();
+
+        const cutoffDate = new Date();
+        cutoffDate.setDate(cutoffDate.getDate() - timeFrame);
 
         await Promise.all(
           normalizedVisits.map(async (visit) => {
@@ -82,25 +95,67 @@ function Summary() {
               };
             }
 
-            normalizedCategorization.category.forEach((cat) => {
-              timePerCategory[cat] = (timePerCategory[cat] || 0) + timeSpent;
-            });
+            if (visit.startDateTime >= cutoffDate) {
+              normalizedCategorization.category.forEach((cat) => {
+                timePerCategoryCurr[cat] =
+                  (timePerCategoryCurr[cat] || 0) + timeSpent;
+              });
+              sitesVisitedCurr.add(visit.siteUrl);
+            } else {
+              normalizedCategorization.category.forEach((cat) => {
+                timePerCategoryPrev[cat] =
+                  (timePerCategoryPrev[cat] || 0) + timeSpent;
+              });
+              sitesVisitedPrev.add(visit.siteUrl);
+            }
           }),
         );
-        setTimePerCategory(timePerCategory);
+        const newSites = new Set<string>(
+          [...sitesVisitedCurr].filter((x) => !sitesVisitedPrev.has(x)),
+        );
+        setTimePerCategoryCurr(timePerCategoryCurr);
+        setTimePerCategoryPrev(timePerCategoryPrev);
         setTimePerSite(timePerSite);
+        setNewSites(newSites);
       }
 
       load();
-    }, [userId]);
-    return { timePerCategory, timePerSite };
+    }, [userId, timeFrame]);
+    return { timePerCategoryCurr, timePerSite, timePerCategoryPrev, newSites };
   }
 
-  const { timePerCategory, timePerSite } = useData();
+  const { timePerCategoryCurr, timePerSite, timePerCategoryPrev, newSites } =
+    useData();
 
   return (
     <>
       <h1>Summary</h1>
+      <ToggleButtonGroup
+        value={timeFrame}
+        exclusive
+        onChange={(event, newTimeFrame) => setTimeFrame(newTimeFrame)}
+      >
+        <ToggleButton value={7}>7 Days</ToggleButton>
+        <ToggleButton value={30}>30 Days</ToggleButton>
+        <ToggleButton value={90}>90 Days</ToggleButton>
+      </ToggleButtonGroup>
+      <p>What's New</p>
+      <Box
+        sx={{
+          height: 300,
+          backgroundColor: "#f0f0f0",
+          borderRadius: 2,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        <ul style={{ listStyleType: "none", padding: 0, margin: 0 }}>
+          {Array.from(newSites).map((site) => (
+            <li key={site}>{site}</li>
+          ))}
+        </ul>
+      </Box>
       <p>Category Trends</p>
       <Box
         sx={{
@@ -113,9 +168,15 @@ function Summary() {
         }}
       >
         <ul style={{ listStyleType: "none", padding: 0, margin: 0 }}>
-          {Object.entries(timePerCategory).map(([category, time]) => (
+          {Object.entries(timePerCategoryCurr).map(([category, time]) => (
             <li key={category}>
               {category}: {(time / (1000 * 60 * 60)).toFixed(2)} hrs
+              {time < timePerCategoryPrev[category] ? (
+                <ArrowUpwardIcon />
+              ) : timePerCategoryCurr[category] >
+                timePerCategoryPrev[category] ? (
+                <ArrowDownwardIcon />
+              ) : null}
             </li>
           ))}
         </ul>
