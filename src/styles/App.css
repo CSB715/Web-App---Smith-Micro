@@ -1,0 +1,62 @@
+/* The following CSS was generated with Github Copilot with minor modifications */
+/* Ensure root fills the screen so background covers full height */
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+/* full-width background that shows on either side on large screens */
+.app-viewport {
+  min-height: 100vh;
+  width: 100%;
+  box-sizing: border-box;
+  background-color: #f4f7fb; /* subtle side background */
+  display: flex;
+  justify-content: center; /* centers .app-container horizontally */
+  align-items: flex-start; /* content starts at top */
+  padding: 24px 12px; /* vertical spacing and small mobile gutters */
+  overflow: auto;
+}
+
+/* centered content column */
+.app-container {
+  width: 100%;
+  height: auto;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  padding: 16px; /* inner gutter on mobile */
+  max-width: 100%; /* mobile: fill */
+  background: transparent; /* mobile: transparent so it feels full-bleed */
+  border-radius: 8px;
+  transition:
+    width 240ms ease,
+    padding 240ms ease,
+    background 240ms ease;
+  overflow: visible;
+}
+
+/* Desktop: one third of viewport, with its own surface so sides show the subtle background */
+@media (min-width: 1024px) {
+  .app-container {
+    width: 33.3333vw; /* central third of viewport */
+    max-width: 1200px; /* optional cap */
+    min-width: 360px; /* avoid too-narrow column on medium screens */
+    height: auto;
+    min-height: 90vh;
+    background: #ffffff; /* white content surface */
+    padding: 18px; /* more interior padding on desktop */
+    box-shadow: 0 6px 20px rgba(9, 30, 66, 0.06);
+  }
+}
+
+.app-container > * {
+  flex: 0 0 auto;
+  align-self: stretch;
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  height: auto;
+}
