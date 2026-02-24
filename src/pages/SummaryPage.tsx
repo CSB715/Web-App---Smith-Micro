@@ -55,7 +55,8 @@ function Summary() {
         );
 
         const normalizedVisits: Visit[] = visitsData.flat().map((v) => ({
-          siteUrl: getDisplayUrl(v.data.siteUrl).substring(4), // remove www. for better display
+          id: v.id,
+          siteUrl: getDisplayUrl(v.data.siteUrl).replace(/^www\./, ""), // remove www. for better display
           startDateTime: new Date(v.data.startDateTime),
           endDateTime: new Date(v.data.endDateTime),
         }));

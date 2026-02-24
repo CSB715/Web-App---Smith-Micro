@@ -47,7 +47,7 @@ export default function SiteModal({
     }
   };
 
-  const displayUrl = getDisplayUrl(url).substring(4); // remove www. for better display
+  const displayUrl = getDisplayUrl(url).replace(/^www\./, ""); // remove www. for better display
 
   function useSiteMetadata(userId: string, url: string, open: boolean) {
     const [categorization, setCategorization] = useState<Categorization>({
