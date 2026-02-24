@@ -133,7 +133,11 @@ function Summary() {
       <ToggleButtonGroup
         value={timeFrame}
         exclusive
-        onChange={(event, newTimeFrame) => setTimeFrame(newTimeFrame)}
+        onChange={(event, newTimeFrame) => {
+          if (newTimeFrame !== null) {
+            setTimeFrame(newTimeFrame);
+          }
+        }}
       >
         <ToggleButton value={7}>7 Days</ToggleButton>
         <ToggleButton value={30}>30 Days</ToggleButton>
