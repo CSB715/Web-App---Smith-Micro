@@ -4,6 +4,7 @@ export type Device = {
 };
 
 export type Visit = {
+  id: string;
   siteUrl: string;
   startDateTime: Date;
   endDateTime: Date;

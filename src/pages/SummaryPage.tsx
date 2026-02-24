@@ -55,7 +55,8 @@ function Summary() {
         );
 
         const normalizedVisits: Visit[] = visitsData.flat().map((v) => ({
-          siteUrl: getDisplayUrl(v.data.siteUrl).substring(4), // remove www. for better display
+          id: v.id,
+          siteUrl: getDisplayUrl(v.data.siteUrl).replace(/^www\./, ""), // remove www. for better display
           startDateTime: new Date(v.data.startDateTime),
           endDateTime: new Date(v.data.endDateTime),
         }));
@@ -133,7 +134,11 @@ function Summary() {
       <ToggleButtonGroup
         value={timeFrame}
         exclusive
-        onChange={(event, newTimeFrame) => setTimeFrame(newTimeFrame)}
+        onChange={(event, newTimeFrame) => {
+          if (newTimeFrame !== null) {
+            setTimeFrame(newTimeFrame);
+          }
+        }}
       >
         <ToggleButton value={7}>7 Days</ToggleButton>
         <ToggleButton value={30}>30 Days</ToggleButton>
