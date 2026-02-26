@@ -19,7 +19,8 @@ type FirestoreNotification = {
 
 function Notifications() {
   const navigate = useNavigate();
-  const [userId, setUserId] = useState<string>("");
+  const [userId, setUserId] = useState<string | null>(null);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
 
   function normalizeNotification(
     d: FirestoreNotification,
@@ -67,6 +68,7 @@ function Notifications() {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (user) {
         setUserId(user.uid);
+        setNotifications(useNotifications(user.uid));
       } else {
         navigate("/login", { replace: true });
       }
@@ -94,7 +96,7 @@ function Notifications() {
     return notifications;
   }
 
-  const notifications = useNotifications(userId);
+
 
   return (
     <>
@@ -110,7 +112,7 @@ function Notifications() {
               key={notification.id}
             >
               <li key={notification.id}>
-                <SiteModal url={notification.siteUrl} userId={userId} />
+                <SiteModal url={notification.siteUrl} userId={userId ? userId : ""} />
                 <p>
                   {getTimeDifferenceString(notification.dateTime)} ago on{" "}
                   {notification.deviceName}
