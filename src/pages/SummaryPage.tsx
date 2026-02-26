@@ -134,7 +134,7 @@ function Summary() {
       <ToggleButtonGroup
         value={timeFrame}
         exclusive
-        onChange={(event, newTimeFrame) => {
+        onChange={(_, newTimeFrame) => {
           if (newTimeFrame !== null) {
             setTimeFrame(newTimeFrame);
           }
