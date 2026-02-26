@@ -19,7 +19,7 @@ export default function AddFlaggedSiteModal({ userId }: { userId: string }) {
   const [open, setOpen] = useState(false);
   const handleOpen = () => setOpen(true);
   const handleClose = () => setOpen(false);
-  const [saving, setSaving] = useState(false);
+  const [_, setSaving] = useState(false);
 
   const handleSave = async () => {
     setSaving(true);
