@@ -20,6 +20,7 @@ type FirestoreNotification = {
 function Notifications() {
   const navigate = useNavigate();
   const [userId, setUserId] = useState<string>("");
+  const [notifications, setNotifications] = useState<Notification[]>([]);
 
   function normalizeNotification(
     d: FirestoreNotification,
@@ -71,7 +72,7 @@ function Notifications() {
         navigate("/login", { replace: true });
       }
     });
-
+    setNotifications(useNotifications(userId));
     return unsubscribe;
   }, [navigate]);
 
@@ -93,8 +94,6 @@ function Notifications() {
 
     return notifications;
   }
-
-  const notifications = useNotifications(userId);
 
   return (
     <>
