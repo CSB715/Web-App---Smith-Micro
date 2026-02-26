@@ -21,6 +21,7 @@ function Notifications() {
   const navigate = useNavigate();
   const [userId, setUserId] = useState<string | null>(null);
   const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [authReady, setAuthReady] = useState(false);
 
   function normalizeNotification(
     d: FirestoreNotification,
@@ -69,8 +70,10 @@ function Notifications() {
       if (user) {
         setUserId(user.uid);
         setNotifications(useNotifications(user.uid));
+        setAuthReady(true);
       } else {
         navigate("/login", { replace: true });
+        setAuthReady(true);
       }
     });
 
@@ -98,7 +101,7 @@ function Notifications() {
 
 
 
-  return (
+  if (authReady) return (
     <>
       <Box sx={{ paddingBottom: "72px" }}>
         <h1>Notification History</h1>
