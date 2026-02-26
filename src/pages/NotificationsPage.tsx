@@ -81,17 +81,17 @@ function getTimeDifferenceString(date: Date): string {
 }
 
 function Notifications() {
+  console.log("Notifications component rendered");
   const navigate = useNavigate();
   const [userId, setUserId] = useState<string | null>(null);
-  const [notifications, setNotifications] = useState<Notification[]>([]);
   const [authReady, setAuthReady] = useState(false);
 
   useEffect(() => {
+    console.log("checking auth state");
     const unsubscribe = onAuthStateChanged(auth, (user) => {
+      console.log("auth state changed:", user);
       if (user) {
         setUserId(user.uid);
-        const notifications = useNotifications(user.uid);
-        setNotifications(notifications);
         setAuthReady(true);
       } else {
         navigate("/login", { replace: true });
@@ -101,6 +101,8 @@ function Notifications() {
 
     return unsubscribe;
   }, [navigate]);
+
+  const notifications = useNotifications(userId || "");
 
 
   if (!authReady) return <p>Loading...</p>;
