@@ -1,6 +1,6 @@
 // Import the functions you need from the SDKs you need
 import { initializeApp, getApps } from "firebase/app";
-import { getAuth, createUserWithEmailAndPassword } from "firebase/auth";
+import { getAuth, createUserWithEmailAndPassword, type Auth } from "firebase/auth";
 import {
   doc,
   getDoc,
@@ -11,6 +11,7 @@ import {
   deleteDoc,
   type DocumentData,
   type DocumentReference,
+  type Firestore,
   getFirestore,
 } from "firebase/firestore";
 // TODO: Add SDKs for Firebase products that you want to use
@@ -30,25 +31,39 @@ const firebaseConfig = {
 };
 
 // Initialize Firebase
-const app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
-export const db = getFirestore(app);
-export const auth = getAuth(app);
+let db: Firestore;
+let auth: Auth;
+
+export function getDb(): Firestore {
+  if (!db) {
+    const app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
+    db = getFirestore(app);
+  }
+  return db;
+}
+
+export function getAuthInstance(): Auth {
+  if (!auth) {
+    const app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
+    auth = getAuth(app);
+  }
+  return auth;
+}
 
 /* Database Interaction Functions */
 
 export async function GetDoc(path: string) {
-  const docRef = doc(db, path);
+  const docRef = doc(getDb(), path);
   const docSnap = await getDoc(docRef);
   if (docSnap.exists()) {
     return { id: docSnap.id, data: docSnap.data() };
   } else {
-    console.log("No such document!");
     return null;
   }
 }
 
 export async function GetDocs(path: string) {
-  const colRef = collection(db, path);
+  const colRef = collection(getDb(), path);
   const colSnap = await getDocs(colRef);
   let objects: { id: string; data: DocumentData }[] = [];
   if (!colSnap.empty) {
@@ -57,18 +72,17 @@ export async function GetDocs(path: string) {
     });
     return objects;
   } else {
-    console.log("No documents found!");
     return [];
   }
 }
 
 export async function SetDoc(path: string, data: any) {
-  const docRef = doc(db, path);
+  const docRef = doc(getDb(), path);
   await setDoc(docRef, data);
 }
 
 export async function GetDevice(userId: string, deviceId: string) {
-  const deviceRef = doc(db, "Users", userId, "Devices", deviceId);
+  const deviceRef = doc(getDb(), "Users", userId, "Devices", deviceId);
   const deviceSnap = await getDoc(deviceRef);
   if (deviceSnap.exists()) {
     return { id: deviceSnap.id, data: deviceSnap.data() };
@@ -77,7 +91,7 @@ export async function GetDevice(userId: string, deviceId: string) {
 }
 
 export async function GetDevices(userId: string) {
-  const devicesCol = collection(db, "Users", userId, "Devices");
+  const devicesCol = collection(getDb(), "Users", userId, "Devices");
   try {
     const devicesSnap = await getDocs(devicesCol);
     const devicesArr = devicesSnap.docs.map((doc) => ({
@@ -86,14 +100,13 @@ export async function GetDevices(userId: string) {
     }));
     return devicesArr;
   } catch (error) {
-    console.error("GetDevices error:", error);
     throw error;
   }
 }
 
 export async function GetVisits(userId: string, deviceId: string) {
   const visitsCol = collection(
-    db,
+    getDb(),
     "Users",
     userId,
     "Devices",
@@ -109,7 +122,7 @@ export async function GetVisits(userId: string, deviceId: string) {
 }
 
 export async function GetCategorization(url: string) {
-  const catRef = doc(db, "Categorization", url);
+  const catRef = doc(getDb(), "Categorization", url);
   try {
     const catSnap = await getDoc(catRef);
     if (catSnap.exists()) {
@@ -123,7 +136,7 @@ export async function GetCategorization(url: string) {
 }
 
 export async function GetCategorizations() {
-  const catsCol = collection(db, "Categorization");
+  const catsCol = collection(getDb(), "Categorization");
   const catsSnap = await getDocs(catsCol);
   return catsSnap.docs.map((doc) => ({
     id: doc.id,
@@ -132,7 +145,7 @@ export async function GetCategorizations() {
 }
 
 export async function GetOverride(userId: string, url: string) {
-  const overridesCol = doc(db, "Users", userId, "Overrides", url);
+  const overridesCol = doc(getDb(), "Users", userId, "Overrides", url);
   const overridesSnap = await getDoc(overridesCol);
   if (overridesSnap.exists()) {
     return { id: overridesSnap.id, data: overridesSnap.data() };
@@ -141,7 +154,7 @@ export async function GetOverride(userId: string, url: string) {
 }
 
 export async function GetOverrides(userId: string) {
-  const overridesCol = collection(db, "Users", userId, "Overrides");
+  const overridesCol = collection(getDb(), "Users", userId, "Overrides");
   const overridesSnap = await getDocs(overridesCol);
   return overridesSnap.docs.map((doc) => ({
     id: doc.id,
@@ -154,14 +167,14 @@ export async function WriteOverride(
   displayURL: string,
   overrides: any,
 ) {
-  const overridesRef = doc(db, "Users", userId, "Overrides", displayURL);
+  const overridesRef = doc(getDb(), "Users", userId, "Overrides", displayURL);
   await setDoc(overridesRef, {
     overrides : overrides
   });
 }
 
 export async function GetNotifications(userId: string) {
-  const notifsCol = collection(db, "Users", userId, "Notifications");
+  const notifsCol = collection(getDb(), "Users", userId, "Notifications");
   const notifsSnap = await getDocs(notifsCol);
   return notifsSnap.docs.map((doc) => ({
     id: doc.id,
@@ -170,7 +183,7 @@ export async function GetNotifications(userId: string) {
 }
 
 export async function GetCategories() {
-  const categoriesCol = collection(db, "Categories");
+  const categoriesCol = collection(getDb(), "Categories");
   const categoriesSnap = await getDocs(categoriesCol);
   return categoriesSnap.docs.map((doc) => ({
     id: doc.id,
@@ -179,7 +192,7 @@ export async function GetCategories() {
 }
 
 export async function DeleteCollection(path: string) {
-  const col = collection(db, path);
+  const col = collection(getDb(), path);
   const snap = await getDocs(col);
   snap.forEach((doc) => {
     deleteDoc(doc.ref);
@@ -209,7 +222,7 @@ export async function GetUserOverrides(userRef: DocumentReference) {
 }
 
 export async function GetUserRef(uid: string) {
-  const userDoc = doc(db, "Users", uid);
+  const userDoc = doc(getDb(), "Users", uid);
   const userSnap = await getDoc(userDoc);
   return userSnap.ref;
 }
@@ -221,7 +234,7 @@ export async function CreateUser(
 ) {
   return createUserWithEmailAndPassword(auth, email, password).then(
     (userCredential) => {
-      const userDoc = doc(db, "Users", userCredential.user.uid);
+      const userDoc = doc(getDb(), "Users", userCredential.user.uid);
       return setDoc(userDoc, {
         emails: [email],
         phones: phone ? [phone] : [],
@@ -233,7 +246,7 @@ export async function CreateUser(
 }
 
 export async function DeleteUser(path: string) {
-  const userRef = doc(db, path);
+  const userRef = doc(getDb(), path);
   const devices: Array<DocumentData> = await GetUserDevices(userRef);
 
   for (const device of devices) {
@@ -252,7 +265,6 @@ export async function DeleteUser(path: string) {
 
   auth.currentUser?.delete().then(() => {
     if (auth.currentUser == null) {
-      console.log();
     }
   });
 }
@@ -287,14 +299,14 @@ export function CreateNotificationTrigger(
 
   if (notifID != "") {
     // For cleanness remove existing notification
-    deleteDoc(doc(db, "Users", uid, "NotificationTriggers", notifID));
+    deleteDoc(doc(getDb(), "Users", uid, "NotificationTriggers", notifID));
   }
 
-  addDoc(collection(db, "Users", uid, "NotificationTriggers"), docObj);
+  addDoc(collection(getDb(), "Users", uid, "NotificationTriggers"), docObj);
 }
 
 export async function AddNewClassification(url : string, category : string[], is_flagged : boolean) {
-  await setDoc(doc(db, "Categorization_Test", url), {
+  await setDoc(doc(getDb(), "Categorization_Test", url), {
     category: category,
     is_flagged: is_flagged,
     url : url

@@ -2,7 +2,7 @@ import { Box, ToggleButton, ToggleButtonGroup } from "@mui/material";
 import { onAuthStateChanged } from "firebase/auth";
 import { useEffect, useState } from "react";
 import {
-  auth,
+  getAuthInstance,
   GetCategorization,
   GetDevices,
   GetVisits,
@@ -19,7 +19,7 @@ function Summary() {
   const [timeFrame, setTimeFrame] = useState<7 | 30 | 90>(7);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
+    const unsubscribe = onAuthStateChanged(getAuthInstance(), (user) => {
       if (user) {
         setUserId(user.uid);
       } else {
@@ -134,7 +134,7 @@ function Summary() {
       <ToggleButtonGroup
         value={timeFrame}
         exclusive
-        onChange={(event, newTimeFrame) => {
+        onChange={(_, newTimeFrame) => {
           if (newTimeFrame !== null) {
             setTimeFrame(newTimeFrame);
           }

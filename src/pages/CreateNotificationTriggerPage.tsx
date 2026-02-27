@@ -3,8 +3,8 @@ import { useLocation, useNavigate } from "react-router";
 import { onAuthStateChanged } from "firebase/auth";
 import {
   GetDoc,
-  db,
-  auth,
+  getDb,
+  getAuthInstance,
   CreateNotificationTrigger,
   GetDevices,
   GetCategoriesArray,
@@ -17,13 +17,11 @@ import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import "../styles/NumberField.css";
 
-
-
 type AlertType = "Site" | "Category";
 
-const CATEGORY_ARR = await GetCategoriesArray();
-
 export default function CreateNotificationTriggerPage() {
+  let CATEGORY_ARR: string[] = [];
+  GetCategoriesArray().then((arr) => { CATEGORY_ARR = arr;});
   const notifID  = useLocation().state ? (useLocation().state as { notifID: string }).notifID : "";
   const hasMounted = useRef(false);
   const navigate = useNavigate();
@@ -42,13 +40,12 @@ export default function CreateNotificationTriggerPage() {
 
   useEffect(() => {
     if (!hasMounted.current) {
-      onAuthStateChanged(auth, async (user) => {
+      onAuthStateChanged(getAuthInstance(), async (user) => {
         if (user) {
-          console.log(notifID);
           // if we are passed an id, we edit that document, not create a new one
           if (notifID !== "") {
             // load selected devices and categories
-            const notifRef = doc(db, "Users", user.uid, "NotificationTriggers", notifID);
+            const notifRef = doc(getDb(), "Users", user.uid, "NotificationTriggers", notifID);
             const notifSnap = await GetDoc(notifRef.path);
 
             setName(notifSnap!.data.name);
@@ -65,7 +62,6 @@ export default function CreateNotificationTriggerPage() {
           setDevices(await GetDevices(user.uid));
           setUid(user.uid);
         } else {
-          console.log("no user currently signed in");
           navigate("/login", { replace: true });
         }
       });

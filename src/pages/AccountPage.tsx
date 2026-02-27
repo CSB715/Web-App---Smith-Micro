@@ -2,11 +2,11 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router";
 import {
-  db,
+  getDb,
   GetDoc,
   GetUserDevices,
   type UserData,
-  auth,
+  getAuthInstance,
 } from "../utils/firestore";
 import {
   doc,
@@ -45,10 +45,9 @@ function Account() {
 
   useEffect(() => {
     if (!hasMounted.current) {
-      onAuthStateChanged(auth, (user) => {
+      onAuthStateChanged(getAuthInstance(), (user) => {
         if (user) {
-          console.log(user.uid);
-          getDoc(doc(db, "Users", user.uid)).then((snap) => {
+          getDoc(doc(getDb(), "Users", user.uid)).then((snap) => {
             setUserSnap(snap);
             setUserData(snap.data() as UserData);
             GetUserDevices(snap.ref).then((deviceArr) => {
@@ -56,7 +55,6 @@ function Account() {
             });
           });
         } else {
-          console.log("no user currently signed in");
           setUserData(null);
           navigate("/login", { replace: true });
         }
@@ -107,13 +105,13 @@ function Account() {
     <>
       <h1 className="title">Account</h1>
       <hr className="divider" />
-      <button onClick={() => auth.signOut()}>Sign Out</button>
+      <button onClick={() => getAuthInstance().signOut()}>Sign Out</button>
 
       <div>
         <div style={{ display: "flex", alignItems: "center" }}>
           <span>
             <h3 style={{ marginBottom: "0" }}>Account Email</h3>
-            <p style={{ marginTop: "0" }}>{auth.currentUser?.email}</p>
+            <p style={{ marginTop: "0" }}>{getAuthInstance().currentUser?.email}</p>
           </span>
           <button
             style={{ marginLeft: "auto" }}
