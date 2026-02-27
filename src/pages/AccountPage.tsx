@@ -47,7 +47,6 @@ function Account() {
     if (!hasMounted.current) {
       onAuthStateChanged(getAuthInstance(), (user) => {
         if (user) {
-          console.log(user.uid);
           getDoc(doc(getDb(), "Users", user.uid)).then((snap) => {
             setUserSnap(snap);
             setUserData(snap.data() as UserData);
@@ -56,7 +55,6 @@ function Account() {
             });
           });
         } else {
-          console.log("no user currently signed in");
           setUserData(null);
           navigate("/login", { replace: true });
         }

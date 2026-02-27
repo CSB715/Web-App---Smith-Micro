@@ -87,7 +87,6 @@ export default function SignIn(props: { disableCustomTheme?: boolean }) {
     const password = data.get('password');
 
     signInWithEmailAndPassword(getAuthInstance(), email?.toString()!, password?.toString()!).then(() => {
-      console.log("signed in: " + getAuthInstance().currentUser!.uid);
       navigate("/")
 
     });
@@ -116,7 +115,6 @@ export default function SignIn(props: { disableCustomTheme?: boolean }) {
       setPasswordError(false);
       setPasswordErrorMessage('');
     }
-    console.log(isValid)
     return isValid;
   };
 

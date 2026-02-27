@@ -36,7 +36,6 @@ function FlaggedSites() {
             category: cat.data.category,
             is_flagged: cat.data.is_flagged,
           }));
-        console.log(flagged);
         setFlaggedSites(flagged);
       });
 
@@ -48,7 +47,6 @@ function FlaggedSites() {
             category: override.data.category,
             is_flagged: true,
           }));
-        console.log("flagged overrides", flagged);
         setFlaggedSites((prev) => [...prev, ...flagged]);
       });
 

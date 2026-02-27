@@ -32,10 +32,6 @@ function SiteCategories() {
     );
   };
 
-  useEffect(() => {
-    console.log("sites: ", sites);
-  }, [sites]);
-
 
   useEffect(() => {
     if (!hasMounted.current) {
@@ -44,7 +40,6 @@ function SiteCategories() {
           const siteURLS = await loadOverrides(user.uid);
           setSites(siteURLS);
         } else {
-          console.log("no user currently signed in");
           navigate("/login", { replace: true });
         }
       });

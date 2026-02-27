@@ -43,7 +43,6 @@ type Props = {
 function handleEnter(event: React.KeyboardEvent<HTMLInputElement>, currDevice: DocumentData, updateDevices: (data: Array<DocumentData>) => void) {
     if (event.key === "Enter") {
         event.preventDefault();
-        console.log(currDevice)
         renameDevice(currDevice!, updateDevices);
     }
 }

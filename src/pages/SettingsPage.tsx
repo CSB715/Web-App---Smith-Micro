@@ -13,9 +13,7 @@ function Settings() {
     if (!hasMounted.current) {
       onAuthStateChanged(getAuthInstance(), (user) => {
         if (user) {
-          console.log("User signed in:", user.uid);
         } else {
-          console.log("no user currently signed in");
           navigate("/login", { replace: true });
         }
       });

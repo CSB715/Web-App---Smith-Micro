@@ -15,7 +15,6 @@ import SignUp from "./mui-templates/sign-up/SignUp";
 import NavBar from "./components/NavBar";
 
 const App = () => {
-  console.log("App rendered");
   return (
     <>
       <div className="app-viewport">

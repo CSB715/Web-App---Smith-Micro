@@ -34,7 +34,6 @@ function NotificationSettings() {
             setNotifications(notifs);
           });
         } else {
-          console.log("no user currently signed in");
           navigate("/login", { replace: true });
         }
       });
