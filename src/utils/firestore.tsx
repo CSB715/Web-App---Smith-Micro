@@ -1,6 +1,6 @@
 // Import the functions you need from the SDKs you need
 import { initializeApp, getApps } from "firebase/app";
-import { getAuth, createUserWithEmailAndPassword } from "firebase/auth";
+import { getAuth, createUserWithEmailAndPassword, type Auth } from "firebase/auth";
 import {
   doc,
   getDoc,
@@ -11,6 +11,7 @@ import {
   deleteDoc,
   type DocumentData,
   type DocumentReference,
+  type Firestore,
   getFirestore,
 } from "firebase/firestore";
 // TODO: Add SDKs for Firebase products that you want to use
@@ -30,9 +31,26 @@ const firebaseConfig = {
 };
 
 // Initialize Firebase
+let db: Firestore;
+let auth: Auth;
+
 const app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
-export const db = getFirestore(app);
-export const auth = getAuth(app);
+
+export function getDb(): Firestore {
+  if (!db) {
+    console.log("Initializing Firestore");
+    db = getFirestore(app);
+  }
+  console.log("db = ", db);
+  return db;
+}
+
+export function getAuthInstance(): Auth {
+  if (!auth) {
+    auth = getAuth(app);
+  }
+  return auth;
+}
 
 /* Database Interaction Functions */
 

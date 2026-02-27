@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
-import { GetNotifications, auth } from "../utils/firestore";
+import { GetNotifications, getAuthInstance } from "../utils/firestore";
 import SiteModal from "../components/SiteModal";
 import { Box } from "@mui/material";
 import { onAuthStateChanged } from "firebase/auth";
@@ -88,7 +88,7 @@ function Notifications() {
 
   useEffect(() => {
     console.log("checking auth state");
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
+    const unsubscribe = onAuthStateChanged(getAuthInstance(), (user) => {
       console.log("auth state changed:", user);
       if (user) {
         setUserId(user.uid);

@@ -3,8 +3,8 @@ import { useLocation, useNavigate } from "react-router";
 import { onAuthStateChanged } from "firebase/auth";
 import {
   GetDoc,
-  db,
-  auth,
+  getDb,
+  getAuthInstance,
   CreateNotificationTrigger,
   GetDevices,
   GetCategoriesArray,
@@ -42,13 +42,13 @@ export default function CreateNotificationTriggerPage() {
 
   useEffect(() => {
     if (!hasMounted.current) {
-      onAuthStateChanged(auth, async (user) => {
+      onAuthStateChanged(getAuthInstance(), async (user) => {
         if (user) {
           console.log(notifID);
           // if we are passed an id, we edit that document, not create a new one
           if (notifID !== "") {
             // load selected devices and categories
-            const notifRef = doc(db, "Users", user.uid, "NotificationTriggers", notifID);
+            const notifRef = doc(getDb(), "Users", user.uid, "NotificationTriggers", notifID);
             const notifSnap = await GetDoc(notifRef.path);
 
             setName(notifSnap!.data.name);

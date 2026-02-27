@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { onAuthStateChanged } from "firebase/auth";
-import { auth, GetCategorizations, GetOverrides } from "../utils/firestore";
+import { getAuthInstance, GetCategorizations, GetOverrides } from "../utils/firestore";
 import { useNavigate } from "react-router";
 import type { Categorization } from "../utils/models";
 import SiteModal from "../components/SiteModal";
@@ -11,7 +11,7 @@ function FlaggedSites() {
   const [userId, setUserId] = useState<string>("");
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
+    const unsubscribe = onAuthStateChanged(getAuthInstance(), (user) => {
       if (user) {
         setUserId(user.uid);
       } else {

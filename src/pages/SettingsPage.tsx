@@ -2,7 +2,7 @@
 import { useEffect, useRef } from "react";
 import "../styles/Page.css";
 import { Link, useNavigate } from "react-router";
-import { auth } from "../utils/firestore";
+import { getAuthInstance } from "../utils/firestore";
 import { onAuthStateChanged } from "firebase/auth";
 
 function Settings() {
@@ -11,7 +11,7 @@ function Settings() {
 
   useEffect(() => {
     if (!hasMounted.current) {
-      onAuthStateChanged(auth, (user) => {
+      onAuthStateChanged(getAuthInstance(), (user) => {
         if (user) {
           console.log("User signed in:", user.uid);
         } else {

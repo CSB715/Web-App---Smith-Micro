@@ -17,7 +17,7 @@ import ForgotPassword from './components/ForgotPassword';
 import AppTheme from '../shared-theme/AppTheme';
 import { GoogleIcon, FacebookIcon } from './components/CustomIcons';
 import { signInWithEmailAndPassword } from 'firebase/auth';
-import { auth } from '../../utils/firestore';
+import { getAuthInstance } from '../../utils/firestore';
 import { useNavigate } from 'react-router';
 
 const Card = styled(MuiCard)(({ theme }) => ({
@@ -86,8 +86,8 @@ export default function SignIn(props: { disableCustomTheme?: boolean }) {
     const email = data.get('email');
     const password = data.get('password');
 
-    signInWithEmailAndPassword(auth, email?.toString()!, password?.toString()!).then(() => {
-      console.log("signed in: " + auth.currentUser!.uid);
+    signInWithEmailAndPassword(getAuthInstance(), email?.toString()!, password?.toString()!).then(() => {
+      console.log("signed in: " + getAuthInstance().currentUser!.uid);
       navigate("/")
 
     });

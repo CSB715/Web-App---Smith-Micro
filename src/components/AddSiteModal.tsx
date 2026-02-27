@@ -1,7 +1,7 @@
 import { useRef, useEffect } from "react";
 import "../styles/Modal.css";
 import { doc, DocumentSnapshot, getDoc } from "firebase/firestore";
-import { db } from "../utils/firestore";
+import { getDb } from "../utils/firestore";
 import { classifyURL } from "../utils/classifier";
 
 
@@ -18,12 +18,12 @@ async function addSite(showThisModal : (modalId : string) => void) {
     const url = newSiteInput.value;
 
     // get site Categorization if exists
-    let docSnap : DocumentSnapshot = await getDoc(doc(db, "Categorization", url));
+    let docSnap : DocumentSnapshot = await getDoc(doc(getDb(), "Categorization", url));
     if (!docSnap.exists()) {
         console.log("No categorization found, classifying...");
         classifyURL(url);
         // at this point, the site should be in the database
-        docSnap = await getDoc(doc(db, "Categorization", url));
+        docSnap = await getDoc(doc(getDb(), "Categorization", url));
     }
 
     // close this modal

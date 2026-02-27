@@ -1,5 +1,5 @@
 import "../styles/Page.css";
-import { auth, GetUserRef, GetUserOverrides } from "../utils/firestore";
+import { getAuthInstance, GetUserRef, GetUserOverrides } from "../utils/firestore";
 import { useState, useRef, useEffect } from "react";
 import AddSiteModal from "../components/AddSiteModal";
 import SiteModal from "../components/SiteModal";
@@ -39,7 +39,7 @@ function SiteCategories() {
 
   useEffect(() => {
     if (!hasMounted.current) {
-      onAuthStateChanged(auth, async (user) => {
+      onAuthStateChanged(getAuthInstance(), async (user) => {
         if (user) {
           const siteURLS = await loadOverrides(user.uid);
           setSites(siteURLS);
@@ -63,8 +63,8 @@ function SiteCategories() {
 
       {sites.map((site) => (
         <div key={site}>
-          {site && auth.currentUser ? (
-            <SiteModal url={site} userId={auth.currentUser.uid} />
+          {site && getAuthInstance().currentUser ? (
+            <SiteModal url={site} userId={getAuthInstance().currentUser!.uid} />
           ) : (
             <p>...</p>
           )}

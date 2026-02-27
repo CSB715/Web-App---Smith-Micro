@@ -1,4 +1,4 @@
-import { auth, GetDevices } from "../utils/firestore";
+import { getDb, getAuthInstance, GetDevices } from "../utils/firestore";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 import SiteModal from "../components/SiteModal";
@@ -7,7 +7,6 @@ import { onAuthStateChanged } from "firebase/auth";
 import { type Device, type Visit } from "../utils/models";
 import { onSnapshot } from "firebase/firestore";
 import { collection } from "firebase/firestore";
-import { db } from "../utils/firestore";
 import { getDisplayUrl } from "../utils/urls";
 
 function History() {
@@ -30,7 +29,7 @@ function History() {
   }
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
+    const unsubscribe = onAuthStateChanged(getAuthInstance(), (user) => {
       if (user) {
         setUserId(user.uid);
       } else {
@@ -88,7 +87,7 @@ function History() {
         if (!deviceId) return;
 
         const visitsRef = collection(
-          db,
+          getDb(),
           "Users",
           userId,
           "Devices",

@@ -2,7 +2,7 @@ import type { DocumentData } from "firebase/firestore";
 import { useRef } from "react";
 import { showErrorModal } from "./ErrorAlert";
 import { doc, deleteDoc } from "firebase/firestore";
-import { db, auth, GetUserDevices, DeleteCollection } from "../utils/firestore";
+import { getDb, getAuthInstance, GetUserDevices, DeleteCollection } from "../utils/firestore";
 import "../styles/Modal.css";
 
 
@@ -17,13 +17,13 @@ function closeModal() {
 }
 
 function deleteDevice(currDevice : DocumentData, updateDevices : (data: Array<DocumentData>) => void) {
-    const docRef = doc(db, "Users", auth.currentUser!.uid, "Devices", currDevice.id);
+    const docRef = doc(getDb(), "Users", getAuthInstance().currentUser!.uid, "Devices", currDevice.id);
 
     DeleteCollection(docRef.path + "/Visits").then(() => {
         deleteDoc(docRef)
         .then(async () => {
             closeModal()
-            GetUserDevices(doc(db, "Users", auth.currentUser!.uid)).then((docArr) => {
+            GetUserDevices(doc(getDb(), "Users", getAuthInstance().currentUser!.uid)).then((docArr) => {
                 updateDevices(docArr)
             });
         })

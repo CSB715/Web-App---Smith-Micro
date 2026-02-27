@@ -6,14 +6,14 @@ import {
   collection,
   deleteDoc,
 } from "firebase/firestore";
-import { db, auth } from "../utils/firestore";
+import { getDb, getAuthInstance } from "../utils/firestore";
 import { useNavigate } from "react-router";
 import { onAuthStateChanged } from "firebase/auth";
 
 async function getNotifications() {
   const notifications: DocumentSnapshot[] = [];
   const snap = await getDocs(
-    collection(db, "Users", auth.currentUser!.uid, "NotificationTriggers"),
+    collection(getDb(), "Users", getAuthInstance().currentUser!.uid, "NotificationTriggers"),
   );
   for (const doc of snap.docs) {
     notifications.push(doc);
@@ -28,7 +28,7 @@ function NotificationSettings() {
 
   useEffect(() => {
     if (!hasMounted.current) {
-      onAuthStateChanged(auth, (user) => {
+      onAuthStateChanged(getAuthInstance(), (user) => {
         if (user) {
           getNotifications().then((notifs) => {
             setNotifications(notifs);
