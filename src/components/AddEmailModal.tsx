@@ -1,5 +1,5 @@
 import { useRef, useEffect } from "react";
-import { auth, db, GetDoc, type UserData } from "../utils/firestore";
+import { getAuthInstance, getDb, GetDoc, type UserData } from "../utils/firestore";
 import { doc, getDoc, updateDoc, arrayUnion } from "firebase/firestore";
 import { showErrorModal } from "./ErrorAlert";
 import "../styles/Modal.css";
@@ -27,7 +27,7 @@ function addEmail(updateUserData : (data : UserData) => void, isAccount : boolea
     }
 
     // add new email to contact list
-    const userDoc = doc(db, "Users", auth.currentUser!.uid)
+    const userDoc = doc(getDb(), "Users", getAuthInstance().currentUser!.uid)
     getDoc(userDoc).then((snap) => {
         updateDoc(snap.ref, { emails: arrayUnion(newEmailInput.value) })
         .then(async () => {

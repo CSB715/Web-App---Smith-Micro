@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import { auth, db, GetDoc, type UserData } from "../utils/firestore";
+import { getAuthInstance, getDb, GetDoc, type UserData } from "../utils/firestore";
 import { doc, getDoc, updateDoc, arrayUnion } from "firebase/firestore";
 import { showErrorModal } from "./ErrorAlert";
 import "../styles/Modal.css";
@@ -21,7 +21,7 @@ function addPhone(updateUserData : (data : UserData) => void ) {
         return;
     }
 
-    const userDoc = doc(db, "Users", auth.currentUser!.uid)
+    const userDoc = doc(getDb(), "Users", getAuthInstance().currentUser!.uid)
     getDoc(userDoc).then((snap) => {
         updateDoc(snap.ref, { phones: arrayUnion(newPhoneInput.value) })
         .then(async () => {
