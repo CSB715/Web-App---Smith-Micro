@@ -1,7 +1,7 @@
 import type { DocumentData } from "firebase/firestore"
 import { useRef } from "react";
 import { updateDoc, doc } from "firebase/firestore";
-import { db, auth, GetUserDevices } from "../utils/firestore";
+import { getDb, getAuthInstance, GetUserDevices } from "../utils/firestore";
 import { showErrorModal } from "./ErrorAlert";
 import "../styles/Modal.css";
 
@@ -20,11 +20,11 @@ function renameDevice(currDevice : DocumentData, updateDevices : (data : Array<D
         return;
     }
 
-    const docRef = doc(db, "Users", auth.currentUser!.uid, "Devices", currDevice.id);
+    const docRef = doc(getDb(), "Users", getAuthInstance().currentUser!.uid, "Devices", currDevice.id);
     updateDoc(docRef, { name: newName })
     .then(async () => {
         closeModal()
-        GetUserDevices(doc(db, "Users", auth.currentUser!.uid)).then((docArr) => {
+        GetUserDevices(doc(getDb(), "Users", getAuthInstance().currentUser!.uid)).then((docArr) => {
             updateDevices(docArr);
         })
     })
@@ -43,7 +43,6 @@ type Props = {
 function handleEnter(event: React.KeyboardEvent<HTMLInputElement>, currDevice: DocumentData, updateDevices: (data: Array<DocumentData>) => void) {
     if (event.key === "Enter") {
         event.preventDefault();
-        console.log(currDevice)
         renameDevice(currDevice!, updateDevices);
     }
 }
