@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
-import { GetNotifications, getAuthInstance } from "../utils/firestore";
+import { getAuthInstance, getDb } from "../utils/firestore";
 import SiteModal from "../components/SiteModal";
 import { Box } from "@mui/material";
 import { onAuthStateChanged } from "firebase/auth";
-import { Timestamp } from "firebase/firestore";
+import { collection, Timestamp } from "firebase/firestore";
 import { type Notification } from "../utils/models";
+import { onSnapshot } from "firebase/firestore";
 
 type FirestoreNotification = {
   id: string;
@@ -17,10 +18,7 @@ type FirestoreNotification = {
   };
 };
 
-
-function normalizeNotification(
-  d: FirestoreNotification,
-): Notification | null {
+function normalizeNotification(d: FirestoreNotification): Notification | null {
   if (
     !d.data.siteUrl ||
     !d.data.deviceName ||
@@ -48,19 +46,19 @@ function useNotifications(userId: string) {
   useEffect(() => {
     if (!userId) return;
 
-    GetNotifications(userId).then((data) => {
-      const normalized = data
-        .map((n) => normalizeNotification(n))
+    const notifsRef = collection(getDb(), "Users", userId, "Notifications");
+    const unsubscribe = onSnapshot(notifsRef, (snapshot) => {
+      const normalized = snapshot.docs
+        .map((doc) => normalizeNotification({ id: doc.id, data: doc.data() }))
         .filter((n): n is Notification => n !== null)
         .sort((a, b) => b.dateTime.getTime() - a.dateTime.getTime()); // sort newest first
-
       setNotifications(normalized);
     });
+    return unsubscribe;
   }, [userId]);
 
   return notifications;
 }
-
 
 function getTimeDifferenceString(date: Date): string {
   const now = new Date();
@@ -101,9 +99,8 @@ function Notifications() {
 
   const notifications = useNotifications(userId || "");
 
-
   if (!authReady) return <p>Loading...</p>;
-    
+
   return (
     <>
       <Box sx={{ paddingBottom: "72px" }}>
@@ -118,7 +115,10 @@ function Notifications() {
               key={notification.id}
             >
               <li key={notification.id}>
-                <SiteModal url={notification.siteUrl} userId={userId ? userId : ""} />
+                <SiteModal
+                  url={notification.siteUrl}
+                  userId={userId ? userId : ""}
+                />
                 <p>
                   {getTimeDifferenceString(notification.dateTime)} ago on{" "}
                   {notification.deviceName}
