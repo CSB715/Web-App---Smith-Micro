@@ -17,8 +17,13 @@ import ForgotPassword from './components/ForgotPassword';
 import AppTheme from '../shared-theme/AppTheme';
 import { GoogleIcon, FacebookIcon } from './components/CustomIcons';
 import { signInWithEmailAndPassword } from 'firebase/auth';
-import { getAuthInstance } from '../../utils/firestore';
+import { getAuthInstance, getDb } from '../../utils/firestore';
 import { useNavigate } from 'react-router';
+import {
+  doc,
+  getDoc,
+  type DocumentData,
+} from "firebase/firestore";
 
 const Card = styled(MuiCard)(({ theme }) => ({
   display: 'flex',
@@ -87,10 +92,28 @@ export default function SignIn(props: { disableCustomTheme?: boolean }) {
     const password = data.get('password');
 
     signInWithEmailAndPassword(getAuthInstance(), email?.toString()!, password?.toString()!).then(() => {
-      navigate("/")
+      //get the user document from firebase and check if they are an admin, if so navigate to the admin dashboard, otherwise navigate to the main page
+      const db = getDb();
+      const auth = getAuthInstance();
 
+      const userDocRef = doc(db, "Users", auth.currentUser!.uid);
+      getDoc(userDocRef).then((docSnap) => {
+        if (docSnap.exists()) {
+          const userData = docSnap.data() as DocumentData;
+          if (userData.isAdmin) {
+            console.log("user is an admin");
+            navigate("/admin-dashboard", {replace: true}); // navigate to admin dashboard if user is an admin
+          }
+        }
+      
+      }).catch((error) => {
+        console.error("Error fetching user data: ", error);
+        navigate("/");
+      });
+
+      navigate("/"); // navigate to main page after sign in
     });
-  };
+  }
 
   const validateInputs = () => {
     const email = document.getElementById('email') as HTMLInputElement;
@@ -179,7 +202,7 @@ export default function SignIn(props: { disableCustomTheme?: boolean }) {
               control={<Checkbox value="remember" color="primary" />}
               label="Remember me"
             />
-            <ForgotPassword open={open} handleClose={handleClose} />
+            <ForgotPassword open={open} handleClose={handleClose}/>
             <Button
               type="submit"
               fullWidth
@@ -232,3 +255,4 @@ export default function SignIn(props: { disableCustomTheme?: boolean }) {
     </AppTheme>
   );
 }
+

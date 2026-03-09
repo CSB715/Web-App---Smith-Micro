@@ -55,7 +55,7 @@ export default function AddPhoneModal( { updateUserData } : Props) {
     }, []);
 
     return (
-        <div id="addPhoneModal" className="modal"
+        <div id="addPhoneModal" className="modal" style = {{display: "none"}}
         ref={overlayRef}
         onClick={(e) => {if (e.target === overlayRef.current) closeModal()}}> 
             <div className="modal-content">
