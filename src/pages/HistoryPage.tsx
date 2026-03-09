@@ -42,11 +42,8 @@ function History() {
 
   function useData() {
     const [devices, setDevices] = useState<Device[]>([]);
-    const [nameToIdMap, setNameToIdMap] = useState<{ [key: string]: string }>(
-      {},
-    );
     const [visits, setVisits] = useState<{ [key: string]: Visit[] }>({});
-    const [selectedDevices, setSelectedDevices] = useState<string[]>([]);
+    const [selectedDevices, setSelectedDevices] = useState<Device[]>([]);
 
     useEffect(() => {
       if (!userId) return;
@@ -57,23 +54,21 @@ function History() {
           id: d.id,
           name: d.data.name,
         }));
-        const deviceNames = normalizedDevices.map((d) => d.name);
         setDevices(normalizedDevices);
-        setSelectedDevices(deviceNames); // select all by default
-        setNameToIdMap(
-          Object.fromEntries(normalizedDevices.map((d) => [d.name, d.id])),
-        );
+        setSelectedDevices(normalizedDevices); // select all by default
       }
 
       load();
     }, [userId]);
 
     useEffect(() => {
-      if (
-        !userId ||
-        selectedDevices.length === 0 ||
-        Object.keys(nameToIdMap).length === 0
-      ) {
+      // if there are no selected devices we should clear the visits
+      if (selectedDevices.length === 0) {
+        setVisits({});
+        return;
+      }
+
+      if (!userId) {
         return;
       }
 
@@ -83,7 +78,7 @@ function History() {
       const visitsByDevice: Record<string, Visit[]> = {};
 
       selectedDevices.forEach((device) => {
-        const deviceId = nameToIdMap[device];
+        const deviceId = device.id;
         if (!deviceId) return;
 
         const visitsRef = collection(
@@ -118,7 +113,7 @@ function History() {
       return () => {
         unsubscribes.forEach((u) => u());
       };
-    }, [userId, selectedDevices, nameToIdMap]);
+    }, [userId, selectedDevices]);
 
     return { devices, visits, selectedDevices, setSelectedDevices };
   }
@@ -129,7 +124,7 @@ function History() {
     <>
       <h1>History Page</h1>
       <DeviceSelect
-        devices={devices.map((d) => d.name)}
+        devices={devices}
         selectedDevices={selectedDevices}
         setSelectedDevices={setSelectedDevices}
       />

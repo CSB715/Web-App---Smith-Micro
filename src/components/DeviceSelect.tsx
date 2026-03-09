@@ -3,43 +3,53 @@ import Checkbox from "@mui/material/Checkbox";
 import TextField from "@mui/material/TextField";
 import CheckBoxOutlineBlankIcon from "@mui/icons-material/CheckBoxOutlineBlank";
 import CheckBoxIcon from "@mui/icons-material/CheckBox";
+import Chip from "@mui/material/Chip";
+import { type Device } from "../utils/models";
+
+// `DeviceSelect` now works with option objects (the same shape as `Device`)
+// so callers can track IDs and names concurrently.
+
+const ALL_ID = "__all__";
 
 export default function DeviceSelect({
   devices,
   selectedDevices,
   setSelectedDevices,
 }: {
-  devices: string[];
-  selectedDevices: string[];
-  setSelectedDevices: (devices: string[]) => void;
+  devices: Device[];
+  selectedDevices: Device[];
+  setSelectedDevices: (devices: Device[]) => void;
 }) {
   const icon = <CheckBoxOutlineBlankIcon fontSize="small" />;
   const checkedIcon = <CheckBoxIcon fontSize="small" />;
 
-  const handleChange = (_: any, newValue: any[]) => {
-    const hasSelectAll = newValue.includes("Select All");
-    const filteredValue = newValue.filter((item) => item !== "Select All");
-    const hadSelectAll = selectedDevices.includes("Select All");
+  const handleChange = (_: any, newValue: Device[]) => {
+    const hasSelectAll = newValue.some((opt) => opt.id === ALL_ID);
+    const filteredValue = newValue.filter((opt) => opt.id !== ALL_ID);
+    const hadSelectAll = selectedDevices.some((opt) => opt.id === ALL_ID);
 
     if (hasSelectAll && filteredValue.length === devices.length) {
-      // All devices are selected, show "Select All" + all devices
-      setSelectedDevices(["Select All", ...devices]);
+      // show the synthetic "Select All" option plus actual devices
+      setSelectedDevices([{ id: ALL_ID, name: "Select All" }, ...devices]);
     } else if (hasSelectAll && !hadSelectAll) {
-      // "Select All" was just clicked, select all devices
-      setSelectedDevices(["Select All", ...devices]);
+      // user just clicked "Select All"
+      setSelectedDevices([{ id: ALL_ID, name: "Select All" }, ...devices]);
     } else {
-      // Individual device was unchecked, remove "Select All" and keep selected devices
+      // normal selection change, drop any existing select-all
       setSelectedDevices(filteredValue);
     }
   };
 
   return (
     <>
-      <Autocomplete
+      <Autocomplete<Device, true, false, false>
         multiple
         value={selectedDevices}
         onChange={handleChange}
-        options={["Select All", ...devices]}
+        options={[{ id: ALL_ID, name: "Select All" }, ...devices]}
+        getOptionLabel={(option) =>
+          typeof option === "string" ? option : option.name
+        }
         renderOption={(props, option, { selected }) => {
           const { key, ...optionProps } = props;
           return (
@@ -50,11 +60,25 @@ export default function DeviceSelect({
                 style={{ marginRight: 8 }}
                 checked={selected}
               />
-              {option}
+              {option.name}
             </li>
           );
         }}
-        renderInput={(params) => <TextField {...params} placeholder="Select Devices..."/>}
+        renderValue={(
+          value: Device[] | Device,
+          getItemProps: (args: { index: number }) => any,
+        ) => {
+          const items = Array.isArray(value) ? value : [value];
+          return items
+            .filter((v) => v.id !== ALL_ID)
+            .map((option, index) => {
+              const itemProps = getItemProps({ index });
+              return <Chip {...itemProps} label={option.name} />;
+            });
+        }}
+        renderInput={(params) => (
+          <TextField {...params} placeholder="Select Devices..." />
+        )}
       />
     </>
   );
