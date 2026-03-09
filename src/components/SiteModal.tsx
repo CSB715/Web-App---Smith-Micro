@@ -10,6 +10,7 @@ import {
 import DeviceSelect from "./DeviceSelect";
 import { type Categorization, type Override } from "../utils/models";
 import { getDisplayUrl } from "../utils/urls";
+import { classifyURL } from "../utils/classifier";
 
 const style = {
   position: "absolute",
@@ -67,7 +68,12 @@ export default function SiteModal({
       if (!open) return;
 
       async function load() {
-        const catData = await GetCategorization(url);
+        let catData = await GetCategorization(url);
+        if (!catData) {
+          console.warn(`Getting new categorization for ${url}`);
+          await classifyURL(url);
+          catData = await GetCategorization(url);
+        }
         const cat = {
           siteUrl: url,
           category: catData?.data.category ?? ["Unknown"],

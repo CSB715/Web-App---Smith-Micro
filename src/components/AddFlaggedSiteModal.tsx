@@ -103,7 +103,7 @@ export default function AddFlaggedSiteModal({ userId }: { userId: string }) {
             </Box>
           </Box>
           <TextField
-            defaultValue="www.roblox.com"
+            defaultValue="www.example.com"
             onChange={(event) => {
               setUrl(event.target.value);
             }}
