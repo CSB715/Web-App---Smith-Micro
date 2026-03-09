@@ -7,7 +7,7 @@ import FlaggedSites from "./pages/FlaggedSitesPage";
 import History from "./pages/HistoryPage";
 import Notifications from "./pages/NotificationsPage";
 import NotificationSettings from "./pages/NotificationSettingsPage";
-import PasswordReset from "./pages/PasswordResetPage";
+import PasswordReset from "./pages/PasswordReset";
 import Settings from "./pages/SettingsPage";
 import SiteCategories from "./pages/SiteCategoriesPage";
 import Summary from "./pages/SummaryPage";
@@ -19,6 +19,7 @@ import SignUp from "./mui-templates/sign-up/SignUp";
 
 // Components
 import NavBar from "./components/NavBar";
+import './styles/App.css';
 
 const App = () => {
   const location = useLocation();
@@ -31,7 +32,7 @@ const App = () => {
 
   return (
     <div className="app-viewport">
-      <div className={`app-container ${isFullWidth ? "full-width" : ""}`}>
+      <div className={`app-container${isFullWidth ? " full-width" : ""}`}>
         {showNavBar && <NavBar />}
         <Routes>
           {/* Main Pages */}
@@ -54,6 +55,7 @@ const App = () => {
           <Route path="/login" element={<SignIn />} />
           <Route path="/sign-up" element={<SignUp />} />
           <Route path="/password-reset" element={<PasswordReset />} />
+
 
           {/* Admin Pages */}
           <Route path="/admin-dashboard" element={<AdminDashboard />} />

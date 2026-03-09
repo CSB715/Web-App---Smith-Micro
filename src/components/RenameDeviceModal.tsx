@@ -51,7 +51,7 @@ export default function RenameDeviceModal({ currDevice, updateDevices } : Props)
     const overlayRef = useRef<HTMLDivElement | null>(null);
     
     return (
-        <div id="renameDeviceModal" className="modal"
+        <div id="renameDeviceModal" className="modal" style = {{display: "none"}}
         ref={overlayRef}
         onClick={(e) => {if (e.target === overlayRef.current) closeModal()}}> 
             <div className="modal-content">

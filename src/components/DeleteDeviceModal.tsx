@@ -39,7 +39,7 @@ export default function DeleteDeviceModal({ currDevice, updateDevices } : Props)
     const overlayRef = useRef<HTMLDivElement | null>(null);
 
     return (
-        <div id="deleteDeviceModal" className="modal"
+        <div id="deleteDeviceModal" className="modal" style = {{display: "none"}}
         ref={overlayRef}
         onClick={(e) => {if (e.target === overlayRef.current) closeModal()}}> 
             <div className="modal-content">

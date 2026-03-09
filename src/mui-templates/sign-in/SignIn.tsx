@@ -17,8 +17,7 @@ import ForgotPassword from './components/ForgotPassword';
 import AppTheme from '../shared-theme/AppTheme';
 import { GoogleIcon, FacebookIcon } from './components/CustomIcons';
 import { signInWithEmailAndPassword } from 'firebase/auth';
-import { auth, db } from '../../utils/firestore';
-import { getAuthInstance } from '../../utils/firestore';
+import { getAuthInstance, getDb } from '../../utils/firestore';
 import { useNavigate } from 'react-router';
 import {
   doc,
@@ -94,6 +93,9 @@ export default function SignIn(props: { disableCustomTheme?: boolean }) {
 
     signInWithEmailAndPassword(getAuthInstance(), email?.toString()!, password?.toString()!).then(() => {
       //get the user document from firebase and check if they are an admin, if so navigate to the admin dashboard, otherwise navigate to the main page
+      const db = getDb();
+      const auth = getAuthInstance();
+
       const userDocRef = doc(db, "Users", auth.currentUser!.uid);
       getDoc(userDocRef).then((docSnap) => {
         if (docSnap.exists()) {

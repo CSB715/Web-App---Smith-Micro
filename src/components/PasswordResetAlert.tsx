@@ -1,5 +1,6 @@
 import "../styles/Alert.css";
 import { useRef, useState } from "react";
+import "../styles/Modal.css";
 
 
 function closeAlert() {
@@ -18,6 +19,7 @@ function PasswordResetAlert() {
       onClick={(e) => {
         if (e.target === overlayRef.current) closeAlert();
       }}
+      style = {{display: "none"}}
     >
       <div className="alert-content">
         <span className="close" onClick={() => closeAlert()}>

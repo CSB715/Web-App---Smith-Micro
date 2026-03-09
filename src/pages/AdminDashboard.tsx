@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { useNavigate } from "react-router";
 import { onAuthStateChanged } from "firebase/auth";
+import { getAuthInstance, getDb } from '../utils/firestore';
 import {
   collection,
   doc,
@@ -39,7 +40,6 @@ import FlagOutlinedIcon from "@mui/icons-material/FlagOutlined";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import CategoryIcon from "@mui/icons-material/Category";
 
-import { db, auth } from "../utils/firestore";
 
 const PAGE_LIMIT = 50;
 
@@ -55,66 +55,77 @@ function AdminDashboard() {
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-  const [anchorElCategories, setAnchorElCategories] = useState<null | HTMLElement>(null);
+  const [anchorElCategories, setAnchorElCategories] =
+    useState<null | HTMLElement>(null);
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const [categoryList, setCategories] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [lastDoc, setLastDoc] = useState<DocumentSnapshot | null>(null);
   const [hasMore, setHasMore] = useState(false);
   const currentQuery = useRef("");
+  const db = getDb();
+  const auth = getAuthInstance();
 
   // Fetch a page of results from Firestore using prefix search
-  const fetchResults = useCallback(async (
-    search: string,
-    cursor: DocumentSnapshot | null,
-    append = false
-  ) => {
-    setLoading(true);
-    currentQuery.current = search;
-    try {
-      let q;
-      if (!search.trim()) {
-        // No search term — just load first page ordered by name
-        q = cursor
-          ? query(collection(db, "Categorization"), orderBy("__name__"), startAfter(cursor), limit(PAGE_LIMIT))
-          : query(collection(db, "Categorization"), orderBy("__name__"), limit(PAGE_LIMIT));
-      } else {
-        // Prefix search on document ID (name field = doc ID in your schema)
-        q = cursor
-          ? query(
-              collection(db, "Categorization"),
-              where("__name__", ">=", search),
-              where("__name__", "<=", search + "\uf8ff"),
-              orderBy("__name__"),
-              startAfter(cursor),
-              limit(PAGE_LIMIT)
-            )
-          : query(
-              collection(db, "Categorization"),
-              where("__name__", ">=", search),
-              where("__name__", "<=", search + "\uf8ff"),
-              orderBy("__name__"),
-              limit(PAGE_LIMIT)
-            );
+  const fetchResults = useCallback(
+    async (search: string, cursor: DocumentSnapshot | null, append = false) => {
+      setLoading(true);
+      currentQuery.current = search;
+      try {
+        let q;
+        if (!search.trim()) {
+          // No search term — just load first page ordered by name
+          q = cursor
+            ? query(
+                collection(db, "Categorization"),
+                orderBy("__name__"),
+                startAfter(cursor),
+                limit(PAGE_LIMIT),
+              )
+            : query(
+                collection(db, "Categorization"),
+                orderBy("__name__"),
+                limit(PAGE_LIMIT),
+              );
+        } else {
+          // Prefix search on document ID (name field = doc ID in your schema)
+          q = cursor
+            ? query(
+                collection(db, "Categorization"),
+                where("__name__", ">=", search),
+                where("__name__", "<=", search + "\uf8ff"),
+                orderBy("__name__"),
+                startAfter(cursor),
+                limit(PAGE_LIMIT),
+              )
+            : query(
+                collection(db, "Categorization"),
+                where("__name__", ">=", search),
+                where("__name__", "<=", search + "\uf8ff"),
+                orderBy("__name__"),
+                limit(PAGE_LIMIT),
+              );
+        }
+
+        const snapshot = await getDocs(q);
+        const fetched: SearchResult[] = snapshot.docs.map((doc) => {
+          const data = doc.data() as DocumentData;
+          return {
+            name: doc.id,
+            categories: data.category,
+            isFlagged: data.is_flagged,
+          };
+        });
+
+        setSearchResults((prev) => (append ? [...prev, ...fetched] : fetched));
+        setLastDoc(snapshot.docs[snapshot.docs.length - 1] ?? null);
+        setHasMore(fetched.length === PAGE_LIMIT);
+      } finally {
+        setLoading(false);
       }
-
-      const snapshot = await getDocs(q);
-      const fetched: SearchResult[] = snapshot.docs.map((doc) => {
-        const data = doc.data() as DocumentData;
-        return {
-          name: doc.id,
-          categories: data.category,
-          isFlagged: data.is_flagged,
-        };
-      });
-
-      setSearchResults((prev) => append ? [...prev, ...fetched] : fetched);
-      setLastDoc(snapshot.docs[snapshot.docs.length - 1] ?? null);
-      setHasMore(fetched.length === PAGE_LIMIT);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+    },
+    [],
+  );
 
   useEffect(() => {
     if (!hasMounted.current) {
@@ -171,7 +182,10 @@ function AdminDashboard() {
     }
   };
 
-  const handleChipClick = (event: React.MouseEvent<HTMLElement>, index: number) => {
+  const handleChipClick = (
+    event: React.MouseEvent<HTMLElement>,
+    index: number,
+  ) => {
     setAnchorEl(event.currentTarget);
     setSelectedIndex(index);
   };
@@ -181,15 +195,21 @@ function AdminDashboard() {
     setSelectedIndex(null);
   };
 
-   const handleCategoryClick = (event: React.MouseEvent<HTMLElement>, index: number) => {
+  const handleCategoryClick = (
+    event: React.MouseEvent<HTMLElement>,
+    index: number,
+  ) => {
     setAnchorElCategories(event.currentTarget);
     setSelectedIndex(index);
   };
 
-  const handleCategoryMenuClose = (event: React.MouseEvent<HTMLElement>, index: number) => {
+  const handleCategoryMenuClose = (
+    event: React.MouseEvent<HTMLElement>,
+    index: number,
+  ) => {
     setAnchorElCategories(null);
     setSelectedIndex(null);
-  }
+  };
 
   const handleToggleCategory = async (category: string, shouldAdd: boolean) => {
     if (selectedIndex !== null) {
@@ -198,28 +218,27 @@ function AdminDashboard() {
       const updatedCategories = shouldAdd
         ? [...currentCategories, category]
         : currentCategories.filter((c) => c !== category);
-      await updateDoc(
-        doc(db, "Categorization", result.name),
-        { category: updatedCategories }
-      );
+      await updateDoc(doc(db, "Categorization", result.name), {
+        category: updatedCategories,
+      });
       setSearchResults((prev) =>
-        prev.map((r, i) => i === selectedIndex ? { ...r, categories: updatedCategories } : r)
+        prev.map((r, i) =>
+          i === selectedIndex ? { ...r, categories: updatedCategories } : r,
+        ),
       );
     }
-  }
-
-
-      
-      
+  };
 
   const handleToggleFlag = async (shouldFlag: boolean) => {
     if (selectedIndex !== null) {
       await updateDoc(
         doc(db, "Categorization", searchResults[selectedIndex].name),
-        { is_flagged: shouldFlag }
+        { is_flagged: shouldFlag },
       );
       setSearchResults((prev) =>
-        prev.map((r, i) => i === selectedIndex ? { ...r, isFlagged: shouldFlag } : r)
+        prev.map((r, i) =>
+          i === selectedIndex ? { ...r, isFlagged: shouldFlag } : r,
+        ),
       );
     }
     handleMenuClose();
@@ -232,7 +251,16 @@ function AdminDashboard() {
           Admin Dashboard
         </Typography>
 
-        <Paper elevation={0} sx={{ p: 2, mb: 3, bgcolor: "grey.50", border: 1, borderColor: "grey.200" }}>
+        <Paper
+          elevation={0}
+          sx={{
+            p: 2,
+            mb: 3,
+            bgcolor: "grey.50",
+            border: 1,
+            borderColor: "grey.200",
+          }}
+        >
           <Typography variant="body2" color="text.secondary">
             <strong>Logged in as:</strong> {auth.currentUser?.email}
           </Typography>
@@ -254,7 +282,13 @@ function AdminDashboard() {
         />
 
         <Box sx={{ float: "right" }}>
-          <Button variant="outlined" color="error" startIcon={<LogoutIcon />} onClick={handleSignOut} sx={{ mb: 4 }}>
+          <Button
+            variant="outlined"
+            color="error"
+            startIcon={<LogoutIcon />}
+            onClick={handleSignOut}
+            sx={{ mb: 4 }}
+          >
             Sign Out
           </Button>
         </Box>
@@ -265,18 +299,32 @@ function AdminDashboard() {
       ) : searchResults.length > 0 ? (
         <Box>
           <Typography variant="h5" sx={{ mb: 3, fontWeight: 600 }}>
-            Results ({searchResults.length}{hasMore ? "+" : ""})
+            Results ({searchResults.length}
+            {hasMore ? "+" : ""})
           </Typography>
           <Stack spacing={2}>
             {searchResults.map((result, index) => (
-              <Card key={result.name} sx={{ transition: "box-shadow 0.3s", "&:hover": { boxShadow: 4 } }}>
+              <Card
+                key={result.name}
+                sx={{
+                  transition: "box-shadow 0.3s",
+                  "&:hover": { boxShadow: 4 },
+                }}
+              >
                 <CardContent>
                   <Typography variant="h6" component="h4" sx={{ mb: 1.5 }}>
                     {result.name}
                   </Typography>
-                  <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}
-                    onClick={(e) => handleCategoryClick(e, index)}>
-                    <strong>Categories:</strong> {result.categories.length > 0 ? result.categories.join(", ") : "None"}
+                  <Typography
+                    variant="body2"
+                    color="text.secondary"
+                    sx={{ mb: 1 }}
+                    onClick={(e) => handleCategoryClick(e, index)}
+                  >
+                    <strong>Categories:</strong>{" "}
+                    {result.categories.length > 0
+                      ? result.categories.join(", ")
+                      : "None"}
                   </Typography>
                   <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                     <Typography variant="body2" color="text.secondary">
@@ -310,7 +358,16 @@ function AdminDashboard() {
           )}
         </Box>
       ) : (
-        <Paper elevation={0} sx={{ p: 4, textAlign: "center", bgcolor: "grey.50", border: 1, borderColor: "grey.200" }}>
+        <Paper
+          elevation={0}
+          sx={{
+            p: 4,
+            textAlign: "center",
+            bgcolor: "grey.50",
+            border: 1,
+            borderColor: "grey.200",
+          }}
+        >
           <Typography variant="body1" color="text.secondary">
             No results found for "{searchQuery}"
           </Typography>
@@ -325,11 +382,15 @@ function AdminDashboard() {
         transformOrigin={{ vertical: "top", horizontal: "center" }}
       >
         <MenuItem onClick={() => handleToggleFlag(true)}>
-          <ListItemIcon><FlagIcon fontSize="small" color="error" /></ListItemIcon>
+          <ListItemIcon>
+            <FlagIcon fontSize="small" color="error" />
+          </ListItemIcon>
           <ListItemText>Flag Site</ListItemText>
         </MenuItem>
         <MenuItem onClick={() => handleToggleFlag(false)}>
-          <ListItemIcon><FlagOutlinedIcon fontSize="small" color="success" /></ListItemIcon>
+          <ListItemIcon>
+            <FlagOutlinedIcon fontSize="small" color="success" />
+          </ListItemIcon>
           <ListItemText>Unflag Site</ListItemText>
         </MenuItem>
       </Menu>
@@ -342,17 +403,37 @@ function AdminDashboard() {
         transformOrigin={{ vertical: "center", horizontal: "center" }}
       >
         {categoryList.map((category, index) => (
-          <MenuItem key={index} onClick={() => handleToggleCategory(category, !searchResults[selectedIndex ?? 0].categories.includes(category))}>
-            <ListItemIcon><CategoryIcon fontSize="small" /></ListItemIcon>
+          <MenuItem
+            key={index}
+            onClick={() =>
+              handleToggleCategory(
+                category,
+                !searchResults[selectedIndex ?? 0].categories.includes(
+                  category,
+                ),
+              )
+            }
+          >
+            <ListItemIcon>
+              <CategoryIcon fontSize="small" />
+            </ListItemIcon>
             <ListItemText primary={category} />
-            
+
             <Chip
-              label={searchResults[selectedIndex ?? 0].categories.includes(category) ? "Yes" : "No"}
-              color={searchResults[selectedIndex ?? 0].categories.includes(category) ? "success" : "default"}
+              label={
+                searchResults[selectedIndex ?? 0].categories.includes(category)
+                  ? "Yes"
+                  : "No"
+              }
+              color={
+                searchResults[selectedIndex ?? 0].categories.includes(category)
+                  ? "success"
+                  : "default"
+              }
               size="small"
               variant="outlined"
               sx={{ ml: 2 }}
-            />  
+            />
           </MenuItem>
         ))}
       </Menu>

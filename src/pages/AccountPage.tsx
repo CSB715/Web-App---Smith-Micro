@@ -98,6 +98,7 @@ function Account() {
   }
 
   async function handleResetPassword() {
+    const auth = getAuthInstance();
     try {
         if(lastResetEmailDateTime && new Date().getTime() - lastResetEmailDateTime < 120000) {
             const secondsLeft = Math.ceil((120000 - (new Date().getTime() - lastResetEmailDateTime)) / 1000);
