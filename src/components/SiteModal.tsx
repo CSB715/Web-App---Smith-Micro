@@ -89,7 +89,6 @@ export default function SiteModal({
         setCategorization(cat);
 
         const override = await GetOverride(userId, url);
-        console.log("Fetched override:", override);
         let normalized: Override;
         if (override) {
           normalized = {
@@ -112,7 +111,6 @@ export default function SiteModal({
         const categoriesData = await GetCategories();
         const categories: string[] = categoriesData.map((c) => c.data.label);
         setCategories(categories);
-        console.log("Normalized override:", normalized);
         setSelectedDevices(
           normalizedDevices.filter((d) =>
             normalized.flagged_for.includes(d.name),
