@@ -15,7 +15,7 @@ function ErrorAlert() {
     const overlayRef = useRef<HTMLDivElement | null>(null);
     
     return (
-        <div id="errorAlert" className="alert"
+        <div id="errorAlert" className="alert" style = {{display: "none"}}
         ref={overlayRef}
         onClick={(e) => {if (e.target === overlayRef.current) closeAlert(); }}> 
             <div className="alert-content">

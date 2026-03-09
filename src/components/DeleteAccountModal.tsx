@@ -1,8 +1,8 @@
 import { useRef } from "react";
 import { DeleteUser } from "../utils/firestore";
 import { showErrorModal } from "./ErrorAlert";
-import "../styles/Modal.css";
 import { useNavigate, type NavigateFunction } from "react-router";
+import "../styles/Modal.css";
 
 function closeModal() {
     const modal = document.getElementById("deleteAccountModal");
@@ -30,7 +30,7 @@ function DeleteAccountModal({uid} : Props) {
     const navigate = useNavigate();
 
     return (
-        <div id="deleteAccountModal" className="modal"
+        <div id="deleteAccountModal" className="modal" style = {{display: "none"}}
         ref={overlayRef}
         onClick={(e) => {if (e.target === overlayRef.current) closeModal(); }}> 
             <div className="modal-content">

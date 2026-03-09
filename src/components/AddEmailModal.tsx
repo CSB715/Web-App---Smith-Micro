@@ -63,7 +63,7 @@ export default function AddEmailModal( {updateUserData, isAccount} : Props) {
     }, []);
 
     return (
-        <div id="addEmailModal" className="modal"
+        <div id="addEmailModal" className="modal" style = {{display: "none"}}
         ref={overlayRef}
         onClick={(e) => {if (e.target === overlayRef.current) closeModal()}}> 
             <div className="modal-content">

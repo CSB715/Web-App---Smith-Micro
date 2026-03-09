@@ -1,8 +1,8 @@
 import { useRef, useEffect } from "react";
-import "../styles/Modal.css";
 import { doc, DocumentSnapshot, getDoc } from "firebase/firestore";
 import { getDb } from "../utils/firestore";
 import { classifyURL } from "../utils/classifier";
+import "../styles/Modal.css";
 
 
 function closeModal() {
@@ -52,7 +52,7 @@ export default function AddSiteModal( { showThisModal } : Props) {
 
     return (
         <>
-            <div id="addSite" className="modal"
+            <div id="addSite" className="modal" style = {{display: "none"}}
             ref={overlayRef}
             onClick={(e) => {if (e.target === overlayRef.current) closeModal()}}> 
                 <div className="modal-content">
