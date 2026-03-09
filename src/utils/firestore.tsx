@@ -269,6 +269,41 @@ export async function DeleteUser(path: string) {
   });
 }
 
+export async function DeleteDevice(device: DocumentData) {
+  const docRef = doc(getDb(), "Users", getAuthInstance().currentUser!.uid, "Devices", device.id);
+
+  // get triggers
+  const triggersCol = collection(getDb(), "Users", getAuthInstance().currentUser!.uid, "NotificationTriggers");
+  const triggerDocs = await GetDocs(triggersCol.path);
+  for (const trigger of triggerDocs) {
+    if (trigger.data.devices.includes(device.name)) {
+
+      if (trigger.data.devices.filter((d: string) => d !== device.name).length === 0) { // delete trigger - no devices attached
+        await deleteDoc(doc(getDb(), "Users", getAuthInstance().currentUser!.uid, "NotificationTriggers", trigger.id));
+      } else { // remove device from trigger list
+
+        setDoc(doc(getDb(), "Users", getAuthInstance().currentUser!.uid, "NotificationTriggers", trigger.id), {
+            ...trigger.data,
+            devices: trigger.data.devices.filter((d: string) => d !== device.name)
+        });
+      }
+    }
+  }
+
+  // delete notifications triggered by this device
+  GetNotifications(getAuthInstance().currentUser!.uid).then((notifs) => {
+    notifs.forEach((notif) => {
+      if (notif.data.deviceName === device.name) {
+        deleteDoc(doc(getDb(), "Users", getAuthInstance().currentUser!.uid, "Notifications", notif.id));
+      }
+    });
+  });
+
+  await DeleteCollection(docRef.path + "/Visits"); // delete all visits
+  await deleteDoc(docRef); // delete the device itself
+
+}
+
 export function CreateNotificationTrigger(
   uid: string,
   name: string,
