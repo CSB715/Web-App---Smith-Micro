@@ -8,7 +8,11 @@ import {
   GetCategories,
 } from "../utils/firestore";
 import DeviceSelect from "./DeviceSelect";
-import { type Categorization, type Override } from "../utils/models";
+import {
+  type Categorization,
+  type Override,
+  type Device,
+} from "../utils/models";
 import { getDisplayUrl } from "../utils/urls";
 import { classifyURL } from "../utils/classifier";
 
@@ -39,7 +43,10 @@ export default function SiteModal({
   const handleSave = async () => {
     // setSaving(true);
     try {
-      await WriteOverride(userId, displayUrl, override);
+      await WriteOverride(userId, displayUrl, {
+        category: override.category,
+        flagged_for: selectedDevices.map((d) => d.name),
+      });
       setOpen(false);
     } catch (e) {
       console.error(e);
@@ -60,8 +67,8 @@ export default function SiteModal({
       category: [],
       flagged_for: [],
     });
-    const [devices, setDevices] = useState<string[]>([]);
-    const [selectedDevices, setSelectedDevices] = useState<string[]>([]);
+    const [devices, setDevices] = useState<Device[]>([]);
+    const [selectedDevices, setSelectedDevices] = useState<Device[]>([]);
     const [categories, setCategories] = useState<string[]>([]);
 
     useEffect(() => {
@@ -82,6 +89,7 @@ export default function SiteModal({
         setCategorization(cat);
 
         const override = await GetOverride(userId, url);
+        console.log("Fetched override:", override);
         let normalized: Override;
         if (override) {
           normalized = {
@@ -96,12 +104,20 @@ export default function SiteModal({
         }
         setOverride(normalized);
         const devicesData = await GetDevices(userId);
-        const devices: string[] = devicesData.map((d) => d.data.name);
-        setDevices(devices);
+        const normalizedDevices: Device[] = devicesData.map((d) => ({
+          id: d.id,
+          name: d.data.name,
+        }));
+        setDevices(normalizedDevices);
         const categoriesData = await GetCategories();
         const categories: string[] = categoriesData.map((c) => c.data.label);
         setCategories(categories);
-        setSelectedDevices(normalized.flagged_for);
+        console.log("Normalized override:", normalized);
+        setSelectedDevices(
+          normalizedDevices.filter((d) =>
+            normalized.flagged_for.includes(d.name),
+          ),
+        );
       }
 
       load();

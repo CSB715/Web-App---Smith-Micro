@@ -80,9 +80,11 @@ function History() {
       const unsubscribes: (() => void)[] = [];
       const visitsByDevice: Record<string, Visit[]> = {};
 
-      selectedDevices.forEach((device) => {
-        const deviceId = device.id;
-        if (!deviceId) return;
+      selectedDevices
+        .filter((d) => d.id !== "__all__")
+        .forEach((device) => {
+          const deviceId = device.id;
+          if (!deviceId) return;
 
         const visitsRef = collection(
           getDb(),

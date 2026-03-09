@@ -73,7 +73,8 @@ export default function DeviceSelect({
             .filter((v) => v.id !== ALL_ID)
             .map((option, index) => {
               const itemProps = getItemProps({ index });
-              return <Chip {...itemProps} label={option.name} />;
+              const { key, ...chipProps } = itemProps;
+              return <Chip key={key} {...chipProps} label={option.name} />;
             });
         }}
         renderInput={(params) => (
