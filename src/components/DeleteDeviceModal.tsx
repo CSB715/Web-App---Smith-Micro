@@ -1,38 +1,34 @@
 import type { DocumentData } from "firebase/firestore";
 import { useRef } from "react";
 import { showErrorModal } from "./ErrorAlert";
-import { doc, deleteDoc } from "firebase/firestore";
-import { getDb, getAuthInstance, GetUserDevices, DeleteCollection } from "../utils/firestore";
+import { doc } from "firebase/firestore";
+import { getDb, getAuthInstance, GetUserDevices, DeleteDevice } from "../utils/firestore";
 import "../styles/Modal.css";
 
 
 type Props = {
-    currDevice : DocumentData | null,
-    updateDevices : (data: Array<DocumentData>) => void
+  currDevice : DocumentData | null,
+  updateDevices : (data: Array<DocumentData>) => void
 }
 
 function closeModal() {
-    const modal = document.getElementById("deleteDeviceModal");
-    modal!.style.display = "none";
+  const modal = document.getElementById("deleteDeviceModal");
+  modal!.style.display = "none";
 }
 
-function deleteDevice(currDevice : DocumentData, updateDevices : (data: Array<DocumentData>) => void) {
-    const docRef = doc(getDb(), "Users", getAuthInstance().currentUser!.uid, "Devices", currDevice.id);
+async function deleteDevice(currDevice : DocumentData, updateDevices : (data: Array<DocumentData>) => void) {
 
-    DeleteCollection(docRef.path + "/Visits").then(() => {
-        deleteDoc(docRef)
-        .then(async () => {
-            closeModal()
-            GetUserDevices(doc(getDb(), "Users", getAuthInstance().currentUser!.uid)).then((docArr) => {
-                updateDevices(docArr)
-            });
-        })
-        .catch((error) => {
-            console.error("Error removing device: ", error);
-            closeModal()
-            showErrorModal();                // show error modal
-        });
+  DeleteDevice(currDevice).then(async () => {
+    closeModal()
+    GetUserDevices(doc(getDb(), "Users", getAuthInstance().currentUser!.uid)).then((docArr) => {
+      updateDevices(docArr);
     });
+  })
+  .catch((error) => {
+    console.error("Error removing device: ", error);
+    closeModal()
+    showErrorModal();                // show error modal
+  });
 }
 
 export default function DeleteDeviceModal({ currDevice, updateDevices } : Props) {
@@ -52,6 +48,8 @@ export default function DeleteDeviceModal({ currDevice, updateDevices } : Props)
                 </div>
             </div>
         </div>
-    )
+      </div>
+    </div>
+  );
 
 }
