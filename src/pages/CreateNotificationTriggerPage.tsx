@@ -20,8 +20,6 @@ import "../styles/NumberField.css";
 type AlertType = "Site" | "Category";
 
 export default function CreateNotificationTriggerPage() {
-  let CATEGORY_ARR: string[] = [];
-  GetCategoriesArray().then((arr) => { CATEGORY_ARR = arr;});
   const notifID  = useLocation().state ? (useLocation().state as { notifID: string }).notifID : "";
   const hasMounted = useRef(false);
   const navigate = useNavigate();
@@ -37,6 +35,7 @@ export default function CreateNotificationTriggerPage() {
   const [alertType, setAlertType] = useState<AlertType>("Category");
   const [limit_hr, setLimit_Hr] = useState<number>(0);
   const [limit_min, setLimit_Min] = useState<number>(0);
+  const [categoriesArr, setCategoriesArr] = useState<string[]>([]);
 
   useEffect(() => {
     if (!hasMounted.current) {
@@ -60,6 +59,7 @@ export default function CreateNotificationTriggerPage() {
           }
 
           setDevices(await GetDevices(user.uid));
+          setCategoriesArr(await GetCategoriesArray());
           setUid(user.uid);
         } else {
           navigate("/login", { replace: true });
@@ -130,7 +130,7 @@ export default function CreateNotificationTriggerPage() {
             onChange={(_: any, newValue: Array<string>) => {
               setCategories(newValue);
             }}
-            options={CATEGORY_ARR}
+            options={categoriesArr}
             renderInput={(params) => <TextField {...params} placeholder="Pick categories"/>}
           />
         )}
