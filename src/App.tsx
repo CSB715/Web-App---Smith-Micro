@@ -24,7 +24,7 @@ import './styles/App.css';
 const App = () => {
   const location = useLocation();
 
-  const pagesWithoutNavBar = ["/login", "/sign-up", "/admin-dashboard"];
+  const pagesWithoutNavBar = ["/login", "/sign-up", "/admin-dashboard", "/password-reset"];
   const showNavBar = !pagesWithoutNavBar.includes(location.pathname);
 
   const fullWidthPages = ["/admin-dashboard"];

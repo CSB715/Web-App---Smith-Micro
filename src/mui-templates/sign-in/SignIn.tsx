@@ -103,7 +103,6 @@ export default function SignIn(props: { disableCustomTheme?: boolean }) {
           if (userData.isAdmin) {
             console.log("user is an admin");
             navigate("/admin-dashboard", {replace: true}); // navigate to admin dashboard if user is an admin
-            
           }
         }
       
@@ -203,7 +202,7 @@ export default function SignIn(props: { disableCustomTheme?: boolean }) {
               control={<Checkbox value="remember" color="primary" />}
               label="Remember me"
             />
-            <ForgotPassword open={open} handleClose={handleClose} />
+            <ForgotPassword open={open} handleClose={handleClose}/>
             <Button
               type="submit"
               fullWidth

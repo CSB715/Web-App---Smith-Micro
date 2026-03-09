@@ -177,7 +177,7 @@ function History() {
           {[
             { value: totalVisits, label: "Visits" },
             { value: totalDays, label: "Days" },
-            { value: selectedDevices.length, label: "Devices" },
+            { value: selectedDevices.includes("Select All") ? selectedDevices.length-1 : selectedDevices.length, label: "Devices" },
           ].map((stat, i) => (
             <Box
               key={stat.label}
