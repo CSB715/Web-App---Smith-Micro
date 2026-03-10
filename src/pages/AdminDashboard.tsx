@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { useNavigate } from "react-router";
 import { onAuthStateChanged } from "firebase/auth";
-import { getAuthInstance, getDb } from '../utils/firestore';
+import { getAuthInstance, getDb } from "../utils/firestore";
 import {
   collection,
   doc,
@@ -39,7 +39,6 @@ import FlagIcon from "@mui/icons-material/Flag";
 import FlagOutlinedIcon from "@mui/icons-material/FlagOutlined";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import CategoryIcon from "@mui/icons-material/Category";
-
 
 const PAGE_LIMIT = 50;
 
@@ -402,40 +401,49 @@ function AdminDashboard() {
         anchorOrigin={{ vertical: "center", horizontal: "center" }}
         transformOrigin={{ vertical: "center", horizontal: "center" }}
       >
-        {categoryList.map((category, index) => (
-          <MenuItem
-            key={index}
-            onClick={() =>
-              handleToggleCategory(
-                category,
-                !searchResults[selectedIndex ?? 0].categories.includes(
+        {categoryList.map((category, index) => {
+          const currentResult =
+            selectedIndex !== null ? searchResults[selectedIndex] : null;
+          if (!currentResult) return null;
+          return (
+            <MenuItem
+              key={index}
+              onClick={() =>
+                handleToggleCategory(
                   category,
-                ),
-              )
-            }
-          >
-            <ListItemIcon>
-              <CategoryIcon fontSize="small" />
-            </ListItemIcon>
-            <ListItemText primary={category} />
+                  !searchResults[selectedIndex ?? 0].categories.includes(
+                    category,
+                  ),
+                )
+              }
+            >
+              <ListItemIcon>
+                <CategoryIcon fontSize="small" />
+              </ListItemIcon>
+              <ListItemText primary={category} />
 
-            <Chip
-              label={
-                searchResults[selectedIndex ?? 0].categories.includes(category)
-                  ? "Yes"
-                  : "No"
-              }
-              color={
-                searchResults[selectedIndex ?? 0].categories.includes(category)
-                  ? "success"
-                  : "default"
-              }
-              size="small"
-              variant="outlined"
-              sx={{ ml: 2 }}
-            />
-          </MenuItem>
-        ))}
+              <Chip
+                label={
+                  searchResults[selectedIndex ?? 0].categories.includes(
+                    category,
+                  )
+                    ? "Yes"
+                    : "No"
+                }
+                color={
+                  searchResults[selectedIndex ?? 0].categories.includes(
+                    category,
+                  )
+                    ? "success"
+                    : "default"
+                }
+                size="small"
+                variant="outlined"
+                sx={{ ml: 2 }}
+              />
+            </MenuItem>
+          );
+        })}
       </Menu>
     </Container>
   );

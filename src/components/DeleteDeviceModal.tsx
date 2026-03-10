@@ -48,8 +48,6 @@ export default function DeleteDeviceModal({ currDevice, updateDevices } : Props)
                 </div>
             </div>
         </div>
-      </div>
-    </div>
   );
 
 }
