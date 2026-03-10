@@ -34,39 +34,67 @@ function FlaggedSites() {
     useEffect(() => {
       if (!userId) return;
 
-      GetCategorizations().then((data) => {
-        const flagged = data
-          .filter((cat) => cat.data.isFlagged === true)
-          .map((cat) => ({
-            siteUrl: cat.id,
-            category: cat.data.category,
-            is_flagged: cat.data.is_flagged,
-          }));
-        setFlaggedSites(flagged);
-      });
+      // Fetch both categorizations and overrides initially
+      Promise.all([GetCategorizations(), GetOverrides(userId)]).then(
+        ([catsData, oversData]) => {
+          const flaggedFromCats = catsData
+            .filter((cat) => cat.data.is_flagged === true)
+            .map((cat) => ({
+              siteUrl: cat.id,
+              category: cat.data.category,
+              is_flagged: cat.data.is_flagged,
+            }));
 
-      const overridesRef = collection(getDb(), "Users", userId, "Overrides");
+          const flaggedFromOvers = oversData
+            .filter((override) => override.data.flagged_for.length > 0)
+            .map((override) => ({
+              siteUrl: override.id,
+              category: override.data.category,
+              is_flagged: true,
+            }));
 
-      const unsubscribe = onSnapshot(overridesRef, (snapshot) => {
-        const flagged = snapshot.docs
-          .map((doc) => ({ id: doc.id, data: doc.data() }))
-          .filter((override) => override.data.flagged_for.length > 0)
-          .map((override) => ({
-            siteUrl: override.id,
-            category: override.data.category,
-            is_flagged: true,
-          }));
-        setFlaggedSites((prev) => {
-          const existingUrls = new Set(prev.map((site) => site.siteUrl));
-          const newFlaggedSites = flagged.filter(
-            (site) => !existingUrls.has(site.siteUrl),
+          // Combine and deduplicate by siteUrl
+          const combined = [...flaggedFromCats, ...flaggedFromOvers].filter(
+            (site, index, arr) =>
+              arr.findIndex((s) => s.siteUrl === site.siteUrl) === index,
           );
-          return [...prev, ...newFlaggedSites];
+
+          setFlaggedSites(combined);
+        },
+      );
+
+      // Set up listener for overrides changes
+      const overridesRef = collection(getDb(), "Users", userId, "Overrides");
+      const unsubscribe = onSnapshot(overridesRef, (snapshot) => {
+        // Re-fetch categorizations or keep them? For simplicity, re-combine
+        GetCategorizations().then((catsData) => {
+          const flaggedFromCats = catsData
+            .filter((cat) => cat.data.is_flagged === true)
+            .map((cat) => ({
+              siteUrl: cat.id,
+              category: cat.data.category,
+              is_flagged: cat.data.is_flagged,
+            }));
+
+          const flaggedFromOvers = snapshot.docs
+            .map((doc) => ({ id: doc.id, data: doc.data() }))
+            .filter((override) => override.data.flagged_for.length > 0)
+            .map((override) => ({
+              siteUrl: override.id,
+              category: override.data.category,
+              is_flagged: true,
+            }));
+
+          const combined = [...flaggedFromCats, ...flaggedFromOvers].filter(
+            (site, index, arr) =>
+              arr.findIndex((s) => s.siteUrl === site.siteUrl) === index,
+          );
+
+          setFlaggedSites(combined);
         });
       });
-      return unsubscribe;
 
-      // get overrides that are flagged
+      return unsubscribe;
     }, [userId]);
 
     return flaggedSites;

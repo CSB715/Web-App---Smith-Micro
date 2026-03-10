@@ -18,14 +18,17 @@ const style = {
 export default function AddFlaggedSiteModal({ userId }: { userId: string }) {
   const [open, setOpen] = useState(false);
   const handleOpen = () => setOpen(true);
-  const handleClose = () => setOpen(false);
+  const handleClose = () => {
+    setOpen(false);
+    setCategories([]);
+  };
   const [_, setSaving] = useState(false);
 
   const handleSave = async () => {
     setSaving(true);
     try {
       await WriteOverride(userId, url, override);
-      setOpen(false);
+      handleClose();
     } catch (e) {
       console.error(e);
     } finally {
