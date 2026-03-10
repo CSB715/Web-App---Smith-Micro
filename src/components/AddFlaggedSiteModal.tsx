@@ -65,7 +65,7 @@ export default function AddFlaggedSiteModal({ userId }: { userId: string }) {
       if (!open) return;
 
       setOverride({ category: categories, flagged_for: devices });
-    }, [categories]);
+    }, [categories, url]);
 
     return {
       categories,
