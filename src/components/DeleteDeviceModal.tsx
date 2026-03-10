@@ -75,5 +75,7 @@ export default function DeleteDeviceModal({
             Confirm
           </button>
         </div>
+      </div>
+    </div>
   );
 }
