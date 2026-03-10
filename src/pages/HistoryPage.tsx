@@ -50,9 +50,8 @@ function History() {
 
   function useData() {
     const [devices, setDevices] = useState<Device[]>([]);
-    const [nameToIdMap, setNameToIdMap] = useState<{ [key: string]: string }>({});
     const [visits, setVisits] = useState<{ [key: string]: Visit[] }>({});
-    const [selectedDevices, setSelectedDevices] = useState<string[]>([]);
+    const [selectedDevices, setSelectedDevices] = useState<Device[]>([]);
 
     useEffect(() => {
       if (!userId) return;
@@ -62,28 +61,39 @@ function History() {
           id: d.id,
           name: d.data.name,
         }));
-        const deviceNames = normalizedDevices.map((d) => d.name);
         setDevices(normalizedDevices);
-        setSelectedDevices(deviceNames);
-        setNameToIdMap(
-          Object.fromEntries(normalizedDevices.map((d) => [d.name, d.id])),
-        );
+        setSelectedDevices(normalizedDevices); // select all by default
       }
       load();
     }, [userId]);
 
     useEffect(() => {
-      if (!userId || selectedDevices.length === 0 || Object.keys(nameToIdMap).length === 0) {
+      // if there are no selected devices we should clear the visits
+      if (selectedDevices.length === 0) {
+        setVisits({});
+        return;
+      }
+
+      if (!userId) {
         return;
       }
       const unsubscribes: (() => void)[] = [];
       const visitsByDevice: Record<string, Visit[]> = {};
 
-      selectedDevices.forEach((device) => {
-        const deviceId = nameToIdMap[device];
-        if (!deviceId) return;
+      selectedDevices
+        .filter((d) => d.id !== "__all__")
+        .forEach((device) => {
+          const deviceId = device.id;
+          if (!deviceId) return;
 
-        const visitsRef = collection(getDb(), "Users", userId, "Devices", deviceId, "Visits");
+        const visitsRef = collection(
+          getDb(),
+          "Users",
+          userId,
+          "Devices",
+          deviceId,
+          "Visits",
+        );
         const unsubscribe = onSnapshot(visitsRef, (snapshot) => {
           const deviceVisits: Visit[] = snapshot.docs.map((doc) => ({
             id: doc.id,
@@ -98,8 +108,10 @@ function History() {
         unsubscribes.push(unsubscribe);
       });
 
-      return () => { unsubscribes.forEach((u) => u()); };
-    }, [userId, selectedDevices, nameToIdMap]);
+      return () => {
+        unsubscribes.forEach((u) => u());
+      };
+    }, [userId, selectedDevices]);
 
     return { devices, visits, selectedDevices, setSelectedDevices };
   }
@@ -118,7 +130,6 @@ function History() {
       }}
     >
       <Box sx={{ px: 2.5 }}>
-
         {/* ── Eyebrow ── */}
         <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 1 }}>
           <Box
@@ -156,9 +167,9 @@ function History() {
             fontWeight: 300,
             letterSpacing: "-0.02em",
             mb: 3,
-          }}  
+          }}
         >
-        Recent Web History
+          Recent Web History
         </Typography>
 
         {/* ── Stats bar — stacks vertically on narrow, row on wider ── */}
@@ -177,7 +188,12 @@ function History() {
           {[
             { value: totalVisits, label: "Visits" },
             { value: totalDays, label: "Days" },
-            { value: selectedDevices.includes("Select All") ? selectedDevices.length-1 : selectedDevices.length, label: "Devices" },
+            {
+              value: selectedDevices.some((d) => d.id === "__all__")
+                ? selectedDevices.length - 1
+                : selectedDevices.length,
+              label: "Devices",
+            },
           ].map((stat, i) => (
             <Box
               key={stat.label}
@@ -236,12 +252,11 @@ function History() {
             Filter by device
           </Typography>
           <DeviceSelect
-            devices={devices.map((d) => d.name)}
+            devices={devices}
             selectedDevices={selectedDevices}
             setSelectedDevices={setSelectedDevices}
           />
         </Box>
-
       </Box>
 
       {/* ── Visit list — full bleed so cards touch the container edges ── */}
@@ -263,93 +278,93 @@ function History() {
       ) : (
         <List disablePadding>
           {Object.entries(visits).map(([key, value]: [string, Visit[]]) => {
-            const sortedValues = value.sort((a,b) => (b.startDateTime.getTime()-a.startDateTime.getTime()));
+            const sortedValues = value.sort(
+              (a, b) => b.startDateTime.getTime() - a.startDateTime.getTime(),
+            );
             return (
-            <Box key={key} sx={{ mb: 3 }}>
-
-              {/* Day header — padded to match content */}
-              <Stack
-                direction="row"
-                alignItems="center"
-                spacing={1}
-                sx={{ mb: 0.75, px: 2.5 }}
-              >
-                <Typography
-                  variant="caption"
-                  sx={{
-                    fontFamily: "monospace",
-                    fontSize: "0.65rem",
-                    letterSpacing: "0.1em",
-                    textTransform: "uppercase",
-                    color: "text.primary",
-                    opacity: 0.55,
-                    whiteSpace: "nowrap",
-                  }}
+              <Box key={key} sx={{ mb: 3 }}>
+                {/* Day header — padded to match content */}
+                <Stack
+                  direction="row"
+                  alignItems="center"
+                  spacing={1}
+                  sx={{ mb: 0.75, px: 2.5 }}
                 >
-                  {key}
-                </Typography>
-                <Divider flexItem sx={{ flex: 1, alignSelf: "center" }} />
-                <Chip
-                  label={value.length}
-                  size="small"
-                  color="primary"
+                  <Typography
+                    variant="caption"
+                    sx={{
+                      fontFamily: "monospace",
+                      fontSize: "0.65rem",
+                      letterSpacing: "0.1em",
+                      textTransform: "uppercase",
+                      color: "text.primary",
+                      opacity: 0.55,
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    {key}
+                  </Typography>
+                  <Divider flexItem sx={{ flex: 1, alignSelf: "center" }} />
+                  <Chip
+                    label={value.length}
+                    size="small"
+                    color="primary"
+                    variant="outlined"
+                    sx={{
+                      height: 18,
+                      fontSize: "0.55rem",
+                      fontFamily: "monospace",
+                      "& .MuiChip-label": { px: 0.75 },
+                    }}
+                  />
+                </Stack>
+
+                {/* Card — full bleed, no horizontal margin */}
+                <Paper
                   variant="outlined"
                   sx={{
-                    height: 18,
-                    fontSize: "0.55rem",
-                    fontFamily: "monospace",
-                    "& .MuiChip-label": { px: 0.75 },
+                    borderRadius: 0,
+                    borderLeft: "none",
+                    borderRight: "none",
+                    overflow: "hidden",
+                    bgcolor: "background.paper",
                   }}
-                />
-              </Stack>
-
-              {/* Card — full bleed, no horizontal margin */}
-              <Paper
-                variant="outlined"
-                sx={{
-                  borderRadius: 0,
-                  borderLeft: "none",
-                  borderRight: "none",
-                  overflow: "hidden",
-                  bgcolor: "background.paper",
-                }}
-              >
-                <List disablePadding>
-                  
-                  {sortedValues.map((visit: Visit, idx: number) => (
-                    <ListItem
-                      key={visit.id}
-                      disablePadding
-                      divider={idx < value.length - 1}
-                      sx={{
-                        "&:hover": { bgcolor: "action.hover" },
-                        transition: "background 0.15s ease",
-                      }}
-                    >
-                      <SiteModal url={visit.siteUrl} userId={userId} />
-                      <Typography
-                        variant="caption"
+                >
+                  <List disablePadding>
+                    {sortedValues.map((visit: Visit, idx: number) => (
+                      <ListItem
+                        key={visit.id}
+                        disablePadding
+                        divider={idx < value.length - 1}
                         sx={{
-                          fontFamily: "monospace",
-                          fontSize: "0.65rem",
-                          letterSpacing: "0.1em",
-                          textTransform: "uppercase",
-                          color: "text.primary",
-                          opacity: 0.55,
-                          whiteSpace: "nowrap",
-                          marginLeft: "auto",
-                          marginRight: "5%", 
+                          "&:hover": { bgcolor: "action.hover" },
+                          transition: "background 0.15s ease",
                         }}
                       >
-                        {visit.startDateTime.getHours() + ":" + visit.startDateTime.getMinutes()}
-                    </Typography>
-                      
-                    </ListItem>
-                  ))}
-                </List>
-              </Paper>
-
-            </Box>
+                        <SiteModal url={visit.siteUrl} userId={userId} />
+                        <Typography
+                          variant="caption"
+                          sx={{
+                            fontFamily: "monospace",
+                            fontSize: "0.65rem",
+                            letterSpacing: "0.1em",
+                            textTransform: "uppercase",
+                            color: "text.primary",
+                            opacity: 0.55,
+                            whiteSpace: "nowrap",
+                            marginLeft: "auto",
+                            marginRight: "5%",
+                          }}
+                        >
+                          {visit.startDateTime.getHours() +
+                            ":" +
+                            visit.startDateTime.getMinutes()}
+                        </Typography>
+                      </ListItem>
+                    ))}
+                  </List>
+                </Paper>
+              </Box>
             );
           })}
         </List>

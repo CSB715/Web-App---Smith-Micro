@@ -1,10 +1,16 @@
 import { useEffect, useState } from "react";
 import { onAuthStateChanged } from "firebase/auth";
-import { getAuthInstance, GetCategorizations, GetOverrides } from "../utils/firestore";
+import {
+  getAuthInstance,
+  GetCategorizations,
+  getDb,
+  GetOverrides,
+} from "../utils/firestore";
 import { useNavigate } from "react-router";
 import type { Categorization } from "../utils/models";
 import SiteModal from "../components/SiteModal";
 import AddFlaggedSiteModal from "../components/AddFlaggedSiteModal";
+import { collection, onSnapshot } from "firebase/firestore";
 
 function FlaggedSites() {
   const navigate = useNavigate();
@@ -39,16 +45,26 @@ function FlaggedSites() {
         setFlaggedSites(flagged);
       });
 
-      GetOverrides(userId).then((data) => {
-        const flagged = data
+      const overridesRef = collection(getDb(), "Users", userId, "Overrides");
+
+      const unsubscribe = onSnapshot(overridesRef, (snapshot) => {
+        const flagged = snapshot.docs
+          .map((doc) => ({ id: doc.id, data: doc.data() }))
           .filter((override) => override.data.flagged_for.length > 0)
           .map((override) => ({
             siteUrl: override.id,
             category: override.data.category,
             is_flagged: true,
           }));
-        setFlaggedSites((prev) => [...prev, ...flagged]);
+        setFlaggedSites((prev) => {
+          const existingUrls = new Set(prev.map((site) => site.siteUrl));
+          const newFlaggedSites = flagged.filter(
+            (site) => !existingUrls.has(site.siteUrl),
+          );
+          return [...prev, ...newFlaggedSites];
+        });
       });
+      return unsubscribe;
 
       // get overrides that are flagged
     }, [userId]);
