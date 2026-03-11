@@ -15,6 +15,7 @@ import { Autocomplete, Button, FormControl, RadioGroup, TextField, FormControlLa
 import { NumberField } from '@base-ui/react/number-field';
 import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
+import type { Device } from "../utils/models";
 import "../styles/NumberField.css";
 
 type AlertType = "Site" | "Category";
@@ -30,7 +31,7 @@ export default function CreateNotificationTriggerPage() {
   const [devices, setDevices] = useState<{ id: string; data: DocumentData }[]>(
     [],
   );
-  const [selectedDevices, setSelectedDevices] = useState<string[]>([]);
+  const [selectedDevices, setSelectedDevices] = useState<Device[]>([]);
   const [ uid, setUid] = useState<string>("");
   const [alertType, setAlertType] = useState<AlertType>("Category");
   const [limit_hr, setLimit_Hr] = useState<number>(0);
@@ -49,7 +50,13 @@ export default function CreateNotificationTriggerPage() {
 
             setName(notifSnap!.data.name);
             setCategories(notifSnap!.data.categories ? notifSnap!.data.categories : [] );
-            setSelectedDevices(notifSnap!.data.devices);
+            for (const deviceName of notifSnap!.data.devices) {
+              const deviceRef = doc(getDb(), "Users", user.uid, "Devices", deviceName);
+              const deviceSnap = await GetDoc(deviceRef.path);
+              if (deviceSnap) {
+                setSelectedDevices((prev) => [...prev, { id: deviceSnap.id, name: deviceSnap.data.name }]);
+              }
+            }
             setSites(notifSnap!.data.sites ? notifSnap!.data.sites : [] );
             setLimit_Hr(notifSnap!.data.time_limit_hr);
             setLimit_Min(notifSnap!.data.time_limit_min);
@@ -70,15 +77,6 @@ export default function CreateNotificationTriggerPage() {
   }, [navigate]);
 
   function createNotification() {
-    const deviceIds = [];
-    for (const device of selectedDevices) {
-      for (const dev of devices) {
-        if (dev.data.name == device) {
-          deviceIds.push(dev.id);
-        }
-      }
-    }
-
     const nameInput = document.getElementById(
       "newNotification",
     ) as HTMLInputElement;
