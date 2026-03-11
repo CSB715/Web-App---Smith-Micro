@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { onAuthStateChanged } from "firebase/auth";
-import { getAuthInstance, GetCategorizations, GetOverrides } from "../utils/firestore";
+import { getAuthInstance, GetCategorizations } from "../utils/firestore";
 import { useNavigate } from "react-router";
 import type { Categorization } from "../utils/models";
 import SiteModal from "../components/SiteModal";
@@ -39,16 +39,16 @@ function FlaggedSites() {
         setFlaggedSites(flagged);
       });
 
-      GetOverrides(userId).then((data) => {
-        const flagged = data
-          .filter((override) => override.data.flagged_for.length > 0)
-          .map((override) => ({
-            siteUrl: override.id,
-            category: override.data.category,
-            is_flagged: true,
-          }));
-        setFlaggedSites((prev) => [...prev, ...flagged]);
-      });
+      // GetOverrides(userId).then((data) => {
+      //   const flagged = data
+      //     // .filter((override) => override.data.flagged_for?.length > 0)
+      //     .map((override) => ({
+      //       siteUrl: override.id,
+      //       category: override.data.category,
+      //       is_flagged: true,
+      //     }));
+      //   setFlaggedSites((prev) => [...prev, ...flagged]);
+      // });
 
       // get overrides that are flagged
     }, [userId]);
