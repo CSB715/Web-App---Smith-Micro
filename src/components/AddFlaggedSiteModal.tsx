@@ -106,7 +106,7 @@ export default function AddFlaggedSiteModal({ userId }: { userId: string }) {
             </Box>
           </Box>
           <TextField
-            defaultValue="www.example.com"
+            placeholder="www.example.com"
             onChange={(event) => {
               setUrl(event.target.value);
             }}

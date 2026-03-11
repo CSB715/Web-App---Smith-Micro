@@ -18,6 +18,7 @@ import {
   type Firestore,
   getFirestore,
 } from "firebase/firestore";
+import type { Device } from "./models";
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
 
@@ -353,7 +354,7 @@ export async function DeleteDevice(device: DocumentData) {
 export function CreateNotificationTrigger(
   uid: string,
   name: string,
-  deviceIds: string[],
+  devices: Device[],
   categories: string[],
   sites: string[],
   alertType: string,
@@ -365,14 +366,14 @@ export function CreateNotificationTrigger(
     alertType === "Category"
       ? {
           name: name,
-          devices: deviceIds,
+          devices: devices.map((device) => device.name),
           categories: categories,
           time_limit_hr: limit_hr,
           time_limit_min: limit_min,
         }
       : {
           name: name,
-          devices: deviceIds,
+          devices: devices.map((device) => device.name),
           sites: sites,
           time_limit_hr: limit_hr,
           time_limit_min: limit_min,
