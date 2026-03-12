@@ -366,14 +366,14 @@ export function CreateNotificationTrigger(
     alertType === "Category"
       ? {
           name: name,
-          devices: devices.map((device) => device.name),
+          devices: devices.map((device) => device.id),
           categories: categories,
           time_limit_hr: limit_hr,
           time_limit_min: limit_min,
         }
       : {
           name: name,
-          devices: devices.map((device) => device.name),
+          devices: devices.map((device) => device.id),
           sites: sites,
           time_limit_hr: limit_hr,
           time_limit_min: limit_min,
