@@ -207,6 +207,8 @@ function AdminDashboard() {
     event: React.MouseEvent<HTMLElement>,
     index: number,
   ) => {
+    event;
+    index;
     setAnchorElCategories(null);
     setSelectedIndex(null);
   };
