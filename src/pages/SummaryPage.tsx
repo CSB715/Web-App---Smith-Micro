@@ -12,6 +12,8 @@ import { type Categorization, type Visit } from "../utils/models";
 import { getDisplayUrl } from "../utils/urls";
 import ArrowUpwardIcon from "@mui/icons-material/ArrowUpward";
 import ArrowDownwardIcon from "@mui/icons-material/ArrowDownward";
+import { type Device } from "../utils/models";
+import DeviceSelect from "../components/DeviceSelect";
 
 function Summary() {
   const navigate = useNavigate();
@@ -39,13 +41,15 @@ function Summary() {
     >({});
     const [timePerSite, setTimePerSite] = useState<Record<string, number>>({});
     const [newSites, setNewSites] = useState<Set<string>>(new Set());
+    const [devices, setDevices] = useState<Device[]>([]);
+    const [selectedDevices, setSelectedDevices] = useState<Device[]>([]);
 
     useEffect(() => {
       if (!userId) return;
 
       async function load() {
         const devicesData = await GetDevices(userId);
-        const normalizedDevices = devicesData.map((d) => ({
+        const normalizedDevices: Device[] = devicesData.map((d) => ({
           id: d.id,
           name: d.data.name,
         }));
@@ -118,19 +122,41 @@ function Summary() {
         setTimePerCategoryPrev(timePerCategoryPrev);
         setTimePerSite(timePerSite);
         setNewSites(newSites);
+        setDevices(normalizedDevices);
+        setSelectedDevices(normalizedDevices);
       }
 
       load();
     }, [userId, timeFrame]);
-    return { timePerCategoryCurr, timePerSite, timePerCategoryPrev, newSites };
+    return {
+      timePerCategoryCurr,
+      timePerSite,
+      timePerCategoryPrev,
+      newSites,
+      devices,
+      selectedDevices,
+      setSelectedDevices,
+    };
   }
 
-  const { timePerCategoryCurr, timePerSite, timePerCategoryPrev, newSites } =
-    useData();
+  const {
+    timePerCategoryCurr,
+    timePerSite,
+    timePerCategoryPrev,
+    newSites,
+    devices,
+    selectedDevices,
+    setSelectedDevices,
+  } = useData();
 
   return (
     <>
       <h1>Summary</h1>
+      <DeviceSelect
+        devices={devices}
+        selectedDevices={selectedDevices}
+        setSelectedDevices={setSelectedDevices}
+      />
       <ToggleButtonGroup
         value={timeFrame}
         exclusive
