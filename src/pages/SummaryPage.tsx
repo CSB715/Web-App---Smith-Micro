@@ -14,12 +14,22 @@ import ArrowUpwardIcon from "@mui/icons-material/ArrowUpward";
 import ArrowDownwardIcon from "@mui/icons-material/ArrowDownward";
 import { type Device } from "../utils/models";
 import DeviceSelect from "../components/DeviceSelect";
-import { LineChart, BarChart } from "@mui/x-charts";
+import { LineChart } from "@mui/x-charts";
 
 function Summary() {
   const navigate = useNavigate();
   const [userId, setUserId] = useState<string>("");
   const [timeFrame, setTimeFrame] = useState<7 | 30 | 90>(7);
+
+  const dayConverter: Record<number, string> = {
+    0: "Sunday",
+    1: "Monday",
+    2: "Tuesday",
+    3: "Wednesday",
+    4: "Thursday",
+    5: "Friday",
+    6: "Saturday",
+  };
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(getAuthInstance(), (user) => {
@@ -44,6 +54,7 @@ function Summary() {
     const [newSites, setNewSites] = useState<Set<string>>(new Set());
     const [devices, setDevices] = useState<Device[]>([]);
     const [selectedDevices, setSelectedDevices] = useState<Device[]>([]);
+    const [chartData, setChartData] = useState<Record<string, any>[]>([]);
     useEffect(() => {
       if (!userId) return;
 
@@ -82,6 +93,7 @@ function Summary() {
         const timePerSite: Record<string, number> = {};
         const sitesVisitedCurr = new Set<string>();
         const sitesVisitedPrev = new Set<string>();
+        const timePerDayAndCat: Record<number, Record<string, number>> = {};
 
         const cutoffDate = new Date();
         cutoffDate.setDate(cutoffDate.getDate() - timeFrame);
@@ -113,6 +125,10 @@ function Summary() {
               normalizedCategorization.category.forEach((cat) => {
                 timePerCategoryCurr[cat] =
                   (timePerCategoryCurr[cat] || 0) + timeSpent;
+                const day = visit.startDateTime.getDay();
+                timePerDayAndCat[day] = timePerDayAndCat[day] || {};
+                timePerDayAndCat[day][cat] =
+                  (timePerDayAndCat[day][cat] || 0) + timeSpent;
               });
               sitesVisitedCurr.add(visit.siteUrl);
               timePerSite[visit.siteUrl] =
@@ -129,10 +145,23 @@ function Summary() {
         const newSites = new Set<string>(
           [...sitesVisitedCurr].filter((x) => !sitesVisitedPrev.has(x)),
         );
+        // Compute chart data
+        const allCategories = new Set<string>();
+        Object.values(timePerDayAndCat).forEach((dayCats) => {
+          Object.keys(dayCats).forEach((cat) => allCategories.add(cat));
+        });
+        const computedChartData = [0, 1, 2, 3, 4, 5, 6].map((day) => {
+          const obj: Record<string, any> = { day: day };
+          allCategories.forEach((cat) => {
+            obj[cat] = (timePerDayAndCat[day]?.[cat] || 0) / (1000 * 60 * 60);
+          });
+          return obj;
+        });
         setTimePerCategoryCurr(timePerCategoryCurr);
         setTimePerCategoryPrev(timePerCategoryPrev);
         setTimePerSite(timePerSite);
         setNewSites(newSites);
+        setChartData(computedChartData);
       }
 
       load();
@@ -145,6 +174,7 @@ function Summary() {
       devices,
       selectedDevices,
       setSelectedDevices,
+      chartData,
     };
   }
 
@@ -156,13 +186,8 @@ function Summary() {
     devices,
     selectedDevices,
     setSelectedDevices,
+    chartData,
   } = useData();
-
-  const chartData = [
-    { day: "Monday", entertainment: 3 },
-    { day: "Tuesday", entertainment: 5 },
-    { day: "Wednesday", entertainment: 1 },
-  ];
 
   return (
     <>
@@ -250,10 +275,23 @@ function Summary() {
       </Box>
       <LineChart
         dataset={chartData}
-        xAxis={[{ scaleType: "band", dataKey: "day" }]}
-        series={[{ dataKey: "entertainment", label: "Entertainment" }]}
-        width={500}
+        xAxis={[
+          {
+            scaleType: "band",
+            dataKey: "day",
+            valueFormatter: (value) => dayConverter[value],
+          },
+        ]}
+        series={
+          chartData.length > 0
+            ? Object.keys(chartData[0])
+                .filter((k) => k !== "day")
+                .map((cat) => ({ dataKey: cat, label: cat }))
+            : []
+        }
+        width={800}
         height={300}
+        yAxis={[{ label: "Hours Spent" }]}
       />
     </>
   );
