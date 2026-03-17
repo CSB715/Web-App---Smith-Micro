@@ -14,6 +14,7 @@ import ArrowUpwardIcon from "@mui/icons-material/ArrowUpward";
 import ArrowDownwardIcon from "@mui/icons-material/ArrowDownward";
 import { type Device } from "../utils/models";
 import DeviceSelect from "../components/DeviceSelect";
+import { LineChart, BarChart } from "@mui/x-charts";
 
 function Summary() {
   const navigate = useNavigate();
@@ -43,7 +44,6 @@ function Summary() {
     const [newSites, setNewSites] = useState<Set<string>>(new Set());
     const [devices, setDevices] = useState<Device[]>([]);
     const [selectedDevices, setSelectedDevices] = useState<Device[]>([]);
-
     useEffect(() => {
       if (!userId) return;
 
@@ -53,9 +53,21 @@ function Summary() {
           id: d.id,
           name: d.data.name,
         }));
+        setDevices(normalizedDevices);
+        setSelectedDevices(normalizedDevices);
+      }
 
+      load();
+    }, [userId]);
+
+    useEffect(() => {
+      if (!userId) return;
+
+      async function load() {
         const visitsData = await Promise.all(
-          normalizedDevices.map((d) => GetVisits(userId, d.id)),
+          selectedDevices
+            .filter((d) => d.id !== "__all__")
+            .map((d) => GetVisits(userId, d.id)),
         );
 
         const normalizedVisits: Visit[] = visitsData.flat().map((v) => ({
@@ -78,9 +90,6 @@ function Summary() {
           normalizedVisits.map(async (visit) => {
             const timeSpent =
               visit.endDateTime.getTime() - visit.startDateTime.getTime();
-
-            timePerSite[visit.siteUrl] =
-              (timePerSite[visit.siteUrl] || 0) + timeSpent;
 
             const categorizationData = await GetCategorization(visit.siteUrl);
 
@@ -106,6 +115,8 @@ function Summary() {
                   (timePerCategoryCurr[cat] || 0) + timeSpent;
               });
               sitesVisitedCurr.add(visit.siteUrl);
+              timePerSite[visit.siteUrl] =
+                (timePerSite[visit.siteUrl] || 0) + timeSpent;
             } else {
               normalizedCategorization.category.forEach((cat) => {
                 timePerCategoryPrev[cat] =
@@ -122,12 +133,10 @@ function Summary() {
         setTimePerCategoryPrev(timePerCategoryPrev);
         setTimePerSite(timePerSite);
         setNewSites(newSites);
-        setDevices(normalizedDevices);
-        setSelectedDevices(normalizedDevices);
       }
 
       load();
-    }, [userId, timeFrame]);
+    }, [userId, timeFrame, selectedDevices]);
     return {
       timePerCategoryCurr,
       timePerSite,
@@ -148,6 +157,12 @@ function Summary() {
     selectedDevices,
     setSelectedDevices,
   } = useData();
+
+  const chartData = [
+    { day: "Monday", entertainment: 3 },
+    { day: "Tuesday", entertainment: 5 },
+    { day: "Wednesday", entertainment: 1 },
+  ];
 
   return (
     <>
@@ -233,6 +248,13 @@ function Summary() {
             ))}
         </ul>
       </Box>
+      <LineChart
+        dataset={chartData}
+        xAxis={[{ scaleType: "band", dataKey: "day" }]}
+        series={[{ dataKey: "entertainment", label: "Entertainment" }]}
+        width={500}
+        height={300}
+      />
     </>
   );
 }
