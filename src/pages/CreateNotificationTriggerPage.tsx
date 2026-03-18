@@ -9,7 +9,7 @@ import {
   GetDevices,
   GetCategoriesArray,
 } from "../utils/firestore";
-import { doc, type DocumentData } from "firebase/firestore";
+import { doc } from "firebase/firestore";
 import DeviceSelect from "../components/DeviceSelect";
 import { Autocomplete, Button, FormControl, RadioGroup, TextField, FormControlLabel, Radio } from "@mui/material";
 import { NumberField } from '@base-ui/react/number-field';
@@ -28,7 +28,7 @@ export default function CreateNotificationTriggerPage() {
   const [name, setName] = useState<string>("");
   const [categories, setCategories] = useState<string[]>([]);
   const [sites, setSites] = useState<string[]>([]);
-  const [devices, setDevices] = useState<{ id: string; data: DocumentData }[]>(
+  const [devices, setDevices] = useState<Device[]>(
     [],
   );
   const [selectedDevices, setSelectedDevices] = useState<Device[]>([]);
@@ -65,7 +65,13 @@ export default function CreateNotificationTriggerPage() {
             nameInput.value = notifSnap!.data.name;
           }
 
-          setDevices(await GetDevices(user.uid));
+          const devicesData = await GetDevices(user.uid);
+          const normalizedDevices = devicesData.map((d) => ({
+            id: d.id,
+            name: d.data.name,
+          }));
+
+          setDevices(normalizedDevices);
           setCategoriesArr(await GetCategoriesArray());
           setUid(user.uid);
         } else {
@@ -106,7 +112,7 @@ export default function CreateNotificationTriggerPage() {
         />
         
         <DeviceSelect
-          devices={devices.map((d) => d.data.name)}
+          devices={devices}
           selectedDevices={selectedDevices}
           setSelectedDevices={setSelectedDevices}
         />
