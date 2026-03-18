@@ -9,14 +9,20 @@ import {
   GetDevices,
   GetCategoriesArray,
 } from "../utils/firestore";
-import { doc } from "firebase/firestore";
+import { doc, Timestamp } from "firebase/firestore";
 import DeviceSelect from "../components/DeviceSelect";
-import { Autocomplete, Button, FormControl, RadioGroup, TextField, FormControlLabel, Radio } from "@mui/material";
+import { Autocomplete, Button, FormControl, RadioGroup, TextField, FormLabel, FormGroup, FormControlLabel, Radio, Checkbox, Link } from "@mui/material";
 import { NumberField } from '@base-ui/react/number-field';
 import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
+import { TimePicker } from '@mui/x-date-pickers/TimePicker';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import type { Device } from "../utils/models";
+import WeekdayPicker from "../components/WeekDayPicker";
 import "../styles/NumberField.css";
+import type { NotificationTrigger } from "../utils/models";
+import dayjs, { Dayjs } from "dayjs";
 
 type AlertType = "Site" | "Category";
 
@@ -37,6 +43,13 @@ export default function CreateNotificationTriggerPage() {
   const [limit_hr, setLimit_Hr] = useState<number>(0);
   const [limit_min, setLimit_Min] = useState<number>(0);
   const [categoriesArr, setCategoriesArr] = useState<string[]>([]);
+  const [email, setEmail] = useState<boolean>(false);
+  const [text, setText] = useState<boolean>(false);
+  const [selectedDays, setSelectedDays] = useState<string[]>([]);
+  const [startTime, setStartTime] = useState<Dayjs>(dayjs());
+  const [endTime, setEndTime] = useState<Dayjs>(dayjs());
+
+  const [advancedView, setAdvancedView] = useState<boolean>(false);
 
   useEffect(() => {
     if (!hasMounted.current) {
@@ -61,6 +74,8 @@ export default function CreateNotificationTriggerPage() {
             setLimit_Hr(notifSnap!.data.time_limit_hr);
             setLimit_Min(notifSnap!.data.time_limit_min);
             setAlertType(notifSnap!.data.categories ? "Category" : "Site");
+            setEmail(notifSnap!.data.email ? true : false);
+            setText(notifSnap!.data.text ? true : false);
             const nameInput = document.getElementById("newNotification") as HTMLInputElement;
             nameInput.value = notifSnap!.data.name;
           }
@@ -82,21 +97,37 @@ export default function CreateNotificationTriggerPage() {
     }
   }, [navigate]);
 
+  function handleCheckEmailBoxChange(event: React.ChangeEvent<HTMLInputElement>) {
+    setEmail(event.target.checked);
+  }
+
+  function handleCheckTextBoxChange(event: React.ChangeEvent<HTMLInputElement>) {
+    setText(event.target.checked);
+  }
+
   function createNotification() {
     const nameInput = document.getElementById(
       "newNotification",
     ) as HTMLInputElement;
-    CreateNotificationTrigger(
-      uid,
-      nameInput.value,
-      selectedDevices,
+
+    const notif : NotificationTrigger = {
+      uid : uid,
+      name: nameInput.value,
+      devices: selectedDevices,
       categories,
       sites,
       alertType,
       notifID,
       limit_hr,
-      limit_min
-    );
+      limit_min,
+      email,
+      text,
+      days: (selectedDays.length > 0) ? selectedDays : ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"], // if empty, default to all
+      startTime: Timestamp.fromDate(startTime.toDate()),
+      endTime: Timestamp.fromDate(endTime.toDate()),
+    }
+
+    CreateNotificationTrigger(notif);
     navigate("/settings/notifications");
   }
 
@@ -204,6 +235,44 @@ export default function CreateNotificationTriggerPage() {
 
         <br />
 
+        <FormControl component="fieldset">
+          <FormLabel component="legend">Notify on site and...</FormLabel>
+          <FormGroup>
+            <FormControlLabel
+              control={<Checkbox checked={email} onChange={handleCheckEmailBoxChange} name="option1" />}
+              label="Email"
+            />
+            <FormControlLabel
+              control={<Checkbox checked={text} onChange={handleCheckTextBoxChange} name="option2" />}
+              label="Text"
+            />
+          </FormGroup>
+        </FormControl>
+        <br />
+
+        
+        {advancedView && (
+          <div>
+            <p>Active During:</p>
+            <LocalizationProvider dateAdapter={AdapterDayjs}>
+              <TimePicker 
+                label="Start Time"
+                value={startTime}
+                onChange={(newValue) => setStartTime(dayjs(newValue))} 
+              />
+              <TimePicker
+                label="End Time"
+                value={endTime}
+                onChange={(newValue) => setEndTime(dayjs(newValue))} 
+              />
+            </LocalizationProvider>
+
+            <br />
+
+            <WeekdayPicker selectedDays={selectedDays} setSelectedDays={setSelectedDays} />
+          </div>
+        )}
+
         <div>
           <Button
             id="cancelNewNotification"
@@ -217,6 +286,10 @@ export default function CreateNotificationTriggerPage() {
         </div>
       </FormControl>
 
+
+      <Link onClick={() => setAdvancedView(!advancedView)}>
+        {advancedView ? "Hide Advanced Options" : "Show Advanced Options"}
+      </Link>
     </>
   );
 }
