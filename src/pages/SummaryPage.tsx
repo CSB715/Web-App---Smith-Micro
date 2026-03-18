@@ -309,8 +309,6 @@ function Summary() {
         orderedDateKeys.push(d.toISOString().slice(0, 10));
       }
 
-      const filteredTimePerCategoryCurr: Record<string, number> = {};
-
       const computedChartData = orderedDateKeys.map((dateKey) => {
         const obj: Record<string, any> = { day: dateKey };
 
@@ -366,15 +364,12 @@ function Summary() {
           });
 
           obj[cat] = sum / (1000 * 60 * 60);
-          filteredTimePerCategoryCurr[cat] =
-            (filteredTimePerCategoryCurr[cat] || 0) + sum;
         });
 
         return obj;
       });
 
       setChartData(computedChartData);
-      setTimePerCategoryCurr(filteredTimePerCategoryCurr);
     }, [
       rawTimePerDayCategorySite,
       displayCategories,
