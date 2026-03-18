@@ -32,16 +32,6 @@ function Summary() {
   const [userId, setUserId] = useState<string>("");
   const [timeFrame, setTimeFrame] = useState<7 | 30 | 90>(7);
 
-  const dayConverter: Record<number, string> = {
-    0: "Sunday",
-    1: "Monday",
-    2: "Tuesday",
-    3: "Wednesday",
-    4: "Thursday",
-    5: "Friday",
-    6: "Saturday",
-  };
-
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(getAuthInstance(), (user) => {
       if (user) {
@@ -71,7 +61,7 @@ function Summary() {
     >({});
     const [siteFilters, setSiteFilters] = useState<Record<string, boolean>>({});
     const [rawTimePerDayCategorySite, setRawTimePerDayCategorySite] = useState<
-      Record<number, Record<string, Record<string, number>>>
+      Record<string, Record<string, Record<string, number>>>
     >({});
 
     const displayInfo = useMemo(() => {
@@ -172,7 +162,7 @@ function Summary() {
         const sitesVisitedCurr = new Set<string>();
         const sitesVisitedPrev = new Set<string>();
         const timePerDayCategorySite: Record<
-          number,
+          string,
           Record<string, Record<string, number>>
         > = {};
         const categorySites: Record<string, Set<string>> = {};
@@ -207,14 +197,15 @@ function Summary() {
               normalizedCategorization.category.forEach((cat) => {
                 timePerCategoryCurr[cat] =
                   (timePerCategoryCurr[cat] || 0) + timeSpent;
-                const day = visit.startDateTime.getDay();
+                const dayKey = visit.startDateTime.toISOString().slice(0, 10); // YYYY-MM-DD
 
                 // raw per-day / per-category / per-site breakdown (for filtering)
-                timePerDayCategorySite[day] = timePerDayCategorySite[day] || {};
-                timePerDayCategorySite[day][cat] =
-                  timePerDayCategorySite[day][cat] || {};
-                timePerDayCategorySite[day][cat][visit.siteUrl] =
-                  (timePerDayCategorySite[day][cat][visit.siteUrl] || 0) +
+                timePerDayCategorySite[dayKey] =
+                  timePerDayCategorySite[dayKey] || {};
+                timePerDayCategorySite[dayKey][cat] =
+                  timePerDayCategorySite[dayKey][cat] || {};
+                timePerDayCategorySite[dayKey][cat][visit.siteUrl] =
+                  (timePerDayCategorySite[dayKey][cat][visit.siteUrl] || 0) +
                   timeSpent;
 
                 // track available sites per category
@@ -304,19 +295,19 @@ function Summary() {
     }, [displayCategories, displayCategorySites]);
 
     useEffect(() => {
-      // Calculate ordered days from 6 days ago to today
+      // Calculate ordered dates from (timeFrame - 1) days ago through today
       const today = new Date();
-      const todayDayOfWeek = today.getDay();
-      const orderedDaysOfWeek = [];
-      for (let daysAgo = 6; daysAgo >= 0; daysAgo--) {
-        const dayOfWeek = (todayDayOfWeek - daysAgo + 7) % 7;
-        orderedDaysOfWeek.push(dayOfWeek);
+      const orderedDateKeys: string[] = [];
+      for (let daysAgo = timeFrame - 1; daysAgo >= 0; daysAgo--) {
+        const d = new Date(today);
+        d.setDate(d.getDate() - daysAgo);
+        orderedDateKeys.push(d.toISOString().slice(0, 10));
       }
 
       const filteredTimePerCategoryCurr: Record<string, number> = {};
 
-      const computedChartData = orderedDaysOfWeek.map((day) => {
-        const obj: Record<string, any> = { day };
+      const computedChartData = orderedDateKeys.map((dateKey) => {
+        const obj: Record<string, any> = { day: dateKey };
 
         displayCategories.forEach((cat) => {
           if (!categoryFilters[cat]) return;
@@ -344,12 +335,13 @@ function Summary() {
                     ? otherCategories.reduce(
                         (acc, otherCat) =>
                           acc +
-                          (rawTimePerDayCategorySite[day]?.[otherCat]?.[
+                          (rawTimePerDayCategorySite[dateKey]?.[otherCat]?.[
                             otherSite
                           ] || 0),
                         0,
                       )
-                    : rawTimePerDayCategorySite[day]?.[cat]?.[otherSite] || 0;
+                    : rawTimePerDayCategorySite[dateKey]?.[cat]?.[otherSite] ||
+                      0;
                 sum += ms;
               });
             } else {
@@ -358,11 +350,12 @@ function Summary() {
                   ? otherCategories.reduce(
                       (acc, otherCat) =>
                         acc +
-                        (rawTimePerDayCategorySite[day]?.[otherCat]?.[site] ||
-                          0),
+                        (rawTimePerDayCategorySite[dateKey]?.[otherCat]?.[
+                          site
+                        ] || 0),
                       0,
                     )
-                  : rawTimePerDayCategorySite[day]?.[cat]?.[site] || 0;
+                  : rawTimePerDayCategorySite[dateKey]?.[cat]?.[site] || 0;
               sum += ms;
             }
           });
@@ -514,7 +507,13 @@ function Summary() {
           {
             scaleType: "band",
             dataKey: "day",
-            valueFormatter: (value) => dayConverter[value],
+            valueFormatter: (value) => {
+              try {
+                return new Date(value).toLocaleDateString();
+              } catch {
+                return String(value);
+              }
+            },
           },
         ]}
         series={
