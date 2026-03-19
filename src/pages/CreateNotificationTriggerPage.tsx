@@ -19,7 +19,7 @@ import { TimePicker } from '@mui/x-date-pickers/TimePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import type { Device } from "../utils/models";
-import WeekdayPicker from "../components/WeekDayPicker";
+import WeekdayPicker from "../components/WeekdayPicker";
 import "../styles/NumberField.css";
 import type { NotificationTrigger } from "../utils/models";
 import dayjs, { Dayjs } from "dayjs";
