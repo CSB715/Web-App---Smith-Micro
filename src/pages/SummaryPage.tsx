@@ -60,7 +60,9 @@ function Summary() {
     const [newSites, setNewSites] = useState<Set<string>>(new Set());
     const [devices, setDevices] = useState<Device[]>([]);
     const [selectedDevices, setSelectedDevices] = useState<Device[]>([]);
-    const [chartData, setChartData] = useState<Record<string, any>[]>([]);
+    const [chartData, setChartData] = useState<
+      Record<string, string | number>[]
+    >([]);
     const [categoryFilters, setCategoryFilters] = useState<
       Record<string, boolean>
     >({});
@@ -310,7 +312,7 @@ function Summary() {
       }
 
       const computedChartData = orderedDateKeys.map((dateKey) => {
-        const obj: Record<string, any> = { day: dateKey };
+        const obj: Record<string, string | number> = { day: dateKey };
 
         displayCategories.forEach((cat) => {
           if (!categoryFilters[cat]) return;
