@@ -51,33 +51,40 @@ export default function CreateNotificationTriggerPage() {
 
   const [advancedView, setAdvancedView] = useState<boolean>(false);
 
+  async function loadNotificationTrigger(notifID: string, uid: string) {
+    // load selected devices and categories
+    const notifRef = doc(getDb(), "Users", uid, "NotificationTriggers", notifID);
+    const notifSnap = await GetDoc(notifRef.path);
+
+    setName(notifSnap!.data.name);
+    setCategories(notifSnap!.data.categories ? notifSnap!.data.categories : [] );
+    for (const deviceName of notifSnap!.data.devices) {
+      const deviceRef = doc(getDb(), "Users", uid, "Devices", deviceName);
+      const deviceSnap = await GetDoc(deviceRef.path);
+      if (deviceSnap) {
+        setSelectedDevices((prev) => [...prev, { id: deviceSnap.id, name: deviceSnap.data.name }]);
+      }
+    }
+    setSites(notifSnap!.data.sites ? notifSnap!.data.sites : [] );
+    setLimit_Hr(notifSnap!.data.time_limit_hr);
+    setLimit_Min(notifSnap!.data.time_limit_min);
+    setAlertType(notifSnap!.data.categories ? "Category" : "Site");
+    setEmail(notifSnap!.data.email ? true : false);
+    setText(notifSnap!.data.text ? true : false);
+    const nameInput = document.getElementById("newNotification") as HTMLInputElement;
+    nameInput.value = notifSnap!.data.name;
+    setSelectedDays(notifSnap!.data.days ? notifSnap!.data.days : []);
+    setStartTime(dayjs(notifSnap!.data.startTime.toDate()));
+    setEndTime(dayjs(notifSnap!.data.endTime.toDate()));
+  }
+
   useEffect(() => {
     if (!hasMounted.current) {
       onAuthStateChanged(getAuthInstance(), async (user) => {
         if (user) {
           // if we are passed an id, we edit that document, not create a new one
           if (notifID !== "") {
-            // load selected devices and categories
-            const notifRef = doc(getDb(), "Users", user.uid, "NotificationTriggers", notifID);
-            const notifSnap = await GetDoc(notifRef.path);
-
-            setName(notifSnap!.data.name);
-            setCategories(notifSnap!.data.categories ? notifSnap!.data.categories : [] );
-            for (const deviceName of notifSnap!.data.devices) {
-              const deviceRef = doc(getDb(), "Users", user.uid, "Devices", deviceName);
-              const deviceSnap = await GetDoc(deviceRef.path);
-              if (deviceSnap) {
-                setSelectedDevices((prev) => [...prev, { id: deviceSnap.id, name: deviceSnap.data.name }]);
-              }
-            }
-            setSites(notifSnap!.data.sites ? notifSnap!.data.sites : [] );
-            setLimit_Hr(notifSnap!.data.time_limit_hr);
-            setLimit_Min(notifSnap!.data.time_limit_min);
-            setAlertType(notifSnap!.data.categories ? "Category" : "Site");
-            setEmail(notifSnap!.data.email ? true : false);
-            setText(notifSnap!.data.text ? true : false);
-            const nameInput = document.getElementById("newNotification") as HTMLInputElement;
-            nameInput.value = notifSnap!.data.name;
+            loadNotificationTrigger(notifID, user.uid);
           }
 
           const devicesData = await GetDevices(user.uid);
