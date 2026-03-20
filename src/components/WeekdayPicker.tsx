@@ -26,9 +26,15 @@ export default function WeekdayPicker({ selectedDays, setSelectedDays }: Weekday
       value={selectedDays}
       onChange={handleChange}
       aria-label="weekday picker"
+      sx={{ display: 'flex', width: '100%', flexWrap: 'nowrap', overflow: 'hidden' }}
     >
       {days.map((day) => (
-        <ToggleButton key={day} value={day} aria-label={day}>
+        <ToggleButton
+          key={day}
+          value={day}
+          aria-label={day}
+          sx={{ flex: '1 1 0%', minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
+        >
           {day}
         </ToggleButton>
       ))}

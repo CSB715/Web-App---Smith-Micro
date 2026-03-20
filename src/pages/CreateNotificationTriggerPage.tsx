@@ -11,7 +11,7 @@ import {
 } from "../utils/firestore";
 import { doc, Timestamp } from "firebase/firestore";
 import DeviceSelect from "../components/DeviceSelect";
-import { Autocomplete, Button, FormControl, RadioGroup, TextField, FormLabel, FormGroup, FormControlLabel, Radio, Checkbox, Link } from "@mui/material";
+import { Box, Typography, Autocomplete, Button, FormControl, RadioGroup, TextField, FormLabel, FormGroup, FormControlLabel, Radio, Checkbox, Link } from "@mui/material";
 import { NumberField } from '@base-ui/react/number-field';
 import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
@@ -38,7 +38,7 @@ export default function CreateNotificationTriggerPage() {
     [],
   );
   const [selectedDevices, setSelectedDevices] = useState<Device[]>([]);
-  const [ uid, setUid] = useState<string>("");
+  const [uid, setUid] = useState<string>("");
   const [alertType, setAlertType] = useState<AlertType>("Category");
   const [limit_hr, setLimit_Hr] = useState<number>(0);
   const [limit_min, setLimit_Min] = useState<number>(0);
@@ -139,112 +139,161 @@ export default function CreateNotificationTriggerPage() {
   }
 
   return (
-    <>
-      <FormControl>
+    <Box 
+      component="main"
+      role="main"
+      aria-labelledby="create-notification-title"
+      sx={{
+        minHeight: "100vh",
+        bgcolor: "background.default",
+        py: 3,
+        px: 2.5,
+      }}
+    >
+      {/* ── Title ── */}
+      <Typography 
+        variant="h1" 
+        id="create-notification-title" 
+        sx={{ 
+          fontSize: "2.5rem",
+          mb: 2,
+          fontWeight: "300",
+          color: "#01579b",
+          alignSelf: "center",
+          textAlign: "center",
+          }}
+        >
+        {notifID ? "Edit Notification" : "Create Notification"}
+      </Typography>
+
+      {/* ── Form ── */}
+      <FormControl fullWidth sx={{ display: 'flex', flexDirection: 'column', gap: 2, alignItems: 'stretch', '& > *': { width: '100%' } }} >
+        
+        {/* Notification Name */}
         <TextField id="newNotification" 
           label="New Notification" 
           variant="outlined" 
           placeholder="New Notification" 
           value={name} 
+          fullWidth
           onChange={(e) => setName(e.target.value)} 
         />
         
+        {/* Devices */}
         <DeviceSelect
           devices={devices}
           selectedDevices={selectedDevices}
           setSelectedDevices={setSelectedDevices}
         />
 
-        <RadioGroup row 
-          aria-labelledby="site-or-category"
-          name="site-or-category-group"
-          value={alertType}
-          onChange={(e) => setAlertType(e.target.value as AlertType)}
-        >
-          <FormControlLabel value="Site" control={<Radio />} label="Site" />
-          <FormControlLabel value="Category" control={<Radio />} label="Category" />
-        </RadioGroup>
-
-        {alertType === "Category" && (
-          <Autocomplete
-            multiple
-            value={categories}
-            onChange={(_: any, newValue: Array<string>) => {
-              setCategories(newValue);
-            }}
-            options={categoriesArr}
-            renderInput={(params) => <TextField {...params} placeholder="Pick categories"/>}
-          />
-        )}
-
-        {alertType === "Site" && (
-          <Autocomplete
-            freeSolo
-            multiple
-            value={sites}
-            onChange={(_: any, newValue: Array<string>) => {
-              setSites(newValue);
-            }}
-            options={[]} /* add site names maybe?  */
-            renderInput={(params) => <TextField {...params} placeholder="Enter site URLs"/>}
-          />
-        )}
-
-        <div className="numberFieldRow">
-          <label htmlFor="hours" className="numberFieldLabel">
-            Time Limit (hrs)
-          </label>
-          <NumberField.Root 
-            id="hours"
-            defaultValue={0} 
-            min={0} 
-            max={24} 
-            value={limit_hr} 
-            onValueChange={(value) => setLimit_Hr(value || 0)}
+        {/* Alert Type - Sites or Categories */}
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+          <Typography variant="h2"
+            sx={{ fontSize: "1.25rem", mb: 0 }}
           >
-            <NumberField.Group className="numberFieldGroup">
-              <NumberField.Input className="numberFieldInput" />
-              <div className="numberFieldButtons">
-                <NumberField.Increment className="numberFieldButton" >
-                  <KeyboardArrowUpIcon fontSize="small" />
-                </NumberField.Increment>
-                <NumberField.Decrement className="numberFieldButton" >
-                  <KeyboardArrowDownIcon fontSize="small" />
-                </NumberField.Decrement>
-              </div>
-            </NumberField.Group>
-          </NumberField.Root>
-
-          <label htmlFor="mins" className="numberFieldLabel">
-            Time Limit (mins)
-          </label>
-          <NumberField.Root 
-            id="mins"
-            defaultValue={0} 
-            min={0} 
-            max={60} 
-            value={limit_min}
-            onValueChange={(value) => setLimit_Min(value || 0)}
+            Alert Visits By...
+          </Typography>
+          <RadioGroup row 
+            aria-labelledby="site-or-category"
+            name="site-or-category-group"
+            value={alertType}
+            onChange={(e) => setAlertType(e.target.value as AlertType)}
           >
-            <NumberField.Group className="numberFieldGroup">
-              <NumberField.Input className="numberFieldInput" /> 
-              <div className="numberFieldButtons">
-                <NumberField.Increment className="numberFieldButton" >
-                  <KeyboardArrowUpIcon fontSize="small" />
-                </NumberField.Increment>
-                <NumberField.Decrement className="numberFieldButton" >
-                  <KeyboardArrowDownIcon fontSize="small" />
-                </NumberField.Decrement>
-              </div>
-            </NumberField.Group>
-          </NumberField.Root>
-        </div>
+            <FormControlLabel value="Site" control={<Radio />} label="Site" />
+            <FormControlLabel value="Category" control={<Radio />} label="Category" />
+          </RadioGroup>
+        
+          {alertType === "Category" && (
+            <Autocomplete
+              multiple
+              value={categories}
+              onChange={(_: any, newValue: Array<string>) => {
+                setCategories(newValue);
+              }}
+              options={categoriesArr}
+              renderInput={(params) => <TextField {...params} placeholder="Pick categories"/>}
+            />
+          )}
 
-        <br />
+          {alertType === "Site" && (
+            <Autocomplete
+              freeSolo
+              multiple
+              value={sites}
+              onChange={(_: any, newValue: Array<string>) => {
+                setSites(newValue);
+              }}
+              options={[]} /* add site names maybe?  */
+              renderInput={(params) => <TextField {...params} placeholder="Enter site URLs"/>}
+            />
+          )}
+        </Box>
 
-        <FormControl component="fieldset">
-          <FormLabel component="legend">Notify on site and...</FormLabel>
-          <FormGroup>
+        <Box component="section" role="region" aria-label="time limit">
+          <Typography variant="h2"
+            sx={{ fontSize: "1.25rem", mb: 1 }}
+          >
+            Time Limit Per Day
+          </Typography>
+
+          <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2, alignItems: 'start' }}>
+            <Box sx={{ minWidth: 0, boxSizing: 'border-box' }}>
+              <label htmlFor="hours" className="numberFieldLabel">
+                Hrs
+              </label>
+              <NumberField.Root 
+                id="hours"
+                defaultValue={0} 
+                min={0} 
+                max={24} 
+                value={limit_hr} 
+                onValueChange={(value) => setLimit_Hr(value || 0)}
+              >
+                <NumberField.Group className="numberFieldGroup">
+                  <NumberField.Input className="numberFieldInput" />
+                  <div className="numberFieldButtons">
+                    <NumberField.Increment className="numberFieldButton" >
+                      <KeyboardArrowUpIcon fontSize="small" />
+                    </NumberField.Increment>
+                    <NumberField.Decrement className="numberFieldButton" >
+                      <KeyboardArrowDownIcon fontSize="small" />
+                    </NumberField.Decrement>
+                  </div>
+                </NumberField.Group>
+              </NumberField.Root>
+            </Box>
+
+            <Box sx={{ minWidth: 0, boxSizing: 'border-box' }}>
+              <label htmlFor="mins" className="numberFieldLabel">
+                Mins
+              </label>
+              <NumberField.Root 
+                id="mins"
+                defaultValue={0} 
+                min={0} 
+                max={60} 
+                value={limit_min}
+                onValueChange={(value) => setLimit_Min(value || 0)}
+              >
+                <NumberField.Group className="numberFieldGroup">
+                  <NumberField.Input className="numberFieldInput" /> 
+                  <div className="numberFieldButtons">
+                    <NumberField.Increment className="numberFieldButton" >
+                      <KeyboardArrowUpIcon fontSize="small" />
+                    </NumberField.Increment>
+                    <NumberField.Decrement className="numberFieldButton" >
+                      <KeyboardArrowDownIcon fontSize="small" />
+                    </NumberField.Decrement>
+                  </div>
+                </NumberField.Group>
+              </NumberField.Root>
+            </Box>
+          </Box>
+        </Box>
+
+        <FormControl fullWidth component="fieldset">
+          <FormLabel component="legend" sx={{ fontSize: "1.25rem", mb: 1, color: 'black' }}>Notify on site and...</FormLabel>
+          <FormGroup row sx={{ alignItems: 'center', justifyContent: 'center', gap: 2 }}>
             <FormControlLabel
               control={<Checkbox checked={email} onChange={handleCheckEmailBoxChange} name="option1" />}
               label="Email"
@@ -255,17 +304,15 @@ export default function CreateNotificationTriggerPage() {
             />
           </FormGroup>
         </FormControl>
-        <br />
-
         
         {advancedView && (
-          <div>
-            <p>Active During:</p>
+          <Box component="section" role="region" aria-label="advanced options" sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+            <Typography variant="h2" sx={{ fontSize: "1.25rem", mb: 1 }}>Active During:</Typography>
             <LocalizationProvider dateAdapter={AdapterDayjs}>
               <TimePicker 
                 label="Start Time"
                 value={startTime}
-                onChange={(newValue) => setStartTime(dayjs(newValue))} 
+                onChange={(newValue) => setStartTime(dayjs(newValue))}
               />
               <TimePicker
                 label="End Time"
@@ -274,29 +321,37 @@ export default function CreateNotificationTriggerPage() {
               />
             </LocalizationProvider>
 
-            <br />
-
             <WeekdayPicker selectedDays={selectedDays} setSelectedDays={setSelectedDays} />
-          </div>
+          </Box>
         )}
 
-        <div>
-          <Button
+        <Box component="section" role="region" aria-label="cancel and create buttons" sx={{ display: 'flex', flexDirection: 'row', gap: 2, alignItems: 'center', justifyContent: 'center', width: '100%' }}>
+          <Button variant="outlined" color="error"
             id="cancelNewNotification"
             onClick={() => navigate("/settings/notifications")}
           >
             Cancel
           </Button>
-          <Button id="createNewNotification" onClick={() => createNotification()}>
+          <Button variant="contained" color="primary"
+            id="createNewNotification" 
+            onClick={() => createNotification()}>
             Create
           </Button>
-        </div>
+        </Box>
       </FormControl>
 
 
-      <Link onClick={() => setAdvancedView(!advancedView)}>
+      <Link 
+        sx={{
+          display: 'block',
+          textAlign: 'center',
+          mx: 'auto',
+          mt: 2,
+          cursor: 'pointer'
+        }}
+        onClick={() => setAdvancedView(!advancedView)}>
         {advancedView ? "Hide Advanced Options" : "Show Advanced Options"}
       </Link>
-    </>
+    </Box>
   );
 }
