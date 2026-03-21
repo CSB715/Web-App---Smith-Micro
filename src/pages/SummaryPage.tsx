@@ -422,7 +422,6 @@ function Summary() {
       sx={{
         minHeight: "100vh",
         bgcolor: "background.default",
-        py: 3,
         px: 2.5,
       }}
     >
@@ -432,13 +431,13 @@ function Summary() {
         <Typography
           variant="h1"
           sx={{
-            fontWeight: 300,
+            fontWeight: "bold",
             letterSpacing: "-0.02em",
             mb: 3,
             color: "#01579b",
             alignSelf: "center",
             textAlign: "center",
-            fontSize: "2.5rem",
+            fontSize: "2rem",
           }}
         >
           Summary

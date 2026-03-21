@@ -9,7 +9,7 @@ import {
 import { getDb, getAuthInstance } from "../utils/firestore";
 import { useNavigate } from "react-router";
 import { onAuthStateChanged } from "firebase/auth";
-import { Button, List, ListItem, ListItemText, Box } from "@mui/material";
+import { Button, List, ListItem, ListItemText, Box, Typography } from "@mui/material";
 
 async function getNotifications() {
   const snap = await getDocs(
@@ -46,21 +46,33 @@ function NotificationSettings() {
 
   return (
     <>
-      <h1 className="title">Notification Settings</h1>
-      <hr className="divider" />
+      <Typography
+        variant="h1"
+        id="notification-settings-title"
+        sx={{ 
+          fontSize: "2rem",
+          letterSpacing: "-0.02em",
+          mb: 2,
+          fontWeight: "bold",
+          color: "#01579b",
+          alignSelf: "center",
+          textAlign: "center",
+        }}
+      >
+        Notification Settings
+      </Typography>
 
-      <br />
-
-      <div>
+      <Box component="section">
         <List>
           {notifications.map((notification) => (
-            <ListItem key={notification.id} sx={{ display: "flex", alignItems: "stretch" }} >
+            <ListItem key={notification.id} sx={{ display: "flex", alignItems: "center" }} >
               <ListItemText sx={{ flex: 1, pl: 2 }} >
                 {notification.data()!.name}
               </ListItemText>
-              <Box sx={{ display: "flex", gap: 1, pr: 2 }} >
+              <Box sx={{ display: "flex", gap: 1, pr: 2, alignItems: 'center', justifyContent: 'center' }} >
                 <Button sx={{
                   width: 80,
+                  height: 30,
                   justifyContent: "center",
                 }}
                   onClick={() =>
@@ -72,6 +84,7 @@ function NotificationSettings() {
                 </Button>
                 <Button sx={{ 
                   width: 80,
+                  height: 30,
                   justifyContent: "center",
                  }}
                   onClick={() => handleDeleteNotification(notification)}
@@ -83,7 +96,7 @@ function NotificationSettings() {
             </ListItem>
           ))}
         </List>
-      </div>
+      </Box>
 
       <Button variant="contained"
         onClick={() => navigate("/settings/notifications/create-notification", { state : {notifID : "" } })}

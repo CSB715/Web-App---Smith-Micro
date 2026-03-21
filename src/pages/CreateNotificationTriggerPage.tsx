@@ -146,7 +146,6 @@ export default function CreateNotificationTriggerPage() {
       sx={{
         minHeight: "100vh",
         bgcolor: "background.default",
-        py: 3,
         px: 2.5,
       }}
     >
@@ -155,14 +154,14 @@ export default function CreateNotificationTriggerPage() {
         variant="h1" 
         id="create-notification-title" 
         sx={{ 
-          fontSize: "2.5rem",
+          fontSize: "2rem",
           mb: 2,
-          fontWeight: "300",
+          fontWeight: "bold",
           color: "#01579b",
           alignSelf: "center",
           textAlign: "center",
-          }}
-        >
+        }}
+      >
         {notifID ? "Edit Notification" : "Create Notification"}
       </Typography>
 
