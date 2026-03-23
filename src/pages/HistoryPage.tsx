@@ -315,7 +315,7 @@ function History() {
                           transition: "background 0.15s ease",
                         }}
                       >
-                        <SiteModal url={visit.siteUrl} userId={userId} />
+                        <SiteModal url={visit.siteUrl} />
                         <Typography
                           variant="caption"
                           sx={{

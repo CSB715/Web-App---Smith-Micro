@@ -581,7 +581,7 @@ function Summary() {
                   key={site}
                   sx={{ fontFamily: "monospace", fontSize: "0.9rem" }}
                 >
-                  <SiteModal url={site} userId={userId} />
+                  <SiteModal url={site} />
                 </Box>
               ))}
             </Box>
@@ -687,7 +687,7 @@ function Summary() {
                     py: 0.5,
                   }}
                 >
-                  <SiteModal url={site} userId={userId} />
+                  <SiteModal url={site} />
                   <Box component="span" sx={{ opacity: 0.7 }}>
                     {(time / (1000 * 60 * 60)).toFixed(2)} hrs
                   </Box>

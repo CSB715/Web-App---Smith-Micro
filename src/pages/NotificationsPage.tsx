@@ -131,7 +131,6 @@ function Notifications() {
               <li key={notification.id}>
                 <SiteModal
                   url={notification.siteUrl}
-                  userId={userId ? userId : ""}
                 />
                 <p>
                   {getTimeDifferenceString(notification.dateTime)} ago on{" "}

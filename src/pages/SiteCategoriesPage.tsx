@@ -59,7 +59,7 @@ function SiteCategories() {
       {sites.map((site) => (
         <div key={site}>
           {site && getAuthInstance().currentUser ? (
-            <SiteModal url={site} userId={getAuthInstance().currentUser!.uid} />
+            <SiteModal url={site} />
           ) : (
             <p>...</p>
           )}

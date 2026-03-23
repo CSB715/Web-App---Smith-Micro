@@ -10,7 +10,7 @@ import type { Categorization } from "../utils/models";
 import SiteModal from "../components/SiteModal";
 import AddFlaggedSiteModal from "../components/AddFlaggedSiteModal";
 import { type DocumentData } from "firebase/firestore";
-import { Typography, Box, List, ListItem } from "@mui/material";
+import { Typography, Box, List, ListItemButton } from "@mui/material";
 
 function combineURLS(flaggedFromCats: Categorization[], flaggedFromOvers: Categorization[]) {
   return flaggedFromCats.concat(
@@ -99,11 +99,13 @@ function FlaggedSites() {
         Flagged Sites
       </Typography>
 
-      <List style={{ listStyleType: "none", padding: 0, margin: 0 }}>
+      <List aria-label="List of flagged sites">
         {flaggedSites.map((site) => (
-          <ListItem key={site.siteUrl}>
-            <SiteModal url={site.siteUrl} />
-          </ListItem>
+          <ListItemButton 
+            component={SiteModal} 
+            key={site.siteUrl} 
+            url={site.siteUrl}
+          />
         ))}
       </List>
       <AddFlaggedSiteModal />
