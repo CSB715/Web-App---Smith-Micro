@@ -60,8 +60,7 @@ function Settings() {
   useEffect(() => {
     if (!hasMounted.current) {
       onAuthStateChanged(getAuthInstance(), (user) => {
-        if (user) {
-        } else {
+        if (!user) {
           navigate("/login", { replace: true });
         }
       });

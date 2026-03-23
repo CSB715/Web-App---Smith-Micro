@@ -142,7 +142,7 @@ export default function CreateNotificationTriggerPage() {
     <Box 
       component="main"
       role="main"
-      aria-labelledby="create-notification-title"
+      aria-labelledby="create-notification"
       sx={{
         minHeight: "100vh",
         bgcolor: "background.default",
