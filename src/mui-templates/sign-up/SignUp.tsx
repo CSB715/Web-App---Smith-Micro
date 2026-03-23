@@ -9,32 +9,9 @@ import Link from '@mui/material/Link';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 import Stack from '@mui/material/Stack';
-import { styled } from '@mui/material/styles';
 import AppTheme from '../shared-theme/AppTheme';
 import { CreateUser } from '../../utils/firestore';
 import { useNavigate } from 'react-router';
-
-const SignUpContainer = styled(Stack)(({ theme }) => ({
-  minHeight: '100%',
-  padding: theme.spacing(2),
-  [theme.breakpoints.up('sm')]: {
-    padding: theme.spacing(4),
-  },
-  '&::before': {
-    content: '""',
-    display: 'block',
-    position: 'absolute',
-    zIndex: -1,
-    inset: 0,
-    backgroundImage:
-      'radial-gradient(ellipse at 50% 50%, hsl(210, 100%, 97%), hsl(0, 0%, 100%))',
-    backgroundRepeat: 'no-repeat',
-    ...theme.applyStyles('dark', {
-      backgroundImage:
-        'radial-gradient(at 50% 50%, hsla(210, 100%, 16%, 0.5), hsl(220, 30%, 5%))',
-    }),
-  },
-}));
 
 export default function SignUp(props: { disableCustomTheme?: boolean }) {
   const [emailError, setEmailError] = React.useState(false);
@@ -88,8 +65,8 @@ export default function SignUp(props: { disableCustomTheme?: boolean }) {
 
   return (
     <AppTheme {...props}>
-      <CssBaseline enableColorScheme />
-      <SignUpContainer direction="column" justifyContent="space-between">
+      <CssBaseline />
+      <Stack direction="column" justifyContent="space-between">
         <Typography
           component="h1"
           variant="h1" 
@@ -166,7 +143,7 @@ export default function SignUp(props: { disableCustomTheme?: boolean }) {
             </Link>
           </Typography>
         </Box>
-      </SignUpContainer>
+      </Stack>
     </AppTheme>
   );
 }
