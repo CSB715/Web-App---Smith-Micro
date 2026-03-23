@@ -3,20 +3,20 @@ import { onAuthStateChanged } from "firebase/auth";
 import {
   getAuthInstance,
   GetCategorizations,
-  getDb,
   GetOverrides,
 } from "../utils/firestore";
 import { useNavigate } from "react-router";
 import type { Categorization } from "../utils/models";
 import SiteModal from "../components/SiteModal";
 import AddFlaggedSiteModal from "../components/AddFlaggedSiteModal";
-import { collection, onSnapshot, type DocumentData } from "firebase/firestore";
-import { Typography, Box, List, ListItem, CircularProgress } from "@mui/material";
+import { type DocumentData } from "firebase/firestore";
+import { Typography, Box, List, ListItem } from "@mui/material";
 
 function combineURLS(flaggedFromCats: Categorization[], flaggedFromOvers: Categorization[]) {
-  return [...flaggedFromCats, ...flaggedFromOvers].filter(
-    (site, index, arr) =>
-      arr.findIndex((s) => s.siteUrl === site.siteUrl) === index,
+  return flaggedFromCats.concat(
+    flaggedFromOvers.filter(
+      (site) => !flaggedFromCats.some((c) => c.siteUrl === site.siteUrl),
+    ),
   );
 }
 
@@ -32,7 +32,7 @@ function getFlaggedSitesFromCategorizations(catsData: {id: string, data: Documen
 
 function getFlaggedSitesFromOverrides(oversData: {id: string, data: DocumentData}[]) {
   return oversData
-  .filter((override) => override.data.flagged_for.length > 0)
+  .filter((override) => 'flagged_for' in override.data && override.data.flagged_for.length > 0)
   .map((override) => ({
     siteUrl: override.id,
     category: override.data.category,
@@ -40,63 +40,37 @@ function getFlaggedSitesFromOverrides(oversData: {id: string, data: DocumentData
   }));
 }
 
+function useSites(userId: string, setFlaggedSites: (sites: Categorization[]) => void) {
+  // Fetch both categorizations and overrides initially
+  Promise.all([GetCategorizations(), GetOverrides(userId)]).then(
+    ([catsData, oversData]) => {
+      const flaggedFromCats = getFlaggedSitesFromCategorizations(catsData);
+      const flaggedFromOvers = getFlaggedSitesFromOverrides(oversData);
+
+      // Combine and deduplicate by siteUrl
+      const combined = combineURLS(flaggedFromCats, flaggedFromOvers);
+
+      setFlaggedSites(combined);
+      console.log("Initial flagged sites:", combined);
+    },
+  );
+}
+
 function FlaggedSites() {
   const navigate = useNavigate();
-  const [userId, setUserId] = useState<string>("");
-  const [loading, setLoading] = useState(true);
+  const [flaggedSites, setFlaggedSites] = useState<Categorization[]>([]);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(getAuthInstance(), (user) => {
+    onAuthStateChanged(getAuthInstance(), (user) => {
       if (user) {
-        setUserId(user.uid);
+        useSites(user.uid, setFlaggedSites);
       } else {
         navigate("/login", { replace: true });
       }
     });
-
-    return unsubscribe;
   }, [navigate]);
 
-  function useSites() {
-    const [flaggedSites, setFlaggedSites] = useState<Categorization[]>([]);
 
-    useEffect(() => {
-      if (!userId) return;
-      // Fetch both categorizations and overrides initially
-      Promise.all([GetCategorizations(), GetOverrides(userId)]).then(
-        ([catsData, oversData]) => {
-          const flaggedFromCats = getFlaggedSitesFromCategorizations(catsData);
-          const flaggedFromOvers = getFlaggedSitesFromOverrides(oversData);
-
-          // Combine and deduplicate by siteUrl
-          const combined = combineURLS(flaggedFromCats, flaggedFromOvers);
-
-          setFlaggedSites(combined);
-        },
-      );
-
-      // Set up listener for overrides changes
-      const overridesRef = collection(getDb(), "Users", userId, "Overrides");
-      const unsubscribe = onSnapshot(overridesRef, (snapshot) => {
-        // Re-fetch categorizations or keep them? For simplicity, re-combine
-        GetCategorizations().then((catsData) => {
-          const flaggedFromCats = getFlaggedSitesFromCategorizations(catsData);
-
-          const flaggedFromOvers = getFlaggedSitesFromOverrides(snapshot.docs);
-
-          const combined = combineURLS(flaggedFromCats, flaggedFromOvers);
-
-          setFlaggedSites(combined);
-        });
-      });
-      return unsubscribe;
-    }, [userId]);
-
-
-    return flaggedSites;
-  }
-
-  const flaggedSites = useSites();
 
   return (
     <Box
@@ -125,16 +99,14 @@ function FlaggedSites() {
         Flagged Sites
       </Typography>
 
-      {loading && <CircularProgress />}
-
       <List style={{ listStyleType: "none", padding: 0, margin: 0 }}>
         {flaggedSites.map((site) => (
           <ListItem key={site.siteUrl}>
-            <SiteModal url={site.siteUrl} userId={userId} />
+            <SiteModal url={site.siteUrl} />
           </ListItem>
         ))}
       </List>
-      <AddFlaggedSiteModal userId={userId} />
+      <AddFlaggedSiteModal />
     </Box>
   );
 }
