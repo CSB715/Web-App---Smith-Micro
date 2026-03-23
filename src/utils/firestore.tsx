@@ -18,7 +18,7 @@ import {
   type Firestore,
   getFirestore,
 } from "firebase/firestore";
-import type { Device } from "./models";
+import type { NotificationTrigger } from "./models";
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
 
@@ -352,39 +352,41 @@ export async function DeleteDevice(device: DocumentData) {
 }
 
 export function CreateNotificationTrigger(
-  uid: string,
-  name: string,
-  devices: Device[],
-  categories: string[],
-  sites: string[],
-  alertType: string,
-  notifID: string,
-  limit_hr: number,
-  limit_min: number,
+  notif: NotificationTrigger,
 ) {
   const docObj =
-    alertType === "Category"
+    notif.alertType === "Category"
       ? {
-          name: name,
-          devices: devices.map((device) => device.id),
-          categories: categories,
-          time_limit_hr: limit_hr,
-          time_limit_min: limit_min,
+          name: notif.name,
+          devices: notif.devices.map((device) => device.id),
+          categories: notif.categories,
+          time_limit_hr: notif.limit_hr,
+          time_limit_min: notif.limit_min,
+          email: notif.email,
+          text: notif.text,
+          days: notif.days,
+          startTime: notif.startTime,
+          endTime: notif.endTime,
         }
       : {
-          name: name,
-          devices: devices.map((device) => device.id),
-          sites: sites,
-          time_limit_hr: limit_hr,
-          time_limit_min: limit_min,
+          name: notif.name,
+          devices: notif.devices.map((device) => device.id),
+          sites: notif.sites,
+          time_limit_hr: notif.limit_hr,
+          time_limit_min: notif.limit_min,
+          email: notif.email,
+          text: notif.text,
+          days: notif.days,
+          startTime: notif.startTime,
+          endTime: notif.endTime,
         };
 
-  if (notifID != "") {
+  if (notif.notifID != "") {
     // For cleanness remove existing notification
-    deleteDoc(doc(getDb(), "Users", uid, "NotificationTriggers", notifID));
+    deleteDoc(doc(getDb(), "Users", notif.uid, "NotificationTriggers", notif.notifID));
   }
 
-  addDoc(collection(getDb(), "Users", uid, "NotificationTriggers"), docObj);
+  addDoc(collection(getDb(), "Users", notif.uid, "NotificationTriggers"), docObj);
 }
 
 export async function AddNewClassification(

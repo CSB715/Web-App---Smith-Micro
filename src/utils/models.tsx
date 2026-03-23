@@ -1,3 +1,5 @@
+import type { Timestamp } from "firebase/firestore";
+
 export type Device = {
   id: string;
   name: string;
@@ -28,3 +30,20 @@ export type Override = {
   category: string[];
   flagged_for: string[];
 };
+
+export type NotificationTrigger = {
+  uid: string,
+  name: string,
+  devices: Device[],
+  categories: string[],
+  sites: string[],
+  alertType: string,
+  notifID: string,
+  limit_hr: number,
+  limit_min: number,
+  email: boolean,
+  text: boolean,
+  days: string[],
+  startTime: Timestamp,
+  endTime: Timestamp,
+}

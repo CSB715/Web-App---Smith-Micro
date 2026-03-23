@@ -1,20 +1,28 @@
 .numberFieldGroup {
   display: flex;
   align-items: stretch;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .numberFieldInput {
   flex: 1;
+  min-width: 0; /* allow input to shrink inside flex */
+  box-sizing: border-box;
 }
 
 .numberFieldButtons {
   display: flex;
   flex-direction: column;
-  width: 32px;
+  width: 36px; /* fixed width for buttons */
+  flex-shrink: 0; /* don't allow buttons to shrink */
 }
 
 .numberFieldButton {
   flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 
 }
 

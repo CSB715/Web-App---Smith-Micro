@@ -125,51 +125,25 @@ function History() {
       sx={{
         minHeight: "100vh",
         bgcolor: "background.default",
-        py: 3,
         px: 0,
       }}
     >
       <Box sx={{ px: 2.5 }}>
-        {/* ── Eyebrow ── */}
-        <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 1 }}>
-          <Box
-            sx={{
-              width: 6,
-              height: 6,
-              borderRadius: "50%",
-              bgcolor: "primary.main",
-              "@keyframes hpulse": {
-                "0%, 100%": { opacity: 1, transform: "scale(1)" },
-                "50%": { opacity: 0.4, transform: "scale(0.7)" },
-              },
-              animation: "hpulse 2.6s ease-in-out infinite",
-              flexShrink: 0,
-            }}
-          />
-          <Typography
-            variant="caption"
-            sx={{
-              fontFamily: "monospace",
-              letterSpacing: "0.13em",
-              textTransform: "uppercase",
-              color: "primary.main",
-              fontSize: "0.6rem",
-            }}
-          >
-            Browsing History
-          </Typography>
-        </Stack>
-
         {/* ── Title ── */}
         <Typography
-          variant="h4"
-          sx={{
-            fontWeight: 300,
+          variant="h1" 
+          id="History-title" 
+          sx={{ 
+            fontSize: "2rem",
             letterSpacing: "-0.02em",
-            mb: 3,
+            mb: 2,
+            fontWeight: "bold",
+            color: "#01579b",
+            alignSelf: "center",
+            textAlign: "center",
           }}
         >
-          Recent Web History
+          Web History
         </Typography>
 
         {/* ── Stats bar — stacks vertically on narrow, row on wider ── */}
@@ -341,7 +315,7 @@ function History() {
                           transition: "background 0.15s ease",
                         }}
                       >
-                        <SiteModal url={visit.siteUrl} userId={userId} />
+                        <SiteModal url={visit.siteUrl} />
                         <Typography
                           variant="caption"
                           sx={{

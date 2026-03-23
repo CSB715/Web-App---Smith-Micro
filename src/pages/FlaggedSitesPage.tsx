@@ -3,117 +3,113 @@ import { onAuthStateChanged } from "firebase/auth";
 import {
   getAuthInstance,
   GetCategorizations,
-  getDb,
   GetOverrides,
 } from "../utils/firestore";
 import { useNavigate } from "react-router";
 import type { Categorization } from "../utils/models";
 import SiteModal from "../components/SiteModal";
 import AddFlaggedSiteModal from "../components/AddFlaggedSiteModal";
-import { collection, onSnapshot } from "firebase/firestore";
+import { type DocumentData } from "firebase/firestore";
+import { Typography, Box, List, ListItemButton } from "@mui/material";
+
+function combineURLS(flaggedFromCats: Categorization[], flaggedFromOvers: Categorization[]) {
+  return flaggedFromCats.concat(
+    flaggedFromOvers.filter(
+      (site) => !flaggedFromCats.some((c) => c.siteUrl === site.siteUrl),
+    ),
+  );
+}
+
+function getFlaggedSitesFromCategorizations(catsData: {id: string, data: DocumentData}[]) {
+  return catsData
+  .filter((cat) => cat.data.is_flagged === true)
+  .map((cat) => ({
+    siteUrl: cat.id,
+    category: cat.data.category,
+    is_flagged: cat.data.is_flagged,
+  }));
+}
+
+function getFlaggedSitesFromOverrides(oversData: {id: string, data: DocumentData}[]) {
+  return oversData
+  .filter((override) => 'flagged_for' in override.data && override.data.flagged_for.length > 0)
+  .map((override) => ({
+    siteUrl: override.id,
+    category: override.data.category,
+    is_flagged: true,
+  }));
+}
+
+function useSites(userId: string, setFlaggedSites: (sites: Categorization[]) => void) {
+  // Fetch both categorizations and overrides initially
+  Promise.all([GetCategorizations(), GetOverrides(userId)]).then(
+    ([catsData, oversData]) => {
+      const flaggedFromCats = getFlaggedSitesFromCategorizations(catsData);
+      const flaggedFromOvers = getFlaggedSitesFromOverrides(oversData);
+
+      // Combine and deduplicate by siteUrl
+      const combined = combineURLS(flaggedFromCats, flaggedFromOvers);
+
+      setFlaggedSites(combined);
+      console.log("Initial flagged sites:", combined);
+    },
+  );
+}
 
 function FlaggedSites() {
   const navigate = useNavigate();
-  const [userId, setUserId] = useState<string>("");
+  const [flaggedSites, setFlaggedSites] = useState<Categorization[]>([]);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(getAuthInstance(), (user) => {
+    onAuthStateChanged(getAuthInstance(), (user) => {
       if (user) {
-        setUserId(user.uid);
+        useSites(user.uid, setFlaggedSites);
       } else {
         navigate("/login", { replace: true });
       }
     });
-
-    return unsubscribe;
   }, [navigate]);
 
-  function useSites() {
-    const [flaggedSites, setFlaggedSites] = useState<Categorization[]>([]);
 
-    useEffect(() => {
-      if (!userId) return;
-
-      // Fetch both categorizations and overrides initially
-      Promise.all([GetCategorizations(), GetOverrides(userId)]).then(
-        ([catsData, oversData]) => {
-          const flaggedFromCats = catsData
-            .filter((cat) => cat.data.is_flagged === true)
-            .map((cat) => ({
-              siteUrl: cat.id,
-              category: cat.data.category,
-              is_flagged: cat.data.is_flagged,
-            }));
-
-          const flaggedFromOvers = oversData
-            .filter((override) => override.data.flagged_for.length > 0)
-            .map((override) => ({
-              siteUrl: override.id,
-              category: override.data.category,
-              is_flagged: true,
-            }));
-
-          // Combine and deduplicate by siteUrl
-          const combined = [...flaggedFromCats, ...flaggedFromOvers].filter(
-            (site, index, arr) =>
-              arr.findIndex((s) => s.siteUrl === site.siteUrl) === index,
-          );
-
-          setFlaggedSites(combined);
-        },
-      );
-
-      // Set up listener for overrides changes
-      const overridesRef = collection(getDb(), "Users", userId, "Overrides");
-      const unsubscribe = onSnapshot(overridesRef, (snapshot) => {
-        // Re-fetch categorizations or keep them? For simplicity, re-combine
-        GetCategorizations().then((catsData) => {
-          const flaggedFromCats = catsData
-            .filter((cat) => cat.data.is_flagged === true)
-            .map((cat) => ({
-              siteUrl: cat.id,
-              category: cat.data.category,
-              is_flagged: cat.data.is_flagged,
-            }));
-
-          const flaggedFromOvers = snapshot.docs
-            .map((doc) => ({ id: doc.id, data: doc.data() }))
-            .filter((override) => override.data.flagged_for.length > 0)
-            .map((override) => ({
-              siteUrl: override.id,
-              category: override.data.category,
-              is_flagged: true,
-            }));
-
-          const combined = [...flaggedFromCats, ...flaggedFromOvers].filter(
-            (site, index, arr) =>
-              arr.findIndex((s) => s.siteUrl === site.siteUrl) === index,
-          );
-
-          setFlaggedSites(combined);
-        });
-      });
-
-      return unsubscribe;
-    }, [userId]);
-
-    return flaggedSites;
-  }
-
-  const flaggedSites = useSites();
 
   return (
-    <>
-      <h1>Flagged Sites</h1>
-      <ul style={{ listStyleType: "none", padding: 0, margin: 0 }}>
+    <Box
+      component="main"
+      role="main"
+      aria-labelledby="flagged-sites"
+      sx={{
+        minHeight: "100vh",
+        bgcolor: "background.default",
+        px: 2.5,
+      }}
+    >
+      <Typography
+        variant="h1"
+        id="flagged-sites-title"
+        sx={{ 
+          fontSize: "2rem",
+          letterSpacing: "-0.02em",
+          mb: 2,
+          fontWeight: "bold",
+          color: "#01579b",
+          alignSelf: "center",
+          textAlign: "center",
+        }}
+      >
+        Flagged Sites
+      </Typography>
+
+      <List aria-label="List of flagged sites">
         {flaggedSites.map((site) => (
-          <li key={site.siteUrl}>
-            <SiteModal url={site.siteUrl} userId={userId} />
-          </li>
+          <ListItemButton 
+            component={SiteModal} 
+            key={site.siteUrl} 
+            url={site.siteUrl}
+          />
         ))}
-      </ul>
-      <AddFlaggedSiteModal userId={userId} />
-    </>
+      </List>
+      <AddFlaggedSiteModal />
+    </Box>
   );
 }
 

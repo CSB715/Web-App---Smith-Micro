@@ -12,7 +12,7 @@ body,
   min-height: 100vh;
   width: 100%;
   box-sizing: border-box;
-  background-color: #f4f7fb; /* subtle side background */
+  background-color: #ffffff; /* small screens: full white */
   display: flex;
   justify-content: center; /* centers .app-container horizontally */
   align-items: flex-start; /* content starts at top */
@@ -46,9 +46,14 @@ body,
     min-width: 360px; /* avoid too-narrow column on medium screens */
     height: auto;
     min-height: 90vh;
-    background: #ffffff; /* white content surface */
+    background-color: #ffffff; /* white content surface */
     padding: 18px; /* more interior padding on desktop */
     box-shadow: 0 6px 20px rgba(9, 30, 66, 0.06);
+  }
+
+  /* show subtle side background on desktop */
+  .app-viewport {
+    background-color: #f4f7fb;
   }
 }
 
