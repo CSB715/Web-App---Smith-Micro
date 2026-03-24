@@ -173,6 +173,8 @@ function Summary() {
 
         const cutoffDate = new Date();
         cutoffDate.setDate(cutoffDate.getDate() - timeFrame);
+        const yesterday = new Date();
+        yesterday.setDate(yesterday.getDate() - 1);
 
         await Promise.all(
           normalizedVisits.map(async (visit) => {
@@ -216,7 +218,11 @@ function Summary() {
                 categorySites[cat] = categorySites[cat] || new Set();
                 categorySites[cat].add(visit.siteUrl);
               });
-              sitesVisitedCurr.add(visit.siteUrl);
+              if (visit.startDateTime >= yesterday) {
+                sitesVisitedCurr.add(visit.siteUrl);
+              } else {
+                sitesVisitedPrev.add(visit.siteUrl);
+              }
               timePerSite[visit.siteUrl] =
                 (timePerSite[visit.siteUrl] || 0) + timeSpent;
             } else {
@@ -462,7 +468,7 @@ function Summary() {
         {[
           {
             value: Object.values(timePerSite)
-              .reduce((sum, h) => (sum + h) / (1000 * 60 * 60), 0)
+              .reduce((sum, h) => sum + h / (1000 * 60 * 60), 0)
               .toFixed(2),
             label: "Hours",
           },
@@ -497,7 +503,6 @@ function Summary() {
             <Typography
               variant="caption"
               sx={{
-                fontFamily: "monospace",
                 fontSize: "0.55rem",
                 letterSpacing: "0.1em",
                 textTransform: "uppercase",
@@ -513,16 +518,19 @@ function Summary() {
       <Divider sx={{ mb: 3 }} />
 
       {/* ── Device filter ── */}
-      <Box sx={{ mb: 4 }} component="section" role="region" aria-label="device filter">
+      <Box
+        sx={{ mb: 4 }}
+        component="section"
+        role="region"
+        aria-label="device filter"
+      >
         <Typography
           variant="caption"
           sx={{
-            fontFamily: "monospace",
             fontSize: "0.68rem",
             letterSpacing: "0.11em",
             textTransform: "uppercase",
             color: "black",
-            opacity: 0.6,
             display: "block",
             mb: 1.5,
           }}
@@ -536,8 +544,47 @@ function Summary() {
         />
       </Box>
 
+      {/* ── What's New ── */}
+      <Box
+        sx={{ mb: 3 }}
+        component="section"
+        role="region"
+        aria-label="what's new"
+      >
+        <Typography variant="h2" sx={{ mb: 1, fontSize: "1.5rem" }}>
+          What's New
+        </Typography>
+        <Paper
+          sx={{
+            px: 2,
+            py: 1.5,
+            backgroundColor: "background.paper",
+            borderRadius: 2,
+          }}
+        >
+          {newSites.size === 0 ? (
+            <Typography variant="caption" sx={{ color: "text.secondary" }}>
+              No new sites since yesterday.
+            </Typography>
+          ) : (
+            <Box component="ul" sx={{ listStyle: "none", m: 0, p: 0 }}>
+              {Array.from(newSites).map((site) => (
+                <Box component="li" key={site} sx={{ fontSize: "0.9rem" }}>
+                  <SiteModal url={site} />
+                </Box>
+              ))}
+            </Box>
+          )}
+        </Paper>
+      </Box>
+
       {/* ── Timeframe ── */}
-      <Box sx={{ mb: 3 }} component="section" role="region" aria-label="timeframe selection">
+      <Box
+        sx={{ mb: 3 }}
+        component="section"
+        role="region"
+        aria-label="timeframe selection"
+      >
         <ToggleButtonGroup
           value={timeFrame}
           exclusive
@@ -553,44 +600,13 @@ function Summary() {
         </ToggleButtonGroup>
       </Box>
 
-      {/* ── What's New ── */}
-      <Box sx={{ mb: 3 }} component="section" role="region" aria-label="what's new" >
-        <Typography variant="h2" sx={{ mb: 1, fontSize: "1.5rem" }}>
-          What's New
-        </Typography>
-        <Paper
-          sx={{
-            px: 2,
-            py: 1.5,
-            backgroundColor: "background.paper",
-            borderRadius: 2,
-          }}
-        >
-          {newSites.size === 0 ? (
-            <Typography
-              variant="caption"
-              sx={{ color: "text.secondary", fontFamily: "monospace" }}
-            >
-              No new sites this period.
-            </Typography>
-          ) : (
-            <Box component="ul" sx={{ listStyle: "none", m: 0, p: 0 }}>
-              {Array.from(newSites).map((site) => (
-                <Box
-                  component="li"
-                  key={site}
-                  sx={{ fontFamily: "monospace", fontSize: "0.9rem" }}
-                >
-                  <SiteModal url={site} />
-                </Box>
-              ))}
-            </Box>
-          )}
-        </Paper>
-      </Box>
-
       {/* ── Category Trends ── */}
-      <Box sx={{ mb: 3 }} component="section" role="region" aria-label="category trends">
+      <Box
+        sx={{ mb: 3 }}
+        component="section"
+        role="region"
+        aria-label="category trends"
+      >
         <Typography variant="h2" sx={{ mb: 1, fontSize: "1.5rem" }}>
           Category Trends
         </Typography>
@@ -603,10 +619,7 @@ function Summary() {
           }}
         >
           {Object.entries(timePerCategoryCurr).length === 0 ? (
-            <Typography
-              variant="caption"
-              sx={{ color: "text.secondary", fontFamily: "monospace" }}
-            >
+            <Typography variant="caption" sx={{ color: "text.secondary" }}>
               No category data available.
             </Typography>
           ) : (
@@ -614,15 +627,17 @@ function Summary() {
               {Object.entries(timePerCategoryCurr)
                 .sort((a, b) => b[1] - a[1])
                 .map(([cat, time]) => {
-                  const prevTime = timePerCategoryPrev[cat] || 0;
+                  const prevTime =
+                    (timePerCategoryPrev[cat] || 0) / (1000 * 60 * 60);
+                  const currTime = time / (1000 * 60 * 60);
                   const trend =
-                    prevTime > time
+                    currTime - prevTime < -0.1
                       ? "decrease"
-                      : prevTime < time
+                      : currTime - prevTime > 0.1
                         ? "increase"
                         : "same";
-                  const hours = (time / (1000 * 60 * 60)).toFixed(2);
-                  const prevHours = (prevTime / (1000 * 60 * 60)).toFixed(2);
+                  const hours = currTime.toFixed(2);
+                  const prevHours = prevTime.toFixed(2);
                   return (
                     <Box
                       component="li"
@@ -631,24 +646,30 @@ function Summary() {
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "space-between",
-                        fontFamily: "monospace",
                         fontSize: "0.9rem",
                         py: 0.5,
                       }}
                     >
-                      <Typography>{cat}</Typography>
-                      <Box sx={{ display: "flex", alignItems: "center" }}>
-                        {trend === "increase" && (
-                          <TrendingUp color="action" />
-                        )}
+                      <Typography sx={{ flex: 1 }}>{cat}</Typography>
+                      <Box
+                        sx={{
+                          display: "flex",
+                          alignItems: "center",
+                          width: 32,
+                          justifyContent: "right",
+                        }}
+                      >
+                        {trend === "increase" && <TrendingUp color="action" />}
                         {trend === "decrease" && (
                           <TrendingDown color="action" />
                         )}
                         {trend === "same" && <TrendingFlat color="action" />}
-                        <Typography sx={{ ml: 1 }}>
-                          {hours} hrs ({prevHours} hrs prev)
-                        </Typography>
                       </Box>
+                      <Typography
+                        sx={{ ml: 2, textAlign: "right", minWidth: 160 }}
+                      >
+                        {hours} hrs ({prevHours} hrs prev)
+                      </Typography>
                     </Box>
                   );
                 })}
@@ -658,7 +679,12 @@ function Summary() {
       </Box>
 
       {/* ── Top Sites ── */}
-      <Box sx={{ mb: 3 }} component="section" role="region" aria-label="top sites">
+      <Box
+        sx={{ mb: 3 }}
+        component="section"
+        role="region"
+        aria-label="top sites"
+      >
         <Typography variant="h2" sx={{ mb: 1, fontSize: "1.5rem" }}>
           Top Sites
         </Typography>
@@ -682,7 +708,6 @@ function Summary() {
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "space-between",
-                    fontFamily: "monospace",
                     fontSize: "0.9rem",
                     py: 0.5,
                   }}
@@ -698,7 +723,12 @@ function Summary() {
       </Box>
 
       {/* ── Hours Spent ── */}
-      <Box sx={{ mb: 3 }} component="section" role="region" aria-label="hours spent graph">
+      <Box
+        sx={{ mb: 3 }}
+        component="section"
+        role="region"
+        aria-label="hours spent graph"
+      >
         <Typography variant="h2" sx={{ mb: 1, fontSize: "1.5rem" }}>
           Hours Online Over The Past {timeFrame} Days
         </Typography>
@@ -728,9 +758,7 @@ function Summary() {
             series={
               chartData.length > 0
                 ? Object.keys(chartData[0])
-                    .filter(
-                      (k) => k !== "day" && (categoryFilters[k] ?? true),
-                    )
+                    .filter((k) => k !== "day" && (categoryFilters[k] ?? true))
                     .map((cat) => ({ dataKey: cat, label: cat }))
                 : []
             }
@@ -771,6 +799,7 @@ function Summary() {
                       display: "flex",
                       flexDirection: "column",
                       gap: 1,
+                      marginLeft: 2,
                     }}
                   >
                     {sites.map((site) => {
