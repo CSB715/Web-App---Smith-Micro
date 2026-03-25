@@ -51,7 +51,6 @@ function useSites(userId: string, setFlaggedSites: (sites: Categorization[]) => 
       const combined = combineURLS(flaggedFromCats, flaggedFromOvers);
 
       setFlaggedSites(combined);
-      console.log("Initial flagged sites:", combined);
     },
   );
 }
@@ -59,6 +58,10 @@ function useSites(userId: string, setFlaggedSites: (sites: Categorization[]) => 
 function FlaggedSites() {
   const navigate = useNavigate();
   const [flaggedSites, setFlaggedSites] = useState<Categorization[]>([]);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [siteUrl, setSiteUrl] = useState("");
+
+  const closeModal = () => {setModalOpen(false);}
 
   useEffect(() => {
     onAuthStateChanged(getAuthInstance(), (user) => {
@@ -102,13 +105,19 @@ function FlaggedSites() {
       <List aria-label="List of flagged sites">
         {flaggedSites.map((site) => (
           <ListItemButton 
-            component={SiteModal} 
-            key={site.siteUrl} 
-            url={site.siteUrl}
-          />
+            key={site.siteUrl}
+            onClick={() => {
+              setSiteUrl(site.siteUrl);
+              setModalOpen(true);
+            }}
+          >
+            {site.siteUrl}
+          </ListItemButton>
         ))}
       </List>
       <AddFlaggedSiteModal />
+
+      <SiteModal url={siteUrl} isOpen={modalOpen} closeModal={closeModal} />
     </Box>
   );
 }

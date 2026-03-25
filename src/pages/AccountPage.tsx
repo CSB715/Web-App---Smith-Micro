@@ -118,7 +118,6 @@ function Account() {
     <>
       <h1 className="title">Account</h1>
       <hr className="divider" />
-      <button onClick={() => getAuthInstance().signOut()}>Sign Out</button>
 
       <div>
         <div style={{ display: "flex", alignItems: "center" }}>
@@ -217,6 +216,8 @@ function Account() {
         </table>
 
         <br />
+        
+        <button onClick={() => getAuthInstance().signOut()}>Sign Out</button>
 
         <button onClick={() => showModal("deleteAccountModal")}>
           Delete Account

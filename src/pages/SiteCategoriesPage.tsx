@@ -5,6 +5,7 @@ import AddSiteModal from "../components/AddSiteModal";
 import SiteModal from "../components/SiteModal";
 import { useNavigate } from "react-router";
 import { onAuthStateChanged } from "firebase/auth"; 
+import { Button } from "@mui/material";
 
 function showModal(modalId: string) {
   const modal = document.getElementById(modalId);
@@ -25,6 +26,10 @@ function SiteCategories() {
   const hasMounted = useRef(false);
   const navigate = useNavigate();
   const [sites, setSites] = useState<string[]>([]);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [siteUrl, setSiteUrl] = useState("");
+
+  const closeModal = () => {setModalOpen(false);}
 
   const showThisSiteModal = async (siteURL: string) => {
     setSites(prev =>
@@ -59,13 +64,20 @@ function SiteCategories() {
       {sites.map((site) => (
         <div key={site}>
           {site && getAuthInstance().currentUser ? (
-            <SiteModal url={site} />
+            <Button onClick={() => {setSiteUrl(site); setModalOpen(true);}}>
+              {site}
+            </Button>
           ) : (
             <p>...</p>
           )}
         </div>
       ))}
 
+      <SiteModal
+        url={siteUrl}
+        isOpen={modalOpen}
+        closeModal={closeModal}
+      />
       <AddSiteModal showThisModal={showThisSiteModal} />
     </>
   );
