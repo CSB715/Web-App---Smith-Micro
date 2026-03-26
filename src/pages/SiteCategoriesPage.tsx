@@ -64,7 +64,7 @@ function SiteCategories() {
       {sites.map((site) => (
         <div key={site}>
           {site && getAuthInstance().currentUser ? (
-            <Button onClick={() => {setSiteUrl(site); setModalOpen(true);}}>
+            <Button sx={{textTransform: "uppercase"}} onClick={() => {setSiteUrl(site); setModalOpen(true);}}>
               {site}
             </Button>
           ) : (

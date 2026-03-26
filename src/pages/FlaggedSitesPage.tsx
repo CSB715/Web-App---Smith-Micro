@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { onAuthStateChanged } from "firebase/auth";
 import {
   getAuthInstance,
@@ -10,7 +10,7 @@ import type { Categorization } from "../utils/models";
 import SiteModal from "../components/SiteModal";
 import AddFlaggedSiteModal from "../components/AddFlaggedSiteModal";
 import { type DocumentData } from "firebase/firestore";
-import { Typography, Box, List, ListItemButton } from "@mui/material";
+import { Typography, Box, List, ListItem, ListItemButton, CircularProgress, Button } from "@mui/material";
 
 function combineURLS(flaggedFromCats: Categorization[], flaggedFromOvers: Categorization[]) {
   return flaggedFromCats.concat(
@@ -58,15 +58,20 @@ function useSites(userId: string, setFlaggedSites: (sites: Categorization[]) => 
 function FlaggedSites() {
   const navigate = useNavigate();
   const [flaggedSites, setFlaggedSites] = useState<Categorization[]>([]);
-  const [modalOpen, setModalOpen] = useState(false);
+  const [siteModalOpen, setSiteModalOpen] = useState(false);
+  const [newModalOpen, setNewModalOpen] = useState(false);
   const [siteUrl, setSiteUrl] = useState("");
+  const fetchedData = useRef(false)
 
-  const closeModal = () => {setModalOpen(false);}
+  const closeSiteModal = () => {setSiteModalOpen(false);}
+  const closeNewModal = () => {setNewModalOpen(false);}
 
   useEffect(() => {
+    fetchedData.current = false;
     onAuthStateChanged(getAuthInstance(), (user) => {
       if (user) {
         useSites(user.uid, setFlaggedSites);
+        fetchedData.current = true;
       } else {
         navigate("/login", { replace: true });
       }
@@ -84,6 +89,8 @@ function FlaggedSites() {
         minHeight: "100vh",
         bgcolor: "background.default",
         px: 2.5,
+        display: "flex",
+        flexDirection: "column",
       }}
     >
       <Typography
@@ -102,22 +109,34 @@ function FlaggedSites() {
         Flagged Sites
       </Typography>
 
+      { !fetchedData.current && 
+        <CircularProgress sx={{ justifySelf: "center", alignSelf: "center", mt: 2 }} />
+      }
+
       <List aria-label="List of flagged sites">
         {flaggedSites.map((site) => (
-          <ListItemButton 
-            key={site.siteUrl}
-            onClick={() => {
-              setSiteUrl(site.siteUrl);
-              setModalOpen(true);
-            }}
-          >
-            {site.siteUrl}
-          </ListItemButton>
+          <ListItem key={site.siteUrl}>
+            <ListItemButton 
+              sx={{
+                textTransform: "uppercase",
+              }}
+              key={site.siteUrl}
+              onClick={() => {
+                setSiteUrl(site.siteUrl);
+                setSiteModalOpen(true);
+              }}
+            >
+              <Typography variant="body1" >
+                {site.siteUrl}
+              </Typography>
+            </ListItemButton>
+          </ListItem>
         ))}
       </List>
-      <AddFlaggedSiteModal />
+      <Button variant="contained" color="primary" onClick={() => setNewModalOpen(true)}>Add Site</Button>
 
-      <SiteModal url={siteUrl} isOpen={modalOpen} closeModal={closeModal} />
+      <AddFlaggedSiteModal isOpen={newModalOpen} closeModal={closeNewModal} />
+      <SiteModal url={siteUrl} isOpen={siteModalOpen} closeModal={closeSiteModal} />
     </Box>
   );
 }
