@@ -759,7 +759,11 @@ function Summary() {
               chartData.length > 0
                 ? Object.keys(chartData[0])
                     .filter((k) => k !== "day" && (categoryFilters[k] ?? true))
-                    .map((cat) => ({ dataKey: cat, label: cat }))
+                    .map((cat) => ({
+                      dataKey: cat,
+                      label: cat,
+                      showMark: false,
+                    }))
                 : []
             }
             height={275}
