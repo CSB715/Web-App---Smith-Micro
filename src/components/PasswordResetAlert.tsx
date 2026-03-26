@@ -1,5 +1,5 @@
 import "../styles/Alert.css";
-import { useRef, useState } from "react";
+import { useRef } from "react";
 import "../styles/Modal.css";
 
 

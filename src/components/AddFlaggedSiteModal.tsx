@@ -1,7 +1,9 @@
 import { Button, Modal, Box, TextField, Autocomplete } from "@mui/material";
 import { useEffect, useState } from "react";
-import { WriteOverride, GetDevices, GetCategories } from "../utils/firestore";
+import { WriteOverride, GetDevices, GetCategories, getAuthInstance } from "../utils/firestore";
 import { type Override } from "../utils/models";
+import { onAuthStateChanged } from "firebase/auth";
+import { useNavigate } from "react-router";
 
 const style = {
   position: "absolute",
@@ -15,7 +17,8 @@ const style = {
   p: 4,
 };
 
-export default function AddFlaggedSiteModal({ userId }: { userId: string }) {
+export default function AddFlaggedSiteModal() {
+  const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const handleOpen = () => setOpen(true);
   const handleClose = () => {
@@ -23,6 +26,17 @@ export default function AddFlaggedSiteModal({ userId }: { userId: string }) {
     setCategories([]);
   };
   const [_, setSaving] = useState(false);
+  const [userId, setUserId] = useState("");
+
+  useEffect(() => {
+    onAuthStateChanged(getAuthInstance(), (user) => {
+      if (user) {
+        setUserId(user.uid);
+      } else {
+        navigate("/login", { replace: true });
+      }
+    });
+  }, [navigate]);
 
   const handleSave = async () => {
     setSaving(true);
@@ -65,7 +79,7 @@ export default function AddFlaggedSiteModal({ userId }: { userId: string }) {
       if (!open) return;
 
       setOverride({ category: categories, flagged_for: devices });
-    }, [categories]);
+    }, [categories, url]);
 
     return {
       categories,
@@ -106,7 +120,7 @@ export default function AddFlaggedSiteModal({ userId }: { userId: string }) {
             </Box>
           </Box>
           <TextField
-            defaultValue="www.example.com"
+            placeholder="www.example.com"
             onChange={(event) => {
               setUrl(event.target.value);
             }}

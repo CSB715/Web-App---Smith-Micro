@@ -7,7 +7,6 @@ import { onAuthStateChanged } from "firebase/auth";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import Divider from "@mui/material/Divider";
-import Stack from "@mui/material/Stack";
 import Paper from "@mui/material/Paper";
 
 const settingsLinks = [
@@ -61,8 +60,7 @@ function Settings() {
   useEffect(() => {
     if (!hasMounted.current) {
       onAuthStateChanged(getAuthInstance(), (user) => {
-        if (user) {
-        } else {
+        if (!user) {
           navigate("/login", { replace: true });
         }
       });
@@ -71,37 +69,24 @@ function Settings() {
   }, [navigate]);
 
   return (
-    <Box sx={{ py: 3, px: 0 }}>
+    <Box sx={{ px: 0 }}>
       <Box sx={{ px: 2.5, mb: 3 }}>
 
-
-        <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 1 }}>
-          <Box
-            sx={{
-              width: 6, height: 6, borderRadius: "50%", bgcolor: "primary.main", flexShrink: 0,
-              "@keyframes hpulse": {
-                "0%, 100%": { opacity: 1, transform: "scale(1)" },
-                "50%": { opacity: 0.4, transform: "scale(0.7)" },
-              },
-              animation: "hpulse 2.6s ease-in-out infinite",
-            }}
-          />
-          <Typography variant="caption" sx={{ fontFamily: "monospace", letterSpacing: "0.13em", textTransform: "uppercase", color: "primary.main", fontSize: "0.6rem" }}>
-            Configuration
-          </Typography>
-        </Stack>
-
-
         <Typography
-          variant="h4"
-          sx={{ fontWeight: 300, letterSpacing: "-0.02em", mb: 0, "& em": { fontStyle: "italic", color: "primary.main" } }}>
-          App Settings
-          </Typography>
-        
+          variant="h1" 
+          id="settings-title" 
+          sx={{ 
+            fontSize: "2rem",
+            mb: 2,
+            fontWeight: "bold",
+            color: "#01579b",
+            alignSelf: "center",
+            textAlign: "center",
+          }}
+        >
+          Settings
+        </Typography>
       </Box>
-
-      <Divider sx={{ mb: 3 }} />
-
 
       <Paper
         variant="outlined"

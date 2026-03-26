@@ -15,6 +15,7 @@ import {
 } from "../utils/models";
 import { getDisplayUrl } from "../utils/urls";
 import { classifyURL } from "../utils/classifier";
+import { getAuthInstance } from "../utils/firestore";
 
 const style = {
   position: "absolute",
@@ -29,11 +30,9 @@ const style = {
 };
 
 export default function SiteModal({
-  url,
-  userId,
+  url
 }: {
   url: string;
-  userId: string;
 }) {
   const [open, setOpen] = useState(false);
   const handleOpen = () => setOpen(true);
@@ -43,7 +42,7 @@ export default function SiteModal({
   const handleSave = async () => {
     // setSaving(true);
     try {
-      await WriteOverride(userId, displayUrl, {
+      await WriteOverride(getAuthInstance().currentUser!.uid, displayUrl, {
         category: override.category,
         flagged_for: selectedDevices.map((d) => d.name),
       });
@@ -140,7 +139,7 @@ export default function SiteModal({
     selectedDevices,
     setSelectedDevices,
     categories,
-  } = useSiteMetadata(userId, displayUrl, open);
+  } = useSiteMetadata(getAuthInstance().currentUser!.uid, displayUrl, open);
 
   return (
     <>

@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 import { getAuthInstance, getDb } from "../utils/firestore";
 import SiteModal from "../components/SiteModal";
-import { Box } from "@mui/material";
+import { Box, Typography } from "@mui/material";
 import { onAuthStateChanged } from "firebase/auth";
 import { collection, Timestamp } from "firebase/firestore";
 import { type Notification } from "../utils/models";
@@ -104,7 +104,21 @@ function Notifications() {
   return (
     <>
       <Box sx={{ paddingBottom: "72px" }}>
-        <h1>Notification History</h1>
+        <Typography 
+          variant="h1" 
+          id="notification-title" 
+          sx={{ 
+            fontSize: "2rem",
+            mb: 2,
+            fontWeight: "bold",
+            color: "#01579b",
+            alignSelf: "center",
+            textAlign: "center",
+          }}
+        >
+          Notification History
+        </Typography>
+
         <ul style={{ listStyleType: "none", padding: 0, margin: 0 }}>
           {notifications.map((notification) => (
             <Box
@@ -117,7 +131,6 @@ function Notifications() {
               <li key={notification.id}>
                 <SiteModal
                   url={notification.siteUrl}
-                  userId={userId ? userId : ""}
                 />
                 <p>
                   {getTimeDifferenceString(notification.dateTime)} ago on{" "}

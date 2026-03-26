@@ -9,16 +9,13 @@ import {
 import { getDb, getAuthInstance } from "../utils/firestore";
 import { useNavigate } from "react-router";
 import { onAuthStateChanged } from "firebase/auth";
+import { Button, List, ListItem, ListItemText, Box, Typography } from "@mui/material";
 
 async function getNotifications() {
-  const notifications: DocumentSnapshot[] = [];
   const snap = await getDocs(
     collection(getDb(), "Users", getAuthInstance().currentUser!.uid, "NotificationTriggers"),
   );
-  for (const doc of snap.docs) {
-    notifications.push(doc);
-  }
-  return notifications;
+  return snap.docs;
 }
 
 function NotificationSettings() {
@@ -49,44 +46,63 @@ function NotificationSettings() {
 
   return (
     <>
-      <h1 className="title">Notification Settings</h1>
-      <hr className="divider" />
+      <Typography
+        variant="h1"
+        id="notification-settings-title"
+        sx={{ 
+          fontSize: "2rem",
+          letterSpacing: "-0.02em",
+          mb: 2,
+          fontWeight: "bold",
+          color: "#01579b",
+          alignSelf: "center",
+          textAlign: "center",
+        }}
+      >
+        Notification Settings
+      </Typography>
 
-      <br />
+      <Box component="section">
+        <List>
+          {notifications.map((notification) => (
+            <ListItem key={notification.id} sx={{ display: "flex", alignItems: "center" }} >
+              <ListItemText sx={{ flex: 1, pl: 2 }} >
+                {notification.data()!.name}
+              </ListItemText>
+              <Box sx={{ display: "flex", gap: 1, pr: 2, alignItems: 'center', justifyContent: 'center' }} >
+                <Button sx={{
+                  width: 80,
+                  height: 30,
+                  justifyContent: "center",
+                }}
+                  onClick={() =>
+                    navigate("/settings/notifications/create-notification", { state : {notifID : notification.id } })
+                  }
+                  variant="outlined"
+                >
+                  Edit
+                </Button>
+                <Button sx={{ 
+                  width: 80,
+                  height: 30,
+                  justifyContent: "center",
+                 }}
+                  onClick={() => handleDeleteNotification(notification)}
+                  variant="outlined" color="error"
+                >
+                  Del
+                </Button>
+              </Box>
+            </ListItem>
+          ))}
+        </List>
+      </Box>
 
-      <div>
-        <table>
-          <tbody>
-            {notifications.map((notification) => (
-              <tr key={notification.id}>
-                <td>{notification.data()!.name}</td>
-                <td>
-                  <button
-                    onClick={() => handleDeleteNotification(notification)}
-                  >
-                    Del
-                  </button>
-                </td>
-                <td>
-                  <button
-                    onClick={() =>
-                      navigate("/settings/notifications/create-notification", { state : {notifID : notification.id } })
-                    }
-                  >
-                    Edit
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-
-      <button
+      <Button variant="contained"
         onClick={() => navigate("/settings/notifications/create-notification", { state : {notifID : "" } })}
       >
         New Notification
-      </button>
+      </Button>
     </>
   );
 }
