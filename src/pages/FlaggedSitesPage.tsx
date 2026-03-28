@@ -61,7 +61,7 @@ function FlaggedSites() {
   const [siteModalOpen, setSiteModalOpen] = useState(false);
   const [newModalOpen, setNewModalOpen] = useState(false);
   const [siteUrl, setSiteUrl] = useState("");
-  const fetchedData = useRef(false)
+  const fetchedData = useRef(false);
 
   const closeSiteModal = () => {setSiteModalOpen(false);}
   const closeNewModal = () => {setNewModalOpen(false);}

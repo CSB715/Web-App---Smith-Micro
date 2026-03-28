@@ -97,8 +97,7 @@ export default function AddFlaggedSiteModal({ closeModal, isOpen } :
     <Modal
       open={isOpen}
       onClose={handleClose}
-      aria-labelledby="modal-modal-title"
-      aria-describedby="modal-modal-description"
+      aria-labelledby="flagged-site-modal-title"
     >
       <Box sx={style}>
         <Box
