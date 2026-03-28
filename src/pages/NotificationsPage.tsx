@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 import { getAuthInstance, getDb } from "../utils/firestore";
 import SiteModal from "../components/SiteModal";
-import { Box, Typography } from "@mui/material";
+import { Box, Button, Typography } from "@mui/material";
 import { onAuthStateChanged } from "firebase/auth";
 import { collection, Timestamp } from "firebase/firestore";
 import { type Notification } from "../utils/models";
@@ -82,7 +82,11 @@ function Notifications() {
   const navigate = useNavigate();
   const [userId, setUserId] = useState<string | null>(null);
   const [authReady, setAuthReady] = useState(false);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [siteUrl, setSiteUrl] = useState("");
 
+  const closeModal = () => {setModalOpen(false);}
+  
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(getAuthInstance(), (user) => {
       if (user) {
@@ -129,9 +133,9 @@ function Notifications() {
               key={notification.id}
             >
               <li key={notification.id}>
-                <SiteModal
-                  url={notification.siteUrl}
-                />
+                <Button onClick={() => {setSiteUrl(notification.siteUrl); setModalOpen(true);}}>
+                  {notification.siteUrl}
+                </Button>
                 <p>
                   {getTimeDifferenceString(notification.dateTime)} ago on{" "}
                   {notification.deviceName}
@@ -141,6 +145,12 @@ function Notifications() {
             </Box>
           ))}
         </ul>
+
+        <SiteModal
+          url={siteUrl}
+          isOpen={modalOpen}
+          closeModal={closeModal}
+        />
       </Box>
     </>
   );

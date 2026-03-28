@@ -16,6 +16,9 @@ import {
 import { getDisplayUrl } from "../utils/urls";
 import { classifyURL } from "../utils/classifier";
 import { getAuthInstance } from "../utils/firestore";
+import { onAuthStateChanged } from "firebase/auth";
+import { useNavigate } from "react-router";
+
 
 const style = {
   position: "absolute",
@@ -30,27 +33,37 @@ const style = {
 };
 
 export default function SiteModal({
-  url
+  url,
+  isOpen,
+  closeModal,
 }: {
   url: string;
+  isOpen: boolean;
+  closeModal: () => void;
 }) {
-  const [open, setOpen] = useState(false);
-  const handleOpen = () => setOpen(true);
-  const handleClose = () => setOpen(false);
-  // const [saving, setSaving] = useState(false);
+
+  const navigate = useNavigate();
+  const [userId, setUserId] = useState<string>("");
+
+  useEffect(() => {
+    onAuthStateChanged(getAuthInstance(), (user) => {
+      if (user) {
+        setUserId(user.uid);
+      } else {
+        navigate("/login", { replace: true });
+      }
+    });
+  }, [navigate]);
 
   const handleSave = async () => {
-    // setSaving(true);
     try {
-      await WriteOverride(getAuthInstance().currentUser!.uid, displayUrl, {
+      await WriteOverride(userId, displayUrl, {
         category: override.category,
         flagged_for: selectedDevices.map((d) => d.name),
       });
-      setOpen(false);
+      closeModal();
     } catch (e) {
       console.error(e);
-    } finally {
-      // setSaving(false);
     }
   };
 
@@ -139,72 +152,69 @@ export default function SiteModal({
     selectedDevices,
     setSelectedDevices,
     categories,
-  } = useSiteMetadata(getAuthInstance().currentUser!.uid, displayUrl, open);
+  } = useSiteMetadata(userId, displayUrl, isOpen);
 
   return (
-    <>
-      <Button onClick={handleOpen}>{displayUrl}</Button>
-      <Modal
-        open={open}
-        onClose={handleClose}
-        aria-labelledby="modal-modal-title"
-        aria-describedby="modal-modal-description"
-      >
-        <Box sx={style}>
-          <Box
-            sx={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              mb: 2,
-              borderBottom: "3px solid #000",
-              padding: 2,
-            }}
-          >
-            <h2 id="modal-modal-title">{displayUrl}</h2>
-            <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
-              <Button onClick={handleClose}>X</Button>
-              <a href={url} target="_blank" rel="noopener noreferrer">
-                visit site
-              </a>
-            </Box>
-          </Box>
-          <p>Original:</p>
-          <Autocomplete
-            multiple
-            disabled
-            value={categorization.category}
-            options={categories}
-            renderInput={(params) => <TextField {...params} />}
-          />
-          <p>My Categories:</p>
-          <Autocomplete
-            multiple
-            value={override.category}
-            onChange={(_: any, newValue: Array<string>) => {
-              setOverride({ ...override, category: newValue });
-            }}
-            options={categories}
-            renderInput={(params) => <TextField {...params} />}
-          />
-          <p>Flagged For Devices:</p>
-          <DeviceSelect
-            devices={devices}
-            selectedDevices={selectedDevices}
-            setSelectedDevices={setSelectedDevices}
-          />
-          <Box
-            sx={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-            }}
-          >
-            <Button onClick={handleClose}>Cancel</Button>
-            <Button onClick={handleSave}>Save</Button>
+    <Modal
+      open={isOpen}
+      onClose={() => closeModal()}
+      aria-labelledby="modal-modal-title"
+      aria-describedby="modal-modal-description"
+    >
+      <Box sx={style}>
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            mb: 2,
+            borderBottom: "3px solid #000",
+            padding: 2,
+          }}
+        >
+          <h2 id="modal-modal-title">{displayUrl}</h2>
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+            <Button onClick={() => closeModal()}>X</Button>
+            <a href={url} target="_blank" rel="noopener noreferrer">
+              visit site
+            </a>
           </Box>
         </Box>
-      </Modal>
-    </>
+        <p>System Classification:</p>
+        <Autocomplete
+          multiple
+          disabled
+          value={categorization.category}
+          options={categories}
+          renderInput={(params) => <TextField {...params} />}
+        />
+        <p>My Categories:</p>
+        <Autocomplete
+          multiple
+          value={override.category}
+          onChange={(_: any, newValue: Array<string>) => {
+            setOverride({ ...override, category: newValue });
+          }}
+          options={categories}
+          renderInput={(params) => <TextField {...params} />}
+        />
+        <p>Flagged For Devices:</p>
+        <DeviceSelect
+          devices={devices}
+          selectedDevices={selectedDevices}
+          setSelectedDevices={setSelectedDevices}
+        />
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+          }}
+        >
+          <Button onClick={() => closeModal()}>Cancel</Button>
+          <Button onClick={handleSave}>Save</Button>
+        </Box>
+      </Box>
+    </Modal>
   );
 }

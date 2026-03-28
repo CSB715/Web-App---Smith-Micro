@@ -5,11 +5,8 @@ import AddSiteModal from "../components/AddSiteModal";
 import SiteModal from "../components/SiteModal";
 import { useNavigate } from "react-router";
 import { onAuthStateChanged } from "firebase/auth"; 
+import { Button, Box, Typography, CircularProgress, List, ListItem, ListItemButton } from "@mui/material";
 
-function showModal(modalId: string) {
-  const modal = document.getElementById(modalId);
-  modal!.style.display = "block";
-}
 
 async function loadOverrides(uid: string) {
   const userRef = await GetUserRef(uid);
@@ -25,20 +22,21 @@ function SiteCategories() {
   const hasMounted = useRef(false);
   const navigate = useNavigate();
   const [sites, setSites] = useState<string[]>([]);
-
-  const showThisSiteModal = async (siteURL: string) => {
-    setSites(prev =>
-      prev.includes(siteURL) ? prev : [...prev, siteURL]
-    );
-  };
-
+  const [siteModalOpen, setSiteModalOpen] = useState(false);
+  const [siteUrl, setSiteUrl] = useState("");
+  const fetchedData = useRef(false);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [uid, setUid] = useState<any>(null);
 
   useEffect(() => {
     if (!hasMounted.current) {
+      fetchedData.current = false;
       onAuthStateChanged(getAuthInstance(), async (user) => {
         if (user) {
+          setUid(user.uid);
           const siteURLS = await loadOverrides(user.uid);
           setSites(siteURLS);
+          fetchedData.current = true;
         } else {
           navigate("/login", { replace: true });
         }
@@ -48,26 +46,73 @@ function SiteCategories() {
   }, []);
 
   return (
-    <>
-      <h1 className="title">Site Categories</h1>
-      <hr className="divider" />
+    <Box       
+      sx={{
+        minHeight: "100vh",
+        bgcolor: "background.default",
+        px: 0,
+        display: "flex",
+        flexDirection: "column",
+      }}
+    >
+      <Typography
+          variant="h1" 
+          id="Site-Categorization-title" 
+          sx={{ 
+            fontSize: "2rem",
+            letterSpacing: "-0.02em",
+            mb: 2,
+            fontWeight: "bold",
+            color: "#01579b",
+            alignSelf: "center",
+            textAlign: "center",
+          }}
+        >
+          Site Categorization
+        </Typography>
 
-      <button onClick={() => showModal("addSite")}>Set Site Category</button>
+
+      { !fetchedData.current && 
+        <CircularProgress sx={{ justifySelf: "center", alignSelf: "center", mt: 2 }} />
+      }
+
+      <List aria-label="List of flagged sites">
+        {sites.map((site) => (
+          <ListItem key={site}>
+            <ListItemButton 
+              sx={{
+                textTransform: "uppercase",
+              }}
+              key={site}
+              onClick={() => {
+                setSiteUrl(site);
+                setSiteModalOpen(true);
+              }}
+            >
+              <Typography variant="body1" >
+                {site}
+              </Typography>
+            </ListItemButton>
+          </ListItem>
+        ))}
+      </List>
 
       <br />
 
-      {sites.map((site) => (
-        <div key={site}>
-          {site && getAuthInstance().currentUser ? (
-            <SiteModal url={site} />
-          ) : (
-            <p>...</p>
-          )}
-        </div>
-      ))}
+      <Button variant="contained" onClick={() => setModalOpen(true)}>Set Site Category</Button>
 
-      <AddSiteModal showThisModal={showThisSiteModal} />
-    </>
+
+      {/* Modals */}
+      <SiteModal
+        url={siteUrl}
+        isOpen={siteModalOpen}
+        closeModal={async () => {setSites(await loadOverrides(uid)); setSiteModalOpen(false)}}
+      />
+      <AddSiteModal isOpen={modalOpen} closeModal={() => {setModalOpen(false)}} openSiteModal={(url: string) => {
+        setSiteUrl(url);
+        setSiteModalOpen(true);
+      }} />
+    </ Box>
   );
 }
 
