@@ -3,6 +3,7 @@ import {
   AccordionDetails,
   AccordionSummary,
   Box,
+  Button,
   Checkbox,
   Divider,
   FormControlLabel,
@@ -35,6 +36,10 @@ function Summary() {
   const navigate = useNavigate();
   const [userId, setUserId] = useState<string>("");
   const [timeFrame, setTimeFrame] = useState<7 | 30 | 90>(7);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [siteUrl, setSiteUrl] = useState("");
+
+  const closeModal = () => {setModalOpen(false);}
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(getAuthInstance(), (user) => {
@@ -569,8 +574,14 @@ function Summary() {
           ) : (
             <Box component="ul" sx={{ listStyle: "none", m: 0, p: 0 }}>
               {Array.from(newSites).map((site) => (
-                <Box component="li" key={site} sx={{ fontSize: "0.9rem" }}>
-                  <SiteModal url={site} />
+                <Box
+                  component="li"
+                  key={site}
+                  sx={{ fontSize: "0.9rem" }}
+                >
+                  <Button onClick={() => {setSiteUrl(site); setModalOpen(true);}}>
+                    {site}
+                  </Button>
                 </Box>
               ))}
             </Box>
@@ -712,7 +723,9 @@ function Summary() {
                     py: 0.5,
                   }}
                 >
-                  <SiteModal url={site} />
+                  <Button onClick={() => {setSiteUrl(site); setModalOpen(true);}}>
+                    {site}
+                  </Button>
                   <Box component="span" sx={{ opacity: 0.7 }}>
                     {(time / (1000 * 60 * 60)).toFixed(2)} hrs
                   </Box>
@@ -834,6 +847,12 @@ function Summary() {
           })}
         </Paper>
       </Box>
+
+      <SiteModal
+        url={siteUrl}
+        isOpen={modalOpen}
+        closeModal={closeModal}
+      />
     </Box>
   );
 }
