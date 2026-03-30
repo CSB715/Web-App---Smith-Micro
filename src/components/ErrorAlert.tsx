@@ -1,30 +1,42 @@
-import "../styles/Alert.css";
-import { useRef } from "react";
+import { Modal, Box, Typography, Button } from "@mui/material";
 
-function closeAlert() {
-    const modal = document.getElementById("errorAlert");
-    modal!.style.display = "none";
-}
+const style = {
+  position: "absolute",
+  top: "50%",
+  left: "50%",
+  transform: "translate(-50%, -50%)",
+  width: 400,
+  bgcolor: "background.paper",
+  border: "2px solid #000",
+  boxShadow: 24,
+  p: 4,
+};
 
-function showErrorModal() {
-    const modal = document.getElementById("errorAlert");
-    modal!.style.display = "block";
-}
+type Props = {
+  open: boolean;
+  onClose: () => void;
+};
 
-function ErrorAlert() {
-    const overlayRef = useRef<HTMLDivElement | null>(null);
-    
-    return (
-        <div id="errorAlert" className="alert" style = {{display: "none"}}
-        ref={overlayRef}
-        onClick={(e) => {if (e.target === overlayRef.current) closeAlert(); }}> 
-            <div className="alert-content">
-                <span className="close" onClick={() => closeAlert()}>&times;</span>
-                <p>We're sorry, an error occurred. Please try again later.</p>
-            </div>
-        </div> 
-    );
+function ErrorAlert({ open, onClose }: Props) {
+  return (
+    <Modal
+      open={open}
+      onClose={onClose}
+      aria-labelledby="modal-modal-title"
+      aria-describedby="modal-modal-description"
+    >
+      <Box sx={style}>
+        <Typography sx={{ mb: 3 }}>
+          We're sorry, an error occurred. Please try again later.
+        </Typography>
+        <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
+          <Button variant="outlined" onClick={onClose}>
+            OK
+          </Button>
+        </Box>
+      </Box>
+    </Modal>
+  );
 }
 
 export default ErrorAlert;
-export { showErrorModal };

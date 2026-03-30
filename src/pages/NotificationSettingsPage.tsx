@@ -46,6 +46,24 @@ function NotificationSettings() {
 
   return (
     <>
+      <Box sx={{ px: 2.5 }}>
+        <Box
+          onClick={() => navigate("/settings")}
+          sx={{
+            display: "inline-flex",
+            alignItems: "center",
+            color: "text.disabled",
+            cursor: "pointer",
+            mb: 1,
+            transition: "opacity 0.15s ease",
+            "&:hover": { opacity: 0.7 },
+          }}
+        >
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <polyline points="15 18 9 12 15 6" />
+          </svg>
+        </Box>
+      </Box>
       <Typography
         variant="h1"
         id="notification-settings-title"
