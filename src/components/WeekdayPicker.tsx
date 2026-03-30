@@ -8,22 +8,25 @@ import { ToggleButton, ToggleButtonGroup } from "@mui/material";
 const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
 type WeekdayPickerProps = {
-    selectedDays: string[];
-    setSelectedDays: (days :  string[]) => void;
-}
+    selectedDays: boolean[];
+    setSelectedDays: (days :  boolean[]) => void;
+};
 
 export default function WeekdayPicker({ selectedDays, setSelectedDays }: WeekdayPickerProps) {
 
+  const selectedValues = days.filter((_, i) => !!selectedDays[i]);
+
   const handleChange = (
     _: React.MouseEvent<HTMLElement>,
-    newDays: string[],
+    newSelected: string[],
   ) => {
+    const newDays = days.map(d => (newSelected ? newSelected.includes(d) : false));
     setSelectedDays(newDays);
   };
 
   return (
     <ToggleButtonGroup
-      value={selectedDays}
+      value={selectedValues}
       onChange={handleChange}
       aria-label="weekday picker"
       sx={{ display: 'flex', width: '100%', flexWrap: 'nowrap', overflow: 'hidden' }}

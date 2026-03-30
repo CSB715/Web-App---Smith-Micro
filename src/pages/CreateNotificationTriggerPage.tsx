@@ -45,7 +45,7 @@ export default function CreateNotificationTriggerPage() {
   const [categoriesArr, setCategoriesArr] = useState<string[]>([]);
   const [email, setEmail] = useState<boolean>(false);
   const [text, setText] = useState<boolean>(false);
-  const [selectedDays, setSelectedDays] = useState<string[]>([]);
+  const [selectedDays, setSelectedDays] = useState<boolean[]>([]);
   const [startTime, setStartTime] = useState<Dayjs>(dayjs());
   const [endTime, setEndTime] = useState<Dayjs>(dayjs());
 
@@ -84,6 +84,9 @@ export default function CreateNotificationTriggerPage() {
         if (user) {
           // if we are passed an id, we edit that document, not create a new one
           if (notifID !== "") {
+            loadNotificationTrigger(notifID, user.uid);
+          }
+          if (notifID && notifID !== "__all__") {
             loadNotificationTrigger(notifID, user.uid);
           }
 
@@ -129,7 +132,7 @@ export default function CreateNotificationTriggerPage() {
       limit_min,
       email,
       text,
-      days: (selectedDays.length > 0) ? selectedDays : ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"], // if empty, default to all
+      days: (selectedDays.length > 0) ? selectedDays : [true, true, true, true, true, true, true], // if empty, default to all
       startTime: Timestamp.fromDate(startTime.toDate()),
       endTime: Timestamp.fromDate(endTime.toDate()),
     }
@@ -334,7 +337,7 @@ export default function CreateNotificationTriggerPage() {
           <Button variant="contained" color="primary"
             id="createNewNotification" 
             onClick={() => createNotification()}>
-            Create
+              {notifID ? "Edit" : "Create"}
           </Button>
         </Box>
       </FormControl>

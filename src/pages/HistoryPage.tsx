@@ -8,25 +8,33 @@ import { type Device, type Visit } from "../utils/models";
 import { onSnapshot } from "firebase/firestore";
 import { collection } from "firebase/firestore";
 import { getDisplayUrl } from "../utils/urls";
+import {
+  Button,
+  Box,
+  Typography,
+  Divider,
+  Paper,
+  Stack,
+  Chip,
+  List,
+  ListItem,
+} from "@mui/material";
 
-import Box from "@mui/material/Box";
-import Typography from "@mui/material/Typography";
-import Divider from "@mui/material/Divider";
-import Paper from "@mui/material/Paper";
-import Stack from "@mui/material/Stack";
-import Chip from "@mui/material/Chip";
-import List from "@mui/material/List";
-import ListItem from "@mui/material/ListItem";
+function sortVisitsByDate(visits: { [key: string]: Visit[] }) {
+  return Object.fromEntries(
+    Object.entries(visits).sort(([a], [b]) => b.localeCompare(a)),
+  );
+}
 
 function History() {
   const navigate = useNavigate();
   const [userId, setUserId] = useState<string>("");
+  const [modalOpen, setModalOpen] = useState(false);
+  const [siteUrl, setSiteUrl] = useState("");
 
-  function sortVisitsByDate(visits: { [key: string]: Visit[] }) {
-    return Object.fromEntries(
-      Object.entries(visits).sort(([a], [b]) => b.localeCompare(a)),
-    );
-  }
+  const closeModal = () => {
+    setModalOpen(false);
+  };
 
   function groupVisitsByDate(visits: Visit[]) {
     return visits.reduce<Record<string, Visit[]>>((acc, visit) => {
@@ -298,7 +306,14 @@ function History() {
                         transition: "background 0.15s ease",
                       }}
                     >
-                      <SiteModal url={visit.siteUrl} />
+                      <Button
+                        onClick={() => {
+                          setSiteUrl(visit.siteUrl);
+                          setModalOpen(true);
+                        }}
+                      >
+                        {visit.siteUrl}
+                      </Button>
                       <Typography
                         variant="caption"
                         sx={{
@@ -362,6 +377,8 @@ function History() {
       </Box>
 
       {getVisits()}
+
+      <SiteModal url={siteUrl} isOpen={modalOpen} closeModal={closeModal} />
     </Box>
   );
 }
