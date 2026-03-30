@@ -1,73 +1,89 @@
-import { useEffect, useRef } from "react";
+import { useState } from "react";
 import { getAuthInstance, getDb, GetDoc, type UserData } from "../utils/firestore";
 import { doc, getDoc, updateDoc, arrayUnion } from "firebase/firestore";
-import { showErrorModal } from "./ErrorAlert";
-import "../styles/Modal.css";
+import { Modal, Box, Typography, Button, TextField } from "@mui/material";
 
+const style = {
+  position: "absolute",
+  top: "50%",
+  left: "50%",
+  transform: "translate(-50%, -50%)",
+  width: 400,
+  bgcolor: "background.paper",
+  border: "2px solid #000",
+  boxShadow: 24,
+  p: 4,
+};
 
-function closeModal() {
-    const modal = document.getElementById("addPhoneModal");
-    const newPhoneInput = document.getElementById("newPhone") as HTMLInputElement;
-    modal!.style.display = "none";
-    newPhoneInput.value = ""
-}
+type Props = {
+  updateUserData: (data: UserData) => void;
+  open: boolean;
+  onClose: () => void;
+  onError: () => void;
+};
 
-function addPhone(updateUserData : (data : UserData) => void ) {
-    const newPhoneInput = document.getElementById("newPhone") as HTMLInputElement;
+export default function AddPhoneModal({ updateUserData, open, onClose, onError }: Props) {
+  const [newPhone, setNewPhone] = useState("");
 
-    const newPhone = newPhoneInput.value.trim();
+  function handleClose() {
+    setNewPhone("");
+    onClose();
+  }
+
+  function handleConfirm() {
     if (newPhone.trim() === "") {
-        console.log("New phone number cannot be empty.");
-        return;
+      console.log("New phone number cannot be empty.");
+      return;
     }
 
     const userDoc = doc(getDb(), "Users", getAuthInstance().currentUser!.uid)
     getDoc(userDoc).then((snap) => {
-        updateDoc(snap.ref, { phones: arrayUnion(newPhoneInput.value) })
+        updateDoc(snap.ref, { phones: arrayUnion(newPhone) })
         .then(async () => {
-            closeModal()
-            updateUserData((await GetDoc(snap!.ref.path))!.data as UserData);         // reload phone number display
+            handleClose()
+            updateUserData((await GetDoc(snap!.ref.path))!.data as UserData);
         })
         .catch((error) => {
             console.error("Error adding phone number: ", error);
-            closeModal();
-            showErrorModal();
+            handleClose();
+            onError();
         });
     })
-}
+  }
 
-type Props = {
-    updateUserData : (data : UserData) => void
-}
-
-export default function AddPhoneModal( { updateUserData } : Props) {
-    const overlayRef = useRef<HTMLDivElement | null>(null);
-
-    useEffect(() => {
-        const newPhoneInput = document.getElementById("newPhone") as HTMLInputElement;
-
-        newPhoneInput.addEventListener("keypress", function(event) {
-            if (event.key === "Enter") {
-                event.preventDefault();
-                addPhone(updateUserData);
+  return (
+    <Modal
+      open={open}
+      onClose={handleClose}
+      aria-labelledby="modal-modal-title"
+      aria-describedby="modal-modal-description"
+    >
+      <Box sx={style}>
+        <Typography sx={{ fontWeight: "bold", fontSize: "1.5rem", mb: 2 }}>
+          New Phone Number
+        </Typography>
+        <TextField
+          fullWidth
+          placeholder="(555) 555-5555"
+          value={newPhone}
+          onChange={(e) => setNewPhone(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              handleConfirm();
             }
-        });
-    }, []);
-
-    return (
-        <div id="addPhoneModal" className="modal" style = {{display: "none"}}
-        ref={overlayRef}
-        onClick={(e) => {if (e.target === overlayRef.current) closeModal()}}> 
-            <div className="modal-content">
-                <span className="close" onClick={() => closeModal()}>&times;</span>
-                <p>New Phone Number</p>
-                <input type="text" id="newPhone" placeholder="(555) 555-5555"/>
-                <br/>
-                <div>
-                    <button id="cancelAddPhone" onClick={() => closeModal()}>Cancel</button>
-                    <button id="confirmAddPhone" onClick={() => addPhone(updateUserData)}>Confirm</button>
-                </div>
-            </div>
-        </div>
-    );
+          }}
+          sx={{ mb: 3 }}
+        />
+        <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 1 }}>
+          <Button variant="outlined" onClick={handleClose}>
+            Cancel
+          </Button>
+          <Button variant="contained" onClick={handleConfirm}>
+            Confirm
+          </Button>
+        </Box>
+      </Box>
+    </Modal>
+  );
 }
