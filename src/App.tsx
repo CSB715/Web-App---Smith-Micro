@@ -12,6 +12,8 @@ import Settings from "./pages/SettingsPage";
 import SiteCategories from "./pages/SiteCategoriesPage";
 import Summary from "./pages/SummaryPage";
 import AdminDashboard from "./pages/AdminDashboard";
+import CommonOverrides from "./pages/CommonOverrides";
+import AdminNavBar from "./components/AdminNavBar";
 
 // Auth Templates
 import SignIn from "./mui-templates/sign-in/SignIn";
@@ -27,13 +29,17 @@ const App = () => {
   const pagesWithoutNavBar = ["/login", "/sign-up", "/admin-dashboard", "/password-reset"];
   const showNavBar = !pagesWithoutNavBar.includes(location.pathname);
 
-  const fullWidthPages = ["/admin-dashboard"];
+  const fullWidthPages = ["/admin-dashboard", ];
   const isFullWidth = fullWidthPages.includes(location.pathname);
+
+  const pagesWithAdminNavBar = ["/admin-dashboard", "/admin-dashboard/common-overrides"];
+  const showAdmBar = pagesWithAdminNavBar.includes(location.pathname);
 
   return (
     <div className="app-viewport">
       <div className={`app-container${isFullWidth ? " full-width" : ""}`}>
         {showNavBar && <NavBar />}
+        {showAdmBar && <AdminNavBar/>}
         <Routes>
           {/* Main Pages */}
           <Route path="/" element={<Notifications />} />
@@ -59,6 +65,7 @@ const App = () => {
 
           {/* Admin Pages */}
           <Route path="/admin-dashboard" element={<AdminDashboard />} />
+          <Route path="/admin-dashboard/common-overrides" element={<CommonOverrides/>}/>
         </Routes>
       </div>
     </div>

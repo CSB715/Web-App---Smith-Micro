@@ -48,7 +48,7 @@ interface SearchResult {
   isFlagged: boolean;
 }
 
-function AdminDashboard() {
+function CommonOverrides() {
   const hasMounted = useRef(false);
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState<string>("");
@@ -245,11 +245,27 @@ function AdminDashboard() {
     handleMenuClose();
   };
 
-  return (
+  const commonOverrides = [{
+    "name": "Website1",
+    "count": 127,
+    "category1": 24,
+    "category2": 10,
+    "category3": 57
+  },
+    {
+    "name:": "Website2", 
+    "count": 10000,
+    "category1": 7,
+    "category2": 12,
+    "category3": 892
+  }
+];
+
+return (
     <Container maxWidth={false} sx={{ py: 1 }}>
       <Box sx={{ mb: 4 }}>
         <Typography variant="h3" component="h1" gutterBottom fontWeight={600}>
-          Admin Dashboard
+          Common Overrides
         </Typography>
 
         <Paper
@@ -292,18 +308,15 @@ function AdminDashboard() {
         </Box>
       </Box>
 
-      {loading && searchResults.length === 0 ? (
-        <Typography color="text.secondary">Loading...</Typography>
-      ) : searchResults.length > 0 ? (
+      {commonOverrides.length > 0 ? (
         <Box>
           <Typography variant="h5" sx={{ mb: 3, fontWeight: 600 }}>
-            Results ({searchResults.length}
-            {hasMore ? "+" : ""})
+            Common Overrides ({commonOverrides.length})
           </Typography>
           <Stack spacing={2}>
-            {searchResults.map((result, index) => (
+            {commonOverrides.map((override, index) => (
               <Card
-                key={result.name}
+                key={index}
                 sx={{
                   transition: "box-shadow 0.3s",
                   "&:hover": { boxShadow: 4 },
@@ -311,34 +324,20 @@ function AdminDashboard() {
               >
                 <CardContent>
                   <Typography variant="h6" component="h4" sx={{ mb: 1.5 }}>
-                    {result.name}
+                    {override.name ?? "—"}
                   </Typography>
-                  <Typography
-                    variant="body2"
-                    color="text.secondary"
-                    sx={{ mb: 1 }}
-                    onClick={(e) => handleCategoryClick(e, index)}
-                  >
-                    <strong>Categories:</strong>{" "}
-                    {result.categories.length > 0
-                      ? result.categories.join(", ")
-                      : "None"}
+                  <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
+                    <strong>Count:</strong> {override.count}
                   </Typography>
-                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                    <Typography variant="body2" color="text.secondary">
-                      <strong>Status:</strong>
-                    </Typography>
-                    <Chip
-                      label={result.isFlagged ? "Flagged" : "Not Flagged"}
-                      color={result.isFlagged ? "error" : "success"}
-                      size="small"
-                      variant="filled"
-                      onClick={(e) => handleChipClick(e, index)}
-                      onDelete={(e) => handleChipClick(e, index)}
-                      deleteIcon={<ExpandMoreIcon />}
-                      sx={{ cursor: "pointer" }}
-                    />
-                  </Box>
+                  <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
+                    <strong>Category 1:</strong> {override.category1}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
+                    <strong>Category 2:</strong> {override.category2}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
+                    <strong>Category 3:</strong> {override.category3}
+                  </Typography>
                 </CardContent>
               </Card>
             ))}
@@ -367,85 +366,14 @@ function AdminDashboard() {
           }}
         >
           <Typography variant="body1" color="text.secondary">
-            No results found for "{searchQuery}"
+            No overrides found.
           </Typography>
         </Paper>
       )}
 
-      <Menu
-        anchorEl={anchorEl}
-        open={Boolean(anchorEl)}
-        onClose={handleMenuClose}
-        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
-        transformOrigin={{ vertical: "top", horizontal: "center" }}
-      >
-        <MenuItem onClick={() => handleToggleFlag(true)}>
-          <ListItemIcon>
-            <FlagIcon fontSize="small" color="error" />
-          </ListItemIcon>
-          <ListItemText>Flag Site</ListItemText>
-        </MenuItem>
-        <MenuItem onClick={() => handleToggleFlag(false)}>
-          <ListItemIcon>
-            <FlagOutlinedIcon fontSize="small" color="success" />
-          </ListItemIcon>
-          <ListItemText>Unflag Site</ListItemText>
-        </MenuItem>
-      </Menu>
-
-      <Menu
-        open={Boolean(anchorElCategories)}
-        onClose={() => handleCategoryMenuClose(null as any, 0)}
-        anchorEl={anchorElCategories}
-        anchorOrigin={{ vertical: "center", horizontal: "center" }}
-        transformOrigin={{ vertical: "center", horizontal: "center" }}
-      >
-        {categoryList.map((category, index) => {
-          const currentResult =
-            selectedIndex !== null ? searchResults[selectedIndex] : null;
-          if (!currentResult) return null;
-          return (
-            <MenuItem
-              key={index}
-              onClick={() =>
-                handleToggleCategory(
-                  category,
-                  !searchResults[selectedIndex ?? 0].categories.includes(
-                    category,
-                  ),
-                )
-              }
-            >
-              <ListItemIcon>
-                <CategoryIcon fontSize="small" />
-              </ListItemIcon>
-              <ListItemText primary={category} />
-
-              <Chip
-                label={
-                  searchResults[selectedIndex ?? 0].categories.includes(
-                    category,
-                  )
-                    ? "Yes"
-                    : "No"
-                }
-                color={
-                  searchResults[selectedIndex ?? 0].categories.includes(
-                    category,
-                  )
-                    ? "success"
-                    : "default"
-                }
-                size="small"
-                variant="outlined"
-                sx={{ ml: 2 }}
-              />
-            </MenuItem>
-          );
-        })}
-      </Menu>
     </Container>
   );
 }
 
-export default AdminDashboard;
+export default CommonOverrides;
+
