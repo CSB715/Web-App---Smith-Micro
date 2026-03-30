@@ -1,4 +1,4 @@
-import { Autocomplete, Modal, Button, Box, TextField } from "@mui/material";
+import { Autocomplete, Modal, Button, Box, TextField, Typography, Link } from "@mui/material";
 import { useState, useEffect } from "react";
 import {
   GetCategorization,
@@ -172,15 +172,17 @@ export default function SiteModal({
             padding: 2,
           }}
         >
-          <h2 id="modal-modal-title">{displayUrl}</h2>
+          <Typography variant="h2" id="modal-modal-title" sx={{ fontSize: "1.5rem", fontWeight: "bold" }}>
+            {url}
+          </Typography>
           <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
             <Button onClick={() => closeModal()}>X</Button>
-            <a href={url} target="_blank" rel="noopener noreferrer">
+            <Link href={url} target="_blank" rel="noopener noreferrer">
               visit site
-            </a>
+            </Link>
           </Box>
         </Box>
-        <p>System Classification:</p>
+        <Typography variant="h3" sx={{ fontSize: "1rem", fontWeight: "bold" }}>System Classification:</Typography>
         <Autocomplete
           multiple
           disabled
@@ -188,7 +190,8 @@ export default function SiteModal({
           options={categories}
           renderInput={(params) => <TextField {...params} />}
         />
-        <p>My Categories:</p>
+        <br />
+        <Typography variant="h3" sx={{ fontSize: "1rem", fontWeight: "bold" }}>My Categories:</Typography>
         <Autocomplete
           multiple
           value={override.category}
@@ -198,7 +201,8 @@ export default function SiteModal({
           options={categories}
           renderInput={(params) => <TextField {...params} />}
         />
-        <p>Flagged For Devices:</p>
+        <br />
+        <Typography variant="h3" sx={{ fontSize: "1rem", fontWeight: "bold" }}>Flagged For Devices:</Typography>
         <DeviceSelect
           devices={devices}
           selectedDevices={selectedDevices}
