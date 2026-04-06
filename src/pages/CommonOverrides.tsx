@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, useCallback } from "react";
-import { useNavigate } from "react-router";
+import { useNavigate, useSearchParams } from "react-router";
 import { onAuthStateChanged } from "firebase/auth";
 import { getAuthInstance, getDb } from "../utils/firestore";
 import {
@@ -22,6 +22,7 @@ import {
   Card,
   CardContent,
   Chip,
+  Collapse,
   Container,
   TextField,
   Typography,
@@ -32,17 +33,20 @@ import {
   MenuItem,
   ListItemIcon,
   ListItemText,
+  IconButton,
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import LogoutIcon from "@mui/icons-material/Logout";
 import FlagIcon from "@mui/icons-material/Flag";
 import FlagOutlinedIcon from "@mui/icons-material/FlagOutlined";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import ExpandLessIcon from "@mui/icons-material/ExpandLess";
 import CategoryIcon from "@mui/icons-material/Category";
+import OpenInNewIcon from "@mui/icons-material/OpenInNew";
 
 const PAGE_LIMIT = 50;
 
-interface SearchResult {
+interface OverrideInfoResult {
   name: string;
   categories: string[];
   isFlagged: boolean;
@@ -51,12 +55,12 @@ interface SearchResult {
 function CommonOverrides() {
   const hasMounted = useRef(false);
   const navigate = useNavigate();
-  const [searchQuery, setSearchQuery] = useState<string>("");
-  const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
+  const [searchResults, setSearchResults] = useState<OverrideInfoResult[]>([]);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [anchorElCategories, setAnchorElCategories] =
     useState<null | HTMLElement>(null);
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
+  const [expandedIndex, setExpandedIndex] = useState<number | null>(null);
   const [categoryList, setCategories] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [lastDoc, setLastDoc] = useState<DocumentSnapshot | null>(null);
@@ -64,61 +68,44 @@ function CommonOverrides() {
   const currentQuery = useRef("");
   const db = getDb();
   const auth = getAuthInstance();
+  const [SearchParams, SetSearchParams] = useSearchParams();
+  const [searchQuery, setSearchQuery] = useState<string>(
+    SearchParams.get("q_name") ?? "",
+  );
 
-  // Fetch a page of results from Firestore using prefix search
   const fetchResults = useCallback(
     async (search: string, cursor: DocumentSnapshot | null, append = false) => {
       setLoading(true);
       currentQuery.current = search;
       try {
-        let q;
-        if (!search.trim()) {
-          // No search term — just load first page ordered by name
-          q = cursor
-            ? query(
-                collection(db, "Categorization"),
-                orderBy("__name__"),
-                startAfter(cursor),
-                limit(PAGE_LIMIT),
-              )
-            : query(
-                collection(db, "Categorization"),
-                orderBy("__name__"),
-                limit(PAGE_LIMIT),
-              );
-        } else {
-          // Prefix search on document ID (name field = doc ID in your schema)
-          q = cursor
-            ? query(
-                collection(db, "Categorization"),
-                where("__name__", ">=", search),
-                where("__name__", "<=", search + "\uf8ff"),
-                orderBy("__name__"),
-                startAfter(cursor),
-                limit(PAGE_LIMIT),
-              )
-            : query(
-                collection(db, "Categorization"),
-                where("__name__", ">=", search),
-                where("__name__", "<=", search + "\uf8ff"),
-                orderBy("__name__"),
-                limit(PAGE_LIMIT),
-              );
-        }
+        const firestoreUrl = `https://us-central1-browser-insights-d704b.cloudfunctions.net/getCommonOverrides`;
 
-        const snapshot = await getDocs(q);
-        const fetched: SearchResult[] = snapshot.docs.map((doc) => {
-          const data = doc.data() as DocumentData;
-          return {
-            name: doc.id,
-            categories: data.category,
-            isFlagged: data.is_flagged,
-          };
+        console.log(
+          "Fetching common overrides with search:",
+          await auth.currentUser?.getIdToken(),
+        );
+
+        const response = await fetch(firestoreUrl, {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: await auth.currentUser!.getIdToken(),
+          },
         });
 
-        setSearchResults((prev) => (append ? [...prev, ...fetched] : fetched));
-        setLastDoc(snapshot.docs[snapshot.docs.length - 1] ?? null);
-        setHasMore(fetched.length === PAGE_LIMIT);
+        if (!response.ok) {
+          const errorData = response;
+
+          console.error("Firestore error:", errorData);
+          return;
+        } else {
+          console.log(
+            "Successfully fetched common overrides data from Firestore.",
+          );
+          console.log("Response data:", await response.json());
+        }
+      } catch (error) {
+        console.error("Error fetching results:", error);
       } finally {
         setLoading(false);
       }
@@ -147,10 +134,10 @@ function CommonOverrides() {
         }
       });
 
-      // // Initial load
-      fetchResults("", null);
+      // Initial load
+      const site = SearchParams.get("q_name");
+      fetchResults(site || "", null);
 
-      // Load categories
       (async () => {
         const categoriesSnapshot = await getDocs(collection(db, "Categories"));
         categoriesSnapshot.forEach((doc) => {
@@ -163,14 +150,18 @@ function CommonOverrides() {
     }
   }, [navigate, fetchResults]);
 
-  // Debounced search
-  useEffect(() => {
-    const timeout = setTimeout(() => {
-      setLastDoc(null);
-      fetchResults(searchQuery, null);
-    }, 150);
-    return () => clearTimeout(timeout);
-  }, [searchQuery, fetchResults]);
+  // useEffect(() => {
+  //   const timeout = setTimeout(() => {
+  //     setLastDoc(null);
+      
+  //     SetSearchParams(searchQuery ? { q_name: searchQuery } : {}, {
+  //       replace: true,
+  //     });
+
+  //     fetchResults(searchQuery, null);
+  //   }, 150);
+  //   return () => clearTimeout(timeout);
+  // }, [searchQuery, fetchResults]);
 
   const handleSignOut = async () => {
     try {
@@ -245,23 +236,33 @@ function CommonOverrides() {
     handleMenuClose();
   };
 
-  const commonOverrides = [{
-    "name": "Website1",
-    "count": 127,
-    "category1": 24,
-    "category2": 10,
-    "category3": 57
-  },
-    {
-    "name:": "Website2", 
-    "count": 10000,
-    "category1": 7,
-    "category2": 12,
-    "category3": 892
-  }
-];
+  const handleCardClick = (index: number) => {
+    setExpandedIndex((prev) => (prev === index ? null : index));
+  };
 
-return (
+  const handleNavigateToSite = (e: React.MouseEvent, siteName: string) => {
+    e.stopPropagation();
+    navigate(`/admin-dashboard?q_name=${encodeURIComponent(siteName)}`);
+  };
+
+  const commonOverrides = [
+    {
+      name: "Website1",
+      count: 127,
+      category1: 24,
+      category2: 10,
+      category3: 57,
+    },
+    {
+      name: "Website2",
+      count: 10000,
+      category1: 7,
+      category2: 12,
+      category3: 892,
+    },
+  ];
+
+  return (
     <Container maxWidth={false} sx={{ py: 1 }}>
       <Box sx={{ mb: 4 }}>
         <Typography variant="h3" component="h1" gutterBottom fontWeight={600}>
@@ -277,8 +278,7 @@ return (
             border: 1,
             borderColor: "grey.200",
           }}
-        >
-        </Paper>
+        />
 
         <TextField
           fullWidth
@@ -314,33 +314,88 @@ return (
             Common Overrides ({commonOverrides.length})
           </Typography>
           <Stack spacing={2}>
-            {commonOverrides.map((override, index) => (
-              <Card
-                key={index}
-                sx={{
-                  transition: "box-shadow 0.3s",
-                  "&:hover": { boxShadow: 4 },
-                }}
-              >
-                <CardContent>
-                  <Typography variant="h6" component="h4" sx={{ mb: 1.5 }}>
-                    {override.name ?? "—"}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
-                    <strong>Count:</strong> {override.count}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
-                    <strong>Category 1:</strong> {override.category1}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
-                    <strong>Category 2:</strong> {override.category2}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
-                    <strong>Category 3:</strong> {override.category3}
-                  </Typography>
-                </CardContent>
-              </Card>
-            ))}
+            {commonOverrides.map((override, index) => {
+              const isExpanded = expandedIndex === index;
+              return (
+                <Card
+                  key={index}
+                  onClick={() => handleCardClick(index)}
+                  sx={{
+                    cursor: "pointer",
+                    transition: "box-shadow 0.3s",
+                    "&:hover": { boxShadow: 4 },
+                  }}
+                >
+                  <CardContent>
+                    {/* Header row: title + count + expand icon */}
+                    <Box
+                      sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                      }}
+                    >
+                      <Box
+                        sx={{ display: "flex", alignItems: "center", gap: 2 }}
+                      >
+                        <Typography variant="h6" component="h4">
+                          {override.name ?? "—"}
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary">
+                          Count: <strong>{override.count}</strong>
+                        </Typography>
+                      </Box>
+                      <IconButton
+                        size="small"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleCardClick(index);
+                        }}
+                      >
+                        {isExpanded ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+                      </IconButton>
+                    </Box>
+
+                    {/* Collapsible details */}
+                    <Collapse in={isExpanded} timeout="auto" unmountOnExit>
+                      <Box sx={{ mt: 1.5 }}>
+                        <Typography
+                          variant="body2"
+                          color="text.secondary"
+                          sx={{ mb: 0.5 }}
+                        >
+                          <strong>Category 1:</strong> {override.category1}
+                        </Typography>
+                        <Typography
+                          variant="body2"
+                          color="text.secondary"
+                          sx={{ mb: 0.5 }}
+                        >
+                          <strong>Category 2:</strong> {override.category2}
+                        </Typography>
+                        <Typography
+                          variant="body2"
+                          color="text.secondary"
+                          sx={{ mb: 1.5 }}
+                        >
+                          <strong>Category 3:</strong> {override.category3}
+                        </Typography>
+                        <Button
+                          variant="contained"
+                          size="small"
+                          endIcon={<OpenInNewIcon />}
+                          onClick={(e) =>
+                            handleNavigateToSite(e, override.name)
+                          }
+                        >
+                          View in Dashboard
+                        </Button>
+                      </Box>
+                    </Collapse>
+                  </CardContent>
+                </Card>
+              );
+            })}
           </Stack>
 
           {hasMore && (
@@ -370,10 +425,8 @@ return (
           </Typography>
         </Paper>
       )}
-
     </Container>
   );
 }
 
 export default CommonOverrides;
-

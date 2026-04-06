@@ -26,10 +26,10 @@ import './styles/App.css';
 const App = () => {
   const location = useLocation();
 
-  const pagesWithoutNavBar = ["/login", "/sign-up", "/admin-dashboard", "/password-reset"];
+  const pagesWithoutNavBar = ["/login", "/sign-up", "/admin-dashboard", "/password-reset", "/admin-dashboard/common-overrides"];
   const showNavBar = !pagesWithoutNavBar.includes(location.pathname);
 
-  const fullWidthPages = ["/admin-dashboard", ];
+  const fullWidthPages = ["/admin-dashboard", "/admin-dashboard/common-overrides"];
   const isFullWidth = fullWidthPages.includes(location.pathname);
 
   const pagesWithAdminNavBar = ["/admin-dashboard", "/admin-dashboard/common-overrides"];

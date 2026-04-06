@@ -1,26 +1,31 @@
 import { BottomNavigation, BottomNavigationAction } from "@mui/material";
 import { useEffect, useState } from "react";
-import { useNavigate, useLocation } from "react-router";
+import { useNavigate, useLocation, useSearchParams } from "react-router";
 import "../styles/NavBar.css";
 
 export default function AdminNavBar() {
   const navigate = useNavigate();
   const location = useLocation();
+  const [SearchParams] = useSearchParams();
   const [value, setValue] = useState<string>(location.pathname);
 
   useEffect(() => {
     setValue(location.pathname);
   }, [location.pathname]);
 
+  const handleNavigate = (newValue: string) => {
+    const qName = SearchParams.get("q_name");
+    const destination = qName
+      ? `${newValue}?q_name=${encodeURIComponent(qName)}`
+      : newValue;
+    navigate(destination);
+  };
 
   return (
     <BottomNavigation
       showLabels
       value={value}
-      onChange={(_, newValue) => {
-        setValue(newValue);
-        navigate(newValue);
-      }}
+      onChange={(_, newValue) => handleNavigate(newValue)}
     >
       <BottomNavigationAction
         label="Websites & Classifications"

@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState, useCallback } from "react";
-import { useNavigate } from "react-router";
+import { useNavigate, useSearchParams } from "react-router";
 import { onAuthStateChanged } from "firebase/auth";
 import { getAuthInstance, getDb } from "../utils/firestore";
+
 import {
   collection,
   doc,
@@ -51,7 +52,6 @@ interface SearchResult {
 function AdminDashboard() {
   const hasMounted = useRef(false);
   const navigate = useNavigate();
-  const [searchQuery, setSearchQuery] = useState<string>("");
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [anchorElCategories, setAnchorElCategories] =
@@ -64,6 +64,12 @@ function AdminDashboard() {
   const currentQuery = useRef("");
   const db = getDb();
   const auth = getAuthInstance();
+  const [SearchParams, SetSearchParams] = useSearchParams();
+  const [authChecked, setAuthChecked] = useState(false);
+
+  const [searchQuery, setSearchQuery] = useState<string>(
+    SearchParams.get("q_name") ?? "",
+  );
 
   // Fetch a page of results from Firestore using prefix search
   const fetchResults = useCallback(
@@ -127,6 +133,17 @@ function AdminDashboard() {
   );
 
   useEffect(() => {
+    const timeout = setTimeout(() => {
+      setLastDoc(null);
+      fetchResults(searchQuery, null);
+      SetSearchParams(searchQuery ? { q_name: searchQuery } : {}, {
+        replace: true,
+      });
+    }, 150);
+    return () => clearTimeout(timeout);
+  }, [searchQuery, fetchResults]);
+
+  useEffect(() => {
     if (!hasMounted.current) {
       hasMounted.current = true;
 
@@ -138,17 +155,24 @@ function AdminDashboard() {
             if (!data?.isAdmin) {
               await auth.signOut();
               navigate("/login", { replace: true });
+              console.warn("Non-admin user attempted to access admin dashboard:", user.uid);
+              return;
             }
+            console.log("Admin user authenticated:", user.uid);
+            setAuthChecked(true);
           } catch {
+            console.error("Error verifying admin status for user:", user.uid);
             navigate("/login", { replace: true });
           }
         } else {
+          console.warn("No user authenticated, redirecting to login.");
           navigate("/login", { replace: true });
         }
       });
 
-      // // Initial load
-      fetchResults("", null);
+      // Initial load
+      const site = SearchParams.get("q_name");
+      fetchResults(site || "", null);
 
       // Load categories
       (async () => {
@@ -246,6 +270,7 @@ function AdminDashboard() {
   };
 
   return (
+    
     <Container maxWidth={false} sx={{ py: 1 }}>
       <Box sx={{ mb: 4 }}>
         <Typography variant="h3" component="h1" gutterBottom fontWeight={600}>
@@ -261,8 +286,7 @@ function AdminDashboard() {
             border: 1,
             borderColor: "grey.200",
           }}
-        >
-        </Paper>
+        ></Paper>
 
         <TextField
           fullWidth
