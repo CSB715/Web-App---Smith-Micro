@@ -66,6 +66,7 @@ function AdminDashboard() {
   const auth = getAuthInstance();
   const [SearchParams, SetSearchParams] = useSearchParams();
   const [authChecked, setAuthChecked] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   const [searchQuery, setSearchQuery] = useState<string>(
     SearchParams.get("q_name") ?? "",
@@ -144,48 +145,60 @@ function AdminDashboard() {
   }, [searchQuery, fetchResults]);
 
   useEffect(() => {
-    if (!hasMounted.current) {
-      hasMounted.current = true;
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      if (!user) {
+        navigate("/login", { replace: true });
+        return;
+      }
 
-      const unsubscribe = onAuthStateChanged(auth, async (user) => {
-        if (user) {
-          try {
-            const userDoc = await getDoc(doc(db, "Users", user.uid));
-            const data = userDoc.data() as DocumentData;
-            if (!data?.isAdmin) {
-              await auth.signOut();
-              navigate("/login", { replace: true });
-              console.warn("Non-admin user attempted to access admin dashboard:", user.uid);
-              return;
-            }
-            console.log("Admin user authenticated:", user.uid);
-            setAuthChecked(true);
-          } catch {
-            console.error("Error verifying admin status for user:", user.uid);
-            navigate("/login", { replace: true });
-          }
-        } else {
-          console.warn("No user authenticated, redirecting to login.");
+      try {
+        const userDoc = await getDoc(doc(db, "Users", user.uid));
+        const data = userDoc.data() as DocumentData;
+
+        if (!data?.isAdmin) {
+          await auth.signOut();
           navigate("/login", { replace: true });
+          return;
         }
+
+        setIsAdmin(true);
+      } catch {
+        await auth.signOut();
+        navigate("/login", { replace: true });
+      } finally {
+        setAuthChecked(true);
+      }
+    });
+
+    return () => unsubscribe();
+  }, [navigate]);
+
+  useEffect(() => {
+    if (!isAdmin) return;
+
+    const site = SearchParams.get("q_name");
+    fetchResults(site || "", null);
+
+    (async () => {
+      const categoriesSnapshot = await getDocs(collection(db, "Categories"));
+      categoriesSnapshot.forEach((doc) => {
+        const data = doc.data() as DocumentData;
+        setCategories((prev) => [...prev, data.label as string]);
       });
+    })();
+  }, [isAdmin]);
 
-      // Initial load
-      const site = SearchParams.get("q_name");
-      fetchResults(site || "", null);
-
-      // Load categories
-      (async () => {
-        const categoriesSnapshot = await getDocs(collection(db, "Categories"));
-        categoriesSnapshot.forEach((doc) => {
-          const data = doc.data() as DocumentData;
-          setCategories((prev) => [...prev, data.label as string]);
-        });
-      })();
-
-      return () => unsubscribe();
-    }
-  }, [navigate, fetchResults]);
+  useEffect(() => {
+    if (!isAdmin) return;
+    const timeout = setTimeout(() => {
+      setLastDoc(null);
+      fetchResults(searchQuery, null);
+      SetSearchParams(searchQuery ? { q_name: searchQuery } : {}, {
+        replace: true,
+      });
+    }, 150);
+    return () => clearTimeout(timeout);
+  }, [searchQuery, fetchResults, isAdmin]);
 
   // Debounced search
   useEffect(() => {
@@ -269,8 +282,19 @@ function AdminDashboard() {
     handleMenuClose();
   };
 
+  if (!authChecked) {
+    return (
+      <Box sx={{ display: "flex", justifyContent: "center", mt: 8 }}>
+        <Typography color="text.secondary">Verifying access...</Typography>
+      </Box>
+    );
+  }
+
+  if (!isAdmin) {
+    return null; // navigate() is already in flight
+  }
+
   return (
-    
     <Container maxWidth={false} sx={{ py: 1 }}>
       <Box sx={{ mb: 4 }}>
         <Typography variant="h3" component="h1" gutterBottom fontWeight={600}>

@@ -1,12 +1,16 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
-import { getAuthInstance, getDb } from "../utils/firestore";
+import { getAuthInstance, getDb, GetDevices } from "../utils/firestore";
 import SiteModal from "../components/SiteModal";
-import { Box, Typography } from "@mui/material";
+import DeviceSelect from "../components/DeviceSelect";
+import { Box, Divider, Typography, Pagination } from "@mui/material";
 import { onAuthStateChanged } from "firebase/auth";
 import { collection, Timestamp } from "firebase/firestore";
 import { type Notification } from "../utils/models";
+import { type Device } from "../utils/models";
 import { onSnapshot } from "firebase/firestore";
+
+const PAGE_SIZE = 20;
 
 type FirestoreNotification = {
   id: string;
@@ -18,25 +22,23 @@ type FirestoreNotification = {
   };
 };
 
-function normalizeNotification(d: FirestoreNotification): Notification | null {
-  if (
-    !d.data.siteUrl ||
-    !d.data.deviceName ||
-    !d.data.reason ||
-    !d.data.dateTime
-  ) {
-    return null;
-  }
+function normalizeNotification(d: FirestoreNotification): Notification {
+  const dateTime = (() => {
+    if (!d.data.dateTime) return new Date(0);
+    if (d.data.dateTime instanceof Date) return d.data.dateTime;
+    try {
+      return d.data.dateTime.toDate();
+    } catch {
+      return new Date(0);
+    }
+  })();
 
   return {
     id: d.id,
-    siteUrl: d.data.siteUrl,
-    deviceName: d.data.deviceName,
-    reason: d.data.reason,
-    dateTime:
-      d.data.dateTime instanceof Date
-        ? d.data.dateTime
-        : d.data.dateTime.toDate(),
+    siteUrl: d.data.siteUrl || "",
+    deviceName: d.data.deviceName || "Unknown device",
+    reason: d.data.reason || "No reason provided",
+    dateTime,
   };
 }
 
@@ -50,8 +52,7 @@ function useNotifications(userId: string) {
     const unsubscribe = onSnapshot(notifsRef, (snapshot) => {
       const normalized = snapshot.docs
         .map((doc) => normalizeNotification({ id: doc.id, data: doc.data() }))
-        .filter((n): n is Notification => n !== null)
-        .sort((a, b) => b.dateTime.getTime() - a.dateTime.getTime()); // sort newest first
+        .sort((a, b) => b.dateTime.getTime() - a.dateTime.getTime());
       setNotifications(normalized);
     });
     return unsubscribe;
@@ -63,6 +64,10 @@ function useNotifications(userId: string) {
 function getTimeDifferenceString(date: Date): string {
   const now = new Date();
   const diffMs = now.getTime() - date.getTime();
+
+  // Fallback for epoch date used as error placeholder
+  if (date.getTime() === 0) return "Unknown time";
+
   if (diffMs > 1000 * 60 * 60 * 24) {
     const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
     return `${diffDays} day${diffDays !== 1 ? "s" : ""}`;
@@ -82,6 +87,9 @@ function Notifications() {
   const navigate = useNavigate();
   const [userId, setUserId] = useState<string | null>(null);
   const [authReady, setAuthReady] = useState(false);
+  const [devices, setDevices] = useState<Device[]>([]);
+  const [selectedDevices, setSelectedDevices] = useState<Device[]>([]);
+  const [page, setPage] = useState(1);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(getAuthInstance(), (user) => {
@@ -93,56 +101,170 @@ function Notifications() {
         setAuthReady(true);
       }
     });
-
     return unsubscribe;
   }, [navigate]);
 
-  const notifications = useNotifications(userId || "");
+  useEffect(() => {
+    if (!userId) return;
+    async function load() {
+      const devicesData = await GetDevices(userId!);
+      const normalized: Device[] = devicesData.map((d) => ({
+        id: d.id,
+        name: d.data.name,
+      }));
+      setDevices(normalized);
+      setSelectedDevices(normalized);
+    }
+    load();
+  }, [userId]);
+
+  const allNotifications = useNotifications(userId || "");
+
+  const filteredNotifications = allNotifications.filter((n) => {
+    if (selectedDevices.length === 0) return true;
+    return selectedDevices.some(
+      (d) => d.id === "__all__" || d.name === n.deviceName,
+    );
+  });
+
+  const pageCount = Math.ceil(filteredNotifications.length / PAGE_SIZE);
+  const paginatedNotifications = filteredNotifications.slice(
+    (page - 1) * PAGE_SIZE,
+    page * PAGE_SIZE,
+  );
+
+  useEffect(() => {
+    setPage(1);
+  }, [selectedDevices]);
 
   if (!authReady) return <p>Loading...</p>;
 
   return (
-    <>
-      <Box sx={{ paddingBottom: "72px" }}>
-        <Typography 
-          variant="h1" 
-          id="notification-title" 
-          sx={{ 
-            fontSize: "2rem",
-            mb: 2,
-            fontWeight: "bold",
-            color: "#01579b",
-            alignSelf: "center",
-            textAlign: "center",
+    <Box sx={{ paddingBottom: "72px", px: 2.5 }}>
+      <Typography
+        variant="h1"
+        id="notification-title"
+        sx={{
+          fontSize: "2rem",
+          mb: 3,
+          fontWeight: "bold",
+          color: "#01579b",
+          textAlign: "center",
+        }}
+      >
+        Notification History
+      </Typography>
+
+      <Divider sx={{ mb: 3 }} />
+
+      
+      <Box
+        sx={{ mb: 4 }}
+        component="section"
+        role="region"
+        aria-label="device filter"
+      >
+        <Typography
+          variant="caption"
+          sx={{
+            fontSize: "0.68rem",
+            letterSpacing: "0.11em",
+            textTransform: "uppercase",
+            color: "black",
+            display: "block",
+            mb: 1.5,
           }}
         >
-          Notification History
+          Filter by device
         </Typography>
-
-        <ul style={{ listStyleType: "none", padding: 0, margin: 0 }}>
-          {notifications.map((notification) => (
-            <Box
-              sx={{
-                borderBottom: "3px solid #000",
-                borderTop: "3px solid #000",
-              }}
-              key={notification.id}
-            >
-              <li key={notification.id}>
-                <SiteModal
-                  url={notification.siteUrl}
-                />
-                <p>
-                  {getTimeDifferenceString(notification.dateTime)} ago on{" "}
-                  {notification.deviceName}
-                </p>
-                <p>{notification.reason}</p>
-              </li>
-            </Box>
-          ))}
-        </ul>
+        <DeviceSelect
+          devices={devices}
+          selectedDevices={selectedDevices}
+          setSelectedDevices={setSelectedDevices}
+        />
       </Box>
-    </>
+
+      
+      <Box sx={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+        {paginatedNotifications.length === 0 ? (
+          <Typography variant="caption" sx={{ color: "text.secondary" }}>
+            No notifications found.
+          </Typography>
+        ) : (
+          paginatedNotifications.map((notification) => (
+            <Box
+              key={notification.id}
+              sx={{
+                backgroundColor: "background.paper",
+                border: "0.5px solid",
+                borderColor: "divider",
+                borderRadius: 2,
+                px: 2,
+                py: 1.5,
+                boxShadow: "0 4px 20px rgba(0,0,0,0.13)",
+              }}
+            >
+              
+              {notification.siteUrl ? (
+                <SiteModal url={notification.siteUrl} />
+              ) : (
+                <Typography
+                  variant="body2"
+                  sx={{ color: "text.disabled", fontStyle: "italic" }}
+                >
+                  Unknown site
+                </Typography>
+              )}
+
+              
+              <Typography
+                variant="body2"
+                sx={{ color: "text.secondary", mt: 0.75, mb: 0.5 }}
+              >
+                {getTimeDifferenceString(notification.dateTime)} ago on{" "}
+                <Box
+                  component="span"
+                  sx={
+                    notification.deviceName === "Unknown device"
+                      ? { color: "text.disabled", fontStyle: "italic" }
+                      : {}
+                  }
+                >
+                  {notification.deviceName}
+                </Box>
+              </Typography>
+
+              
+              <Typography
+                variant="body2"
+                sx={
+                  notification.reason === "No reason provided"
+                    ? { color: "text.disabled", fontStyle: "italic" }
+                    : { color: "text.primary" }
+                }
+              >
+                {notification.reason}
+              </Typography>
+            </Box>
+          ))
+        )}
+      </Box>
+
+      
+      {pageCount > 1 && (
+        <Box sx={{ display: "flex", justifyContent: "center", mt: 3 }}>
+          <Pagination
+            count={pageCount}
+            page={page}
+            onChange={(_, value) => {
+              setPage(value);
+              window.scrollTo({ top: 0, behavior: "smooth" });
+            }}
+            color="primary"
+          />
+        </Box>
+      )}
+    </Box>
   );
 }
 

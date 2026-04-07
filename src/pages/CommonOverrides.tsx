@@ -72,6 +72,8 @@ function CommonOverrides() {
   const [searchQuery, setSearchQuery] = useState<string>(
     SearchParams.get("q_name") ?? "",
   );
+  const [authChecked, setAuthChecked] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   const fetchResults = useCallback(
     async (search: string, cursor: DocumentSnapshot | null, append = false) => {
@@ -114,41 +116,60 @@ function CommonOverrides() {
   );
 
   useEffect(() => {
-    if (!hasMounted.current) {
-      hasMounted.current = true;
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      if (!user) {
+        navigate("/login", { replace: true });
+        return;
+      }
 
-      const unsubscribe = onAuthStateChanged(auth, async (user) => {
-        if (user) {
-          try {
-            const userDoc = await getDoc(doc(db, "Users", user.uid));
-            const data = userDoc.data() as DocumentData;
-            if (!data?.isAdmin) {
-              await auth.signOut();
-              navigate("/login", { replace: true });
-            }
-          } catch {
-            navigate("/login", { replace: true });
-          }
-        } else {
+      try {
+        const userDoc = await getDoc(doc(db, "Users", user.uid));
+        const data = userDoc.data() as DocumentData;
+
+        if (!data?.isAdmin) {
+          await auth.signOut();
           navigate("/login", { replace: true });
+          return;
         }
+
+        setIsAdmin(true);
+      } catch {
+        await auth.signOut();
+        navigate("/login", { replace: true });
+      } finally {
+        setAuthChecked(true);
+      }
+    });
+
+    return () => unsubscribe();
+  }, [navigate]);
+
+  useEffect(() => {
+    if (!isAdmin) return;
+
+    const site = SearchParams.get("q_name");
+    fetchResults(site || "", null);
+
+    (async () => {
+      const categoriesSnapshot = await getDocs(collection(db, "Categories"));
+      categoriesSnapshot.forEach((doc) => {
+        const data = doc.data() as DocumentData;
+        setCategories((prev) => [...prev, data.label as string]);
       });
+    })();
+  }, [isAdmin]);
 
-      // Initial load
-      const site = SearchParams.get("q_name");
-      fetchResults(site || "", null);
-
-      (async () => {
-        const categoriesSnapshot = await getDocs(collection(db, "Categories"));
-        categoriesSnapshot.forEach((doc) => {
-          const data = doc.data() as DocumentData;
-          setCategories((prev) => [...prev, data.label as string]);
-        });
-      })();
-
-      return () => unsubscribe();
-    }
-  }, [navigate, fetchResults]);
+  useEffect(() => {
+    if (!isAdmin) return;
+    const timeout = setTimeout(() => {
+      setLastDoc(null);
+      fetchResults(searchQuery, null);
+      SetSearchParams(searchQuery ? { q_name: searchQuery } : {}, {
+        replace: true,
+      });
+    }, 150);
+    return () => clearTimeout(timeout);
+  }, [searchQuery, fetchResults, isAdmin]);
 
   // useEffect(() => {
   //   const timeout = setTimeout(() => {
@@ -261,6 +282,19 @@ function CommonOverrides() {
       category3: 892,
     },
   ];
+
+  if (!authChecked) {
+    return (
+      <Box sx={{ display: "flex", justifyContent: "center", mt: 8 }}>
+        <Typography color="text.secondary">Verifying access...</Typography>
+      </Box>
+    );
+  }
+
+  if (!isAdmin) {
+    return null; // navigate() is already in flight
+  }
+
 
   return (
     <Container maxWidth={false} sx={{ py: 1 }}>
