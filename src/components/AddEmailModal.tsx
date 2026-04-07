@@ -1,22 +1,40 @@
-import { useRef, useEffect } from "react";
+import { useState } from "react";
 import { getAuthInstance, getDb, GetDoc, type UserData } from "../utils/firestore";
 import { doc, getDoc, updateDoc, arrayUnion } from "firebase/firestore";
-import { showErrorModal } from "./ErrorAlert";
-import "../styles/Modal.css";
+import { Modal, Box, Typography, Button, TextField } from "@mui/material";
 
-function closeModal() {
-    const modal = document.getElementById("addEmailModal");
-    const newEmailInput = document.getElementById("newEmail") as HTMLInputElement;
-    modal!.style.display = "none";
-    newEmailInput.value = ""
-}
+const style = {
+  position: "absolute",
+  top: "50%",
+  left: "50%",
+  transform: "translate(-50%, -50%)",
+  width: 400,
+  bgcolor: "background.paper",
+  border: "2px solid #000",
+  boxShadow: 24,
+  p: 4,
+};
 
-function addEmail(updateUserData : (data : UserData) => void, isAccount : boolean) {
-    const newEmailInput = document.getElementById("newEmail") as HTMLInputElement;
-    const newEmail = newEmailInput.value.trim();
+type Props = {
+  updateUserData: (data: UserData) => void;
+  isAccount: boolean;
+  open: boolean;
+  onClose: () => void;
+  onError: () => void;
+};
+
+export default function AddEmailModal({ updateUserData, isAccount, open, onClose, onError }: Props) {
+  const [newEmail, setNewEmail] = useState("");
+
+  function handleClose() {
+    setNewEmail("");
+    onClose();
+  }
+
+  function handleConfirm() {
     if (newEmail.trim() === "") {
-        console.log("New email cannot be empty.");
-        return;
+      console.log("New email cannot be empty.");
+      return;
     }
 
     // TODO: email authentication to new address
@@ -29,53 +47,52 @@ function addEmail(updateUserData : (data : UserData) => void, isAccount : boolea
     // add new email to contact list
     const userDoc = doc(getDb(), "Users", getAuthInstance().currentUser!.uid)
     getDoc(userDoc).then((snap) => {
-        updateDoc(snap.ref, { emails: arrayUnion(newEmailInput.value) })
+        updateDoc(snap.ref, { emails: arrayUnion(newEmail) })
         .then(async () => {
-            closeModal()
-            updateUserData((await GetDoc(snap!.ref.path))!.data as UserData);         // reload phone number display
+            handleClose()
+            updateUserData((await GetDoc(snap!.ref.path))!.data as UserData);
         })
         .catch((error) => {
             console.error("Error adding email address: ", error);
-            closeModal();
-            showErrorModal();
+            handleClose();
+            onError();
         });
     })
+  }
 
-}
-
-type Props = {
-    updateUserData : (data : UserData) => void,
-    isAccount : boolean
-}
-
-export default function AddEmailModal( {updateUserData, isAccount} : Props) {
-    const overlayRef = useRef<HTMLDivElement | null>(null);
-
-    useEffect(() => {
-        const newEmailInput = document.getElementById("newEmail") as HTMLInputElement;
-
-        newEmailInput.addEventListener("keypress", function(event) {
-            if (event.key === "Enter") {
-                event.preventDefault();
-                addEmail(updateUserData, isAccount);
+  return (
+    <Modal
+      open={open}
+      onClose={handleClose}
+      aria-labelledby="modal-modal-title"
+      aria-describedby="modal-modal-description"
+    >
+      <Box sx={style}>
+        <Typography sx={{ fontWeight: "bold", fontSize: "1.5rem", mb: 2 }}>
+          New Email Address
+        </Typography>
+        <TextField
+          fullWidth
+          placeholder="joesmith@example.com"
+          value={newEmail}
+          onChange={(e) => setNewEmail(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              handleConfirm();
             }
-        });
-    }, []);
-
-    return (
-        <div id="addEmailModal" className="modal" style = {{display: "none"}}
-        ref={overlayRef}
-        onClick={(e) => {if (e.target === overlayRef.current) closeModal()}}> 
-            <div className="modal-content">
-                <span className="close" onClick={() => closeModal()}>&times;</span>
-                <p>New Email Address</p>
-                <input type="text" id="newEmail" placeholder="joesmith@example.com"/>
-                <br/>
-                <div>
-                    <button id="cancelEditEmail" onClick={() => closeModal()}>Cancel</button>
-                    <button id="confirmEditEmail" onClick={() => addEmail(updateUserData, isAccount)}>Confirm</button>
-                </div>
-            </div>
-        </div>
-    )
+          }}
+          sx={{ mb: 3 }}
+        />
+        <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 1 }}>
+          <Button variant="outlined" onClick={handleClose}>
+            Cancel
+          </Button>
+          <Button variant="contained" onClick={handleConfirm}>
+            Confirm
+          </Button>
+        </Box>
+      </Box>
+    </Modal>
+  );
 }

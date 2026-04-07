@@ -1,49 +1,66 @@
-import { useRef } from "react";
 import { DeleteUser } from "../utils/firestore";
-import { showErrorModal } from "./ErrorAlert";
 import { useNavigate, type NavigateFunction } from "react-router";
-import "../styles/Modal.css";
+import { Modal, Box, Typography, Button } from "@mui/material";
 
-function closeModal() {
-    const modal = document.getElementById("deleteAccountModal");
-    modal!.style.display = "none";
-}
-
-function onConfirm(uid : string, navigate : NavigateFunction) {    
-    DeleteUser("Users/" + uid).then(() => {     // delete user in database and auth
-        closeModal()
-        navigate("/login", { replace: true }); // redirect to login page
-    })
-    .catch((error) => {
-        console.log("Error Deleting User " + uid + ": " + error)
-        closeModal();
-        showErrorModal();
-    });
-}
+const style = {
+  position: "absolute",
+  top: "50%",
+  left: "50%",
+  transform: "translate(-50%, -50%)",
+  width: 400,
+  bgcolor: "background.paper",
+  border: "2px solid #000",
+  boxShadow: 24,
+  p: 4,
+};
 
 type Props = {
-    uid: string
+  uid: string;
+  open: boolean;
+  onClose: () => void;
+  onError: () => void;
+};
+
+function onConfirm(uid: string, navigate: NavigateFunction, onClose: () => void, onError: () => void) {
+  DeleteUser("Users/" + uid).then(() => {
+    onClose();
+    navigate("/login", { replace: true });
+  })
+  .catch((error) => {
+    console.log("Error Deleting User " + uid + ": " + error)
+    onClose();
+    onError();
+  });
 }
 
-function DeleteAccountModal({uid} : Props) {
-    const overlayRef = useRef<HTMLDivElement | null>(null);
-    const navigate = useNavigate();
+function DeleteAccountModal({ uid, open, onClose, onError }: Props) {
+  const navigate = useNavigate();
 
-    return (
-        <div id="deleteAccountModal" className="modal" style = {{display: "none"}}
-        ref={overlayRef}
-        onClick={(e) => {if (e.target === overlayRef.current) closeModal(); }}> 
-            <div className="modal-content">
-                <span className="close" onClick={() => closeModal()}>&times;</span>
-                <p>Delete Account?</p>
-                <p>If you delete your account, all data associated with it will be lost.</p>
-                <div>
-                    <button id="cancelDeleteAccount" onClick={() => closeModal()}>Cancel</button>
-                    <button id="confirmDeleteAccount" onClick={() => onConfirm(uid, navigate)}>Confirm</button>
-                </div>
-            </div>
-        </div>
-    )
+  return (
+    <Modal
+      open={open}
+      onClose={onClose}
+      aria-labelledby="modal-modal-title"
+      aria-describedby="modal-modal-description"
+    >
+      <Box sx={style}>
+        <Typography sx={{ fontWeight: "bold", fontSize: "1.5rem", mb: 1 }}>
+          Delete Account?
+        </Typography>
+        <Typography sx={{ color: "text.secondary", mb: 3 }}>
+          If you delete your account, all data associated with it will be lost.
+        </Typography>
+        <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 1 }}>
+          <Button variant="outlined" onClick={onClose}>
+            Cancel
+          </Button>
+          <Button variant="outlined" color="error" onClick={() => onConfirm(uid, navigate, onClose, onError)}>
+            Confirm
+          </Button>
+        </Box>
+      </Box>
+    </Modal>
+  );
 }
 
 export default DeleteAccountModal;

@@ -1,33 +1,41 @@
-import "../styles/Alert.css";
-import { useRef } from "react";
-import "../styles/Modal.css";
+import { Modal, Box, Typography, Button } from "@mui/material";
 
+const style = {
+  position: "absolute",
+  top: "50%",
+  left: "50%",
+  transform: "translate(-50%, -50%)",
+  width: 400,
+  bgcolor: "background.paper",
+  border: "2px solid #000",
+  boxShadow: 24,
+  p: 4,
+};
 
-function closeAlert() {
-  const modal = document.getElementById("resetPasswordAlert");
-  modal!.style.display = "none";
-}
+type Props = {
+  open: boolean;
+  onClose: () => void;
+};
 
-function PasswordResetAlert() {
-  const overlayRef = useRef<HTMLDivElement | null>(null);
-
+function PasswordResetAlert({ open, onClose }: Props) {
   return (
-    <div
-      id="resetPasswordAlert"
-      className="alert"
-      ref={overlayRef}
-      onClick={(e) => {
-        if (e.target === overlayRef.current) closeAlert();
-      }}
-      style = {{display: "none"}}
+    <Modal
+      open={open}
+      onClose={onClose}
+      aria-labelledby="modal-modal-title"
+      aria-describedby="modal-modal-description"
     >
-      <div className="alert-content">
-        <span className="close" onClick={() => closeAlert()}>
-          &times;
-        </span>
-           <p>A password reset link has been sent to your inbox.</p>
-      </div>
-    </div>
+      <Box sx={style}>
+        <Typography sx={{ mb: 3 }}>
+          A password reset link has been sent to your inbox.
+        </Typography>
+        <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
+          <Button variant="outlined" onClick={onClose}>
+            OK
+          </Button>
+        </Box>
+      </Box>
+    </Modal>
   );
 }
 
