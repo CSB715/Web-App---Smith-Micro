@@ -43,7 +43,7 @@ export type NotificationTrigger = {
   limit_min: number,
   email: boolean,
   text: boolean,
-  days: string[],
+  days: boolean[],
   startTime: Timestamp,
   endTime: Timestamp,
 }

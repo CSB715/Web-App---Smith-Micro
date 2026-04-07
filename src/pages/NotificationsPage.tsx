@@ -91,6 +91,8 @@ function Notifications() {
   const [selectedDevices, setSelectedDevices] = useState<Device[]>([]);
   const [page, setPage] = useState(1);
 
+  const closeModal = () => {setModalOpen(false);}
+  
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(getAuthInstance(), (user) => {
       if (user) {

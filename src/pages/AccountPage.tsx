@@ -28,6 +28,19 @@ import Typography from "@mui/material/Typography";
 import Divider from "@mui/material/Divider";
 import Paper from "@mui/material/Paper";
 import Button from "@mui/material/Button";
+import Modal from "@mui/material/Modal";
+
+const style = {
+  position: "absolute",
+  top: "50%",
+  left: "50%",
+  transform: "translate(-50%, -50%)",
+  width: 400,
+  bgcolor: "background.paper",
+  border: "2px solid #000",
+  boxShadow: 24,
+  p: 4,
+};
 
 
 function Account() {
@@ -40,6 +53,14 @@ function Account() {
   const [currDevice, setCurrDevice] = useState<DocumentData | null>(null);
   const [isAccount, setIsAccount] = useState<boolean>(false);
   const [lastResetEmailDateTime, setLastResetEmailDateTime] = useState<number | null>(null);
+  const [deleteDeviceOpen, setDeleteDeviceOpen] = useState(false);
+  const [renameDeviceOpen, setRenameDeviceOpen] = useState(false);
+  const [addEmailOpen, setAddEmailOpen] = useState(false);
+  const [addPhoneOpen, setAddPhoneOpen] = useState(false);
+  const [deleteAccountOpen, setDeleteAccountOpen] = useState(false);
+  const [resetAlertOpen, setResetAlertOpen] = useState(false);
+  const [errorAlertOpen, setErrorAlertOpen] = useState(false);
+  const [pendingDelete, setPendingDelete] = useState<{ type: "email" | "phone"; value: string } | null>(null);
 
   const updateUserData: (data: UserData) => void = (data) => {
     setUserData(data);
@@ -71,17 +92,12 @@ function Account() {
 
   function handleDeleteDevice(deviceId: string) {
     setCurrDevice(devices.find((device) => device.id === deviceId) || null);
-    showModal("deleteDeviceModal");
+    setDeleteDeviceOpen(true);
   }
 
   function handleRenameDevice(deviceId: string) {
     setCurrDevice(devices.find((device) => device.id === deviceId) || null);
-    showModal("renameDeviceModal");
-  }
-
-  function showModal(modalId: string) {
-    const modal = document.getElementById(modalId);
-    modal!.style.display = "block";
+    setRenameDeviceOpen(true);
   }
 
   function handleDeleteEmail(email: string) {
@@ -110,7 +126,7 @@ function Account() {
         }
         await sendPasswordResetEmail(auth, auth.currentUser!.email!);
         setLastResetEmailDateTime(new Date().getTime());
-        showModal("resetPasswordAlert");
+        setResetAlertOpen(true);
     } catch (error: any) {
         alert(`Error: ${error.message}`);
     }
@@ -121,6 +137,22 @@ function Account() {
     <Box sx={{ px: 0 }}>
       {/* ── Title ── */}
       <Box sx={{ px: 2.5, mb: 3 }}>
+        <Box
+          onClick={() => navigate("/settings")}
+          sx={{
+            display: "inline-flex",
+            alignItems: "center",
+            color: "text.disabled",
+            cursor: "pointer",
+            mb: 1,
+            transition: "opacity 0.15s ease",
+            "&:hover": { opacity: 0.7 },
+          }}
+        >
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <polyline points="15 18 9 12 15 6" />
+          </svg>
+        </Box>
         <Typography
           variant="h1"
           id="account-title"
@@ -183,9 +215,6 @@ function Account() {
             <Typography sx={{ fontWeight: 500, fontSize: "0.9rem", lineHeight: 1.2 }}>
               {getAuthInstance().currentUser?.email}
             </Typography>
-            <Typography variant="caption" sx={{ color: "text.primary", opacity: 0.55, fontSize: "0.68rem", fontFamily: "monospace", letterSpacing: "0.03em" }}>
-              Primary login address
-            </Typography>
           </Box>
 
           <Button
@@ -194,7 +223,7 @@ function Account() {
             sx={{ flexShrink: 0 }}
             onClick={() => {
               setIsAccount(true);
-              showModal("addEmailModal");
+              setAddEmailOpen(true);
             }}
           >
             Edit
@@ -243,7 +272,7 @@ function Account() {
                 color="error"
                 size="small"
                 sx={{ width: 80, height: 30, justifyContent: "center" }}
-                onClick={() => handleDeleteEmail(email)}
+                onClick={() => setPendingDelete({ type: "email", value: email })}
               >
                 Del
               </Button>
@@ -257,7 +286,7 @@ function Account() {
           variant="contained"
           onClick={() => {
             setIsAccount(false);
-            showModal("addEmailModal");
+            setAddEmailOpen(true);
           }}
         >
           Add Contact Email
@@ -305,7 +334,7 @@ function Account() {
                 color="error"
                 size="small"
                 sx={{ width: 80, height: 30, justifyContent: "center" }}
-                onClick={() => handleDeletePhone(phone)}
+                onClick={() => setPendingDelete({ type: "phone", value: phone })}
               >
                 Del
               </Button>
@@ -317,7 +346,7 @@ function Account() {
       <Box sx={{ px: 2.5, mt: 1.5 }}>
         <Button
           variant="contained"
-          onClick={() => showModal("addPhoneModal")}
+          onClick={() => setAddPhoneOpen(true)}
         >
           Add Phone Number
         </Button>
@@ -407,31 +436,94 @@ function Account() {
         <Button variant="outlined" fullWidth onClick={() => getAuthInstance().signOut()}>
           Sign Out
         </Button>
-        <Button variant="outlined" color="error" fullWidth onClick={() => showModal("deleteAccountModal")}>
+        <Button variant="outlined" color="error" fullWidth onClick={() => setDeleteAccountOpen(true)}>
           Delete Account
         </Button>
       </Box>
+
+      {/* ── Delete Contact Confirmation ── */}
+      <Modal
+        open={pendingDelete !== null}
+        onClose={() => setPendingDelete(null)}
+        aria-labelledby="modal-modal-title"
+        aria-describedby="modal-modal-description"
+      >
+        <Box sx={style}>
+          <Typography sx={{ fontWeight: "bold", fontSize: "1.5rem", mb: 1 }}>
+            Are you sure you want to delete this {pendingDelete?.type}?
+          </Typography>
+          <Typography sx={{ color: "text.secondary", mb: 3 }}>
+            {pendingDelete?.value}
+          </Typography>
+          <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 1 }}>
+            <Button variant="outlined" onClick={() => setPendingDelete(null)}>
+              Cancel
+            </Button>
+            <Button
+              variant="outlined"
+              color="error"
+              onClick={() => {
+                if (pendingDelete?.type === "email") handleDeleteEmail(pendingDelete.value);
+                else if (pendingDelete?.type === "phone") handleDeletePhone(pendingDelete.value);
+                setPendingDelete(null);
+              }}
+            >
+              Confirm
+            </Button>
+          </Box>
+        </Box>
+      </Modal>
 
       {/* modals for user dialog */}
       <DeleteDeviceModal
         currDevice={currDevice}
         updateDevices={updateDevices}
+        open={deleteDeviceOpen}
+        onClose={() => setDeleteDeviceOpen(false)}
+        onError={() => setErrorAlertOpen(true)}
       />
 
       <RenameDeviceModal
         currDevice={currDevice}
         updateDevices={updateDevices}
+        open={renameDeviceOpen}
+        onClose={() => setRenameDeviceOpen(false)}
+        onError={() => setErrorAlertOpen(true)}
       />
 
-      <AddEmailModal updateUserData={updateUserData} isAccount={isAccount} />
+      <AddEmailModal
+        updateUserData={updateUserData}
+        isAccount={isAccount}
+        open={addEmailOpen}
+        onClose={() => setAddEmailOpen(false)}
+        onError={() => setErrorAlertOpen(true)}
+      />
 
-      <AddPhoneModal updateUserData={updateUserData} />
+      <AddPhoneModal
+        updateUserData={updateUserData}
+        open={addPhoneOpen}
+        onClose={() => setAddPhoneOpen(false)}
+        onError={() => setErrorAlertOpen(true)}
+      />
 
-      {userSnap && <DeleteAccountModal uid={userSnap!.ref.id} />}
+      {userSnap && (
+        <DeleteAccountModal
+          uid={userSnap!.ref.id}
+          open={deleteAccountOpen}
+          onClose={() => setDeleteAccountOpen(false)}
+          onError={() => setErrorAlertOpen(true)}
+        />
+      )}
 
-      <PasswordResetAlert />
+      <PasswordResetAlert
+        open={resetAlertOpen}
+        onClose={() => setResetAlertOpen(false)}
+      />
 
-      <ErrorAlert />
+      <ErrorAlert
+        open={errorAlertOpen}
+        onClose={() => setErrorAlertOpen(false)}
+      />
     </Box>
   );
 }

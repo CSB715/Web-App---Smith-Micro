@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { onAuthStateChanged } from "firebase/auth";
 import {
   getAuthInstance,
@@ -10,7 +10,7 @@ import type { Categorization } from "../utils/models";
 import SiteModal from "../components/SiteModal";
 import AddFlaggedSiteModal from "../components/AddFlaggedSiteModal";
 import { type DocumentData } from "firebase/firestore";
-import { Typography, Box, List, ListItemButton } from "@mui/material";
+import { Typography, Box, List, ListItem, ListItemButton, CircularProgress, Button } from "@mui/material";
 
 function combineURLS(flaggedFromCats: Categorization[], flaggedFromOvers: Categorization[]) {
   return flaggedFromCats.concat(
@@ -51,7 +51,6 @@ function useSites(userId: string, setFlaggedSites: (sites: Categorization[]) => 
       const combined = combineURLS(flaggedFromCats, flaggedFromOvers);
 
       setFlaggedSites(combined);
-      console.log("Initial flagged sites:", combined);
     },
   );
 }
@@ -59,11 +58,20 @@ function useSites(userId: string, setFlaggedSites: (sites: Categorization[]) => 
 function FlaggedSites() {
   const navigate = useNavigate();
   const [flaggedSites, setFlaggedSites] = useState<Categorization[]>([]);
+  const [siteModalOpen, setSiteModalOpen] = useState(false);
+  const [newModalOpen, setNewModalOpen] = useState(false);
+  const [siteUrl, setSiteUrl] = useState("");
+  const fetchedData = useRef(false);
+
+  const closeSiteModal = () => {setSiteModalOpen(false);}
+  const closeNewModal = () => {setNewModalOpen(false);}
 
   useEffect(() => {
+    fetchedData.current = false;
     onAuthStateChanged(getAuthInstance(), (user) => {
       if (user) {
         useSites(user.uid, setFlaggedSites);
+        fetchedData.current = true;
       } else {
         navigate("/login", { replace: true });
       }
@@ -81,8 +89,26 @@ function FlaggedSites() {
         minHeight: "100vh",
         bgcolor: "background.default",
         px: 2.5,
+        display: "flex",
+        flexDirection: "column",
       }}
     >
+      <Box
+        onClick={() => navigate("/settings")}
+        sx={{
+          display: "inline-flex",
+          alignItems: "center",
+          color: "text.disabled",
+          cursor: "pointer",
+          mb: 1,
+          transition: "opacity 0.15s ease",
+          "&:hover": { opacity: 0.7 },
+        }}
+      >
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <polyline points="15 18 9 12 15 6" />
+        </svg>
+      </Box>
       <Typography
         variant="h1"
         id="flagged-sites-title"
@@ -99,16 +125,34 @@ function FlaggedSites() {
         Flagged Sites
       </Typography>
 
+      { !fetchedData.current && 
+        <CircularProgress sx={{ justifySelf: "center", alignSelf: "center", mt: 2 }} />
+      }
+
       <List aria-label="List of flagged sites">
         {flaggedSites.map((site) => (
-          <ListItemButton 
-            component={SiteModal} 
-            key={site.siteUrl} 
-            url={site.siteUrl}
-          />
+          <ListItem key={site.siteUrl}>
+            <ListItemButton 
+              sx={{
+                textTransform: "uppercase",
+              }}
+              key={site.siteUrl}
+              onClick={() => {
+                setSiteUrl(site.siteUrl);
+                setSiteModalOpen(true);
+              }}
+            >
+              <Typography variant="body1" >
+                {site.siteUrl}
+              </Typography>
+            </ListItemButton>
+          </ListItem>
         ))}
       </List>
-      <AddFlaggedSiteModal />
+      <Button variant="contained" color="primary" onClick={() => setNewModalOpen(true)}>Add Site</Button>
+
+      <AddFlaggedSiteModal isOpen={newModalOpen} closeModal={closeNewModal} />
+      <SiteModal url={siteUrl} isOpen={siteModalOpen} closeModal={closeSiteModal} />
     </Box>
   );
 }
