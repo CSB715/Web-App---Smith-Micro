@@ -55,10 +55,27 @@ function SiteCategories() {
         flexDirection: "column",
       }}
     >
-      <Typography
-          variant="h1" 
-          id="Site-Categorization-title" 
-          sx={{ 
+      <Box sx={{ px: 2.5, mb: 3 }}>
+        <Box
+          onClick={() => navigate("/settings")}
+          sx={{
+            display: "inline-flex",
+            alignItems: "center",
+            color: "text.disabled",
+            cursor: "pointer",
+            mb: 1,
+            transition: "opacity 0.15s ease",
+            "&:hover": { opacity: 0.7 },
+          }}
+        >
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <polyline points="15 18 9 12 15 6" />
+          </svg>
+        </Box>
+        <Typography
+          variant="h1"
+          id="Site-Categorization-title"
+          sx={{
             fontSize: "2rem",
             letterSpacing: "-0.02em",
             mb: 2,
@@ -70,6 +87,7 @@ function SiteCategories() {
         >
           Site Categorization
         </Typography>
+      </Box>
 
 
       { !fetchedData.current && 
