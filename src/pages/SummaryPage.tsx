@@ -22,6 +22,7 @@ import {
   getAuthInstance,
   GetCategorization,
   GetDevices,
+  GetOverride,
   GetVisits,
 } from "../utils/firestore";
 import { useNavigate } from "react-router";
@@ -199,7 +200,18 @@ function Summary() {
 
     async function getCategorizationData(visit: Visit) {
       try {
-        return await GetCategorization(visit.siteUrl);
+        const override = await GetOverride(userId, visit.siteUrl); // ensure override is loaded for this site (for accurate categorization)
+        if (override && override.data.category.length > 0) {
+          return {
+            id: visit.siteUrl,
+            data: {
+              category: override.data.category,
+              is_flagged: override.data.is_flagged,
+            },
+          };
+        } else {
+          return await GetCategorization(visit.siteUrl);
+        }
       } catch {
         console.error("Unable to load categorization");
         return null;
