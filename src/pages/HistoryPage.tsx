@@ -182,11 +182,10 @@ function History() {
             <Typography
               variant="caption"
               sx={{
-                fontFamily: "monospace",
                 fontSize: "0.55rem",
                 letterSpacing: "0.1em",
                 textTransform: "uppercase",
-                color: "rgba(255,255,255,0.55)",
+                color: "white",
               }}
             >
               {stat.label}
@@ -199,16 +198,19 @@ function History() {
 
   function getDeviceFilter() {
     return (
-      <Box sx={{ mb: 4 }}>
+      <Box
+        sx={{ mb: 4 }}
+        component="section"
+        role="region"
+        aria-label="device filter"
+      >
         <Typography
           variant="caption"
           sx={{
-            fontFamily: "monospace",
             fontSize: "0.68rem",
             letterSpacing: "0.11em",
             textTransform: "uppercase",
-            color: "text.primary",
-            opacity: 0.6,
+            color: "black",
             display: "block",
             mb: 1.5,
           }}
@@ -230,11 +232,10 @@ function History() {
         <Typography
           variant="caption"
           sx={{
-            fontFamily: "monospace",
             fontSize: "0.62rem",
             letterSpacing: "0.08em",
             textTransform: "uppercase",
-            color: "text.disabled",
+            color: "black",
           }}
         >
           No visits to display
@@ -258,12 +259,10 @@ function History() {
                 <Typography
                   variant="caption"
                   sx={{
-                    fontFamily: "monospace",
                     fontSize: "0.65rem",
                     letterSpacing: "0.1em",
                     textTransform: "uppercase",
                     color: "text.primary",
-                    opacity: 0.55,
                     whiteSpace: "nowrap",
                   }}
                 >
@@ -278,7 +277,6 @@ function History() {
                   sx={{
                     height: 18,
                     fontSize: "0.55rem",
-                    fontFamily: "monospace",
                     "& .MuiChip-label": { px: 0.75 },
                   }}
                 />
@@ -307,6 +305,7 @@ function History() {
                       }}
                     >
                       <Button
+                        sx={{ fontSize: "0.65rem" }}
                         onClick={() => {
                           setSiteUrl(visit.siteUrl);
                           setModalOpen(true);
@@ -317,12 +316,10 @@ function History() {
                       <Typography
                         variant="caption"
                         sx={{
-                          fontFamily: "monospace",
                           fontSize: "0.65rem",
                           letterSpacing: "0.1em",
                           textTransform: "uppercase",
                           color: "text.primary",
-                          opacity: 0.55,
                           whiteSpace: "nowrap",
                           marginLeft: "auto",
                           marginRight: "5%",
@@ -357,13 +354,13 @@ function History() {
           variant="h1"
           id="History-title"
           sx={{
-            fontSize: "2rem",
-            letterSpacing: "-0.02em",
-            mb: 2,
             fontWeight: "bold",
+            letterSpacing: "-0.02em",
+            mb: 3,
             color: "#01579b",
             alignSelf: "center",
             textAlign: "center",
+            fontSize: "2rem",
           }}
         >
           Web History

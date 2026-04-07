@@ -841,9 +841,7 @@ function Summary() {
                   >
                     {site}
                   </Button>
-                  <Box component="span" sx={{ opacity: 0.7 }}>
-                    {(time / MS2HR).toFixed(2)} hrs
-                  </Box>
+                  <Box component="span">{(time / MS2HR).toFixed(2)} hrs</Box>
                 </Box>
               ))}
           </Box>
