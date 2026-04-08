@@ -1,27 +1,17 @@
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useNavigate, useSearchParams } from "react-router";
 import { onAuthStateChanged } from "firebase/auth";
 import { getAuthInstance, getDb } from "../utils/firestore";
 import {
-  collection,
   doc,
   getDoc,
-  getDocs,
-  updateDoc,
-  query,
-  where,
-  orderBy,
-  limit,
-  startAfter,
   type DocumentData,
-  type DocumentSnapshot,
 } from "firebase/firestore";
 import {
   Box,
   Button,
   Card,
   CardContent,
-  Chip,
   Collapse,
   Container,
   TextField,
@@ -29,43 +19,26 @@ import {
   Stack,
   InputAdornment,
   Paper,
-  Menu,
-  MenuItem,
-  ListItemIcon,
-  ListItemText,
   IconButton,
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import LogoutIcon from "@mui/icons-material/Logout";
-import FlagIcon from "@mui/icons-material/Flag";
-import FlagOutlinedIcon from "@mui/icons-material/FlagOutlined";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import ExpandLessIcon from "@mui/icons-material/ExpandLess";
-import CategoryIcon from "@mui/icons-material/Category";
 import OpenInNewIcon from "@mui/icons-material/OpenInNew";
 
-const PAGE_LIMIT = 50;
-
-interface OverrideInfoResult {
+interface CommonOverride {
   name: string;
-  categories: string[];
-  isFlagged: boolean;
+  total: number;
+  categories: Record<string, number>;
 }
 
 function CommonOverrides() {
-  const hasMounted = useRef(false);
+  const [allOverrides, setAllOverrides] = useState<CommonOverride[]>([]);
+  const [commonOverrides, setCommonOverrides] = useState<CommonOverride[]>([]);
   const navigate = useNavigate();
-  const [searchResults, setSearchResults] = useState<OverrideInfoResult[]>([]);
-  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-  const [anchorElCategories, setAnchorElCategories] =
-    useState<null | HTMLElement>(null);
-  const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const [expandedIndex, setExpandedIndex] = useState<number | null>(null);
-  const [categoryList, setCategories] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
-  const [lastDoc, setLastDoc] = useState<DocumentSnapshot | null>(null);
-  const [hasMore, setHasMore] = useState(false);
-  const currentQuery = useRef("");
   const db = getDb();
   const auth = getAuthInstance();
   const [SearchParams, SetSearchParams] = useSearchParams();
@@ -75,46 +48,48 @@ function CommonOverrides() {
   const [authChecked, setAuthChecked] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
 
-  const fetchResults = useCallback(
-    async (search: string, cursor: DocumentSnapshot | null, append = false) => {
-      setLoading(true);
-      currentQuery.current = search;
-      try {
-        const firestoreUrl = `https://us-central1-browser-insights-d704b.cloudfunctions.net/getCommonOverrides`;
-
-        console.log(
-          "Fetching common overrides with search:",
-          await auth.currentUser?.getIdToken(),
-        );
-
-        const response = await fetch(firestoreUrl, {
+  const fetchResults = useCallback(async (search: string) => {
+    setLoading(true);
+    try {
+      const response = await fetch(
+        `https://us-central1-browser-insights-d704b.cloudfunctions.net/getCommonOverrides`,
+        {
           method: "GET",
           headers: {
             "Content-Type": "application/json",
             Authorization: await auth.currentUser!.getIdToken(),
           },
-        });
+        },
+      );
 
-        if (!response.ok) {
-          const errorData = response;
-
-          console.error("Firestore error:", errorData);
-          return;
-        } else {
-          console.log(
-            "Successfully fetched common overrides data from Firestore.",
-          );
-          console.log("Response data:", await response.json());
-        }
-      } catch (error) {
-        console.error("Error fetching results:", error);
-      } finally {
-        setLoading(false);
+      if (!response.ok) {
+        console.error("Error fetching common overrides:", response.status);
+        return;
       }
-    },
-    [],
-  );
 
+      const raw: [string, Record<string, number>][] = await response.json();
+
+      const parsed: CommonOverride[] = raw.map(([name, counts]) => {
+        const { total, ...categories } = counts;
+        return { name, total, categories };
+      });
+
+      const filtered = search.trim()
+        ? parsed.filter((o) =>
+            o.name.toLowerCase().startsWith(search.toLowerCase()),
+          )
+        : parsed;
+
+      setAllOverrides(parsed);
+      setCommonOverrides(filtered);
+    } catch (error) {
+      console.error("Error fetching results:", error);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  // Auth check
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (!user) {
@@ -144,45 +119,27 @@ function CommonOverrides() {
     return () => unsubscribe();
   }, [navigate]);
 
+  // Initial fetch once admin is confirmed
   useEffect(() => {
     if (!isAdmin) return;
-
-    const site = SearchParams.get("q_name");
-    fetchResults(site || "", null);
-
-    (async () => {
-      const categoriesSnapshot = await getDocs(collection(db, "Categories"));
-      categoriesSnapshot.forEach((doc) => {
-        const data = doc.data() as DocumentData;
-        setCategories((prev) => [...prev, data.label as string]);
-      });
-    })();
+    fetchResults(searchQuery);
   }, [isAdmin]);
 
+  // Client-side filtering + URL sync on search query change
   useEffect(() => {
-    if (!isAdmin) return;
     const timeout = setTimeout(() => {
-      setLastDoc(null);
-      fetchResults(searchQuery, null);
+      const filtered = searchQuery.trim()
+        ? allOverrides.filter((o) =>
+            o.name.toLowerCase().startsWith(searchQuery.toLowerCase()),
+          )
+        : allOverrides;
+      setCommonOverrides(filtered);
       SetSearchParams(searchQuery ? { q_name: searchQuery } : {}, {
         replace: true,
       });
     }, 150);
     return () => clearTimeout(timeout);
-  }, [searchQuery, fetchResults, isAdmin]);
-
-  // useEffect(() => {
-  //   const timeout = setTimeout(() => {
-  //     setLastDoc(null);
-      
-  //     SetSearchParams(searchQuery ? { q_name: searchQuery } : {}, {
-  //       replace: true,
-  //     });
-
-  //     fetchResults(searchQuery, null);
-  //   }, 150);
-  //   return () => clearTimeout(timeout);
-  // }, [searchQuery, fetchResults]);
+  }, [searchQuery, allOverrides]);
 
   const handleSignOut = async () => {
     try {
@@ -191,70 +148,6 @@ function CommonOverrides() {
     } catch (error) {
       console.error("Error signing out:", error);
     }
-  };
-
-  const handleChipClick = (
-    event: React.MouseEvent<HTMLElement>,
-    index: number,
-  ) => {
-    setAnchorEl(event.currentTarget);
-    setSelectedIndex(index);
-  };
-
-  const handleMenuClose = () => {
-    setAnchorEl(null);
-    setSelectedIndex(null);
-  };
-
-  const handleCategoryClick = (
-    event: React.MouseEvent<HTMLElement>,
-    index: number,
-  ) => {
-    setAnchorElCategories(event.currentTarget);
-    setSelectedIndex(index);
-  };
-
-  const handleCategoryMenuClose = (
-    event: React.MouseEvent<HTMLElement>,
-    index: number,
-  ) => {
-    event;
-    index;
-    setAnchorElCategories(null);
-    setSelectedIndex(null);
-  };
-
-  const handleToggleCategory = async (category: string, shouldAdd: boolean) => {
-    if (selectedIndex !== null) {
-      const result = searchResults[selectedIndex];
-      const currentCategories = result.categories;
-      const updatedCategories = shouldAdd
-        ? [...currentCategories, category]
-        : currentCategories.filter((c) => c !== category);
-      await updateDoc(doc(db, "Categorization", result.name), {
-        category: updatedCategories,
-      });
-      setSearchResults((prev) =>
-        prev.map((r, i) =>
-          i === selectedIndex ? { ...r, categories: updatedCategories } : r,
-        ),
-      );
-    }
-  };
-
-  const handleToggleFlag = async (shouldFlag: boolean) => {
-    if (selectedIndex !== null) {
-      await updateDoc(
-        doc(db, "Categorization", searchResults[selectedIndex].name),
-        { is_flagged: shouldFlag },
-      );
-      setSearchResults((prev) =>
-        prev.map((r, i) =>
-          i === selectedIndex ? { ...r, isFlagged: shouldFlag } : r,
-        ),
-      );
-    }
-    handleMenuClose();
   };
 
   const handleCardClick = (index: number) => {
@@ -266,23 +159,6 @@ function CommonOverrides() {
     navigate(`/admin-dashboard?q_name=${encodeURIComponent(siteName)}`);
   };
 
-  const commonOverrides = [
-    {
-      name: "Website1",
-      count: 127,
-      category1: 24,
-      category2: 10,
-      category3: 57,
-    },
-    {
-      name: "Website2",
-      count: 10000,
-      category1: 7,
-      category2: 12,
-      category3: 892,
-    },
-  ];
-
   if (!authChecked) {
     return (
       <Box sx={{ display: "flex", justifyContent: "center", mt: 8 }}>
@@ -292,9 +168,8 @@ function CommonOverrides() {
   }
 
   if (!isAdmin) {
-    return null; // navigate() is already in flight
+    return null;
   }
-
 
   return (
     <Container maxWidth={false} sx={{ py: 1 }}>
@@ -342,7 +217,9 @@ function CommonOverrides() {
         </Box>
       </Box>
 
-      {commonOverrides.length > 0 ? (
+      {loading && commonOverrides.length === 0 ? (
+        <Typography color="text.secondary">Loading...</Typography>
+      ) : commonOverrides.length > 0 ? (
         <Box>
           <Typography variant="h5" sx={{ mb: 3, fontWeight: 600 }}>
             Common Overrides ({commonOverrides.length})
@@ -352,7 +229,7 @@ function CommonOverrides() {
               const isExpanded = expandedIndex === index;
               return (
                 <Card
-                  key={index}
+                  key={override.name}
                   onClick={() => handleCardClick(index)}
                   sx={{
                     cursor: "pointer",
@@ -361,7 +238,7 @@ function CommonOverrides() {
                   }}
                 >
                   <CardContent>
-                    {/* Header row: title + count + expand icon */}
+                    {/* Header row: name + total + expand icon */}
                     <Box
                       sx={{
                         display: "flex",
@@ -373,10 +250,10 @@ function CommonOverrides() {
                         sx={{ display: "flex", alignItems: "center", gap: 2 }}
                       >
                         <Typography variant="h6" component="h4">
-                          {override.name ?? "—"}
+                          {override.name}
                         </Typography>
                         <Typography variant="body2" color="text.secondary">
-                          Count: <strong>{override.count}</strong>
+                          Count: <strong>{override.total}</strong>
                         </Typography>
                       </Box>
                       <IconButton
@@ -393,27 +270,18 @@ function CommonOverrides() {
                     {/* Collapsible details */}
                     <Collapse in={isExpanded} timeout="auto" unmountOnExit>
                       <Box sx={{ mt: 1.5 }}>
-                        <Typography
-                          variant="body2"
-                          color="text.secondary"
-                          sx={{ mb: 0.5 }}
-                        >
-                          <strong>Category 1:</strong> {override.category1}
-                        </Typography>
-                        <Typography
-                          variant="body2"
-                          color="text.secondary"
-                          sx={{ mb: 0.5 }}
-                        >
-                          <strong>Category 2:</strong> {override.category2}
-                        </Typography>
-                        <Typography
-                          variant="body2"
-                          color="text.secondary"
-                          sx={{ mb: 1.5 }}
-                        >
-                          <strong>Category 3:</strong> {override.category3}
-                        </Typography>
+                        {Object.entries(override.categories).map(
+                          ([category, count]) => (
+                            <Typography
+                              key={category}
+                              variant="body2"
+                              color="text.secondary"
+                              sx={{ mb: 0.5 }}
+                            >
+                              <strong>{category}:</strong> {count}
+                            </Typography>
+                          ),
+                        )}
                         <Button
                           variant="contained"
                           size="small"
@@ -421,6 +289,7 @@ function CommonOverrides() {
                           onClick={(e) =>
                             handleNavigateToSite(e, override.name)
                           }
+                          sx={{ mt: 1 }}
                         >
                           View in Dashboard
                         </Button>
@@ -431,17 +300,6 @@ function CommonOverrides() {
               );
             })}
           </Stack>
-
-          {hasMore && (
-            <Button
-              variant="outlined"
-              onClick={() => fetchResults(searchQuery, lastDoc, true)}
-              disabled={loading}
-              sx={{ mt: 3 }}
-            >
-              {loading ? "Loading..." : "Load More"}
-            </Button>
-          )}
         </Box>
       ) : (
         <Paper
@@ -455,7 +313,7 @@ function CommonOverrides() {
           }}
         >
           <Typography variant="body1" color="text.secondary">
-            No overrides found.
+            No overrides found{searchQuery ? ` for "${searchQuery}"` : ""}.
           </Typography>
         </Paper>
       )}

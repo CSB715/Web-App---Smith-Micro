@@ -65,7 +65,6 @@ function getTimeDifferenceString(date: Date): string {
   const now = new Date();
   const diffMs = now.getTime() - date.getTime();
 
-  // Fallback for epoch date used as error placeholder
   if (date.getTime() === 0) return "Unknown time";
 
   if (diffMs > 1000 * 60 * 60 * 24) {
@@ -90,9 +89,8 @@ function Notifications() {
   const [devices, setDevices] = useState<Device[]>([]);
   const [selectedDevices, setSelectedDevices] = useState<Device[]>([]);
   const [page, setPage] = useState(1);
+  const [modalUrl, setModalUrl] = useState<string | null>(null);
 
-  const closeModal = () => {setModalOpen(false);}
-  
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(getAuthInstance(), (user) => {
       if (user) {
@@ -159,7 +157,7 @@ function Notifications() {
 
       <Divider sx={{ mb: 3 }} />
 
-      
+      {/* Device filter */}
       <Box
         sx={{ mb: 4 }}
         component="section"
@@ -186,7 +184,7 @@ function Notifications() {
         />
       </Box>
 
-      
+      {/* Notification cards */}
       <Box sx={{ display: "flex", flexDirection: "column", gap: "12px" }}>
         {paginatedNotifications.length === 0 ? (
           <Typography variant="caption" sx={{ color: "text.secondary" }}>
@@ -206,9 +204,22 @@ function Notifications() {
                 boxShadow: "0 4px 20px rgba(0,0,0,0.13)",
               }}
             >
-              
+              {/* Site URL — clickable to open modal, or placeholder if missing */}
               {notification.siteUrl ? (
-                <SiteModal url={notification.siteUrl} />
+                <Typography
+                  variant="body2"
+                  onClick={() => setModalUrl(notification.siteUrl)}
+                  sx={{
+                    color: "#1565c0",
+                    fontWeight: 500,
+                    cursor: "pointer",
+                    textTransform: "uppercase",
+                    letterSpacing: "0.04em",
+                    "&:hover": { textDecoration: "underline" },
+                  }}
+                >
+                  {notification.siteUrl}
+                </Typography>
               ) : (
                 <Typography
                   variant="body2"
@@ -218,7 +229,7 @@ function Notifications() {
                 </Typography>
               )}
 
-              
+              {/* Timestamp + device */}
               <Typography
                 variant="body2"
                 sx={{ color: "text.secondary", mt: 0.75, mb: 0.5 }}
@@ -236,7 +247,7 @@ function Notifications() {
                 </Box>
               </Typography>
 
-              
+              {/* Reason */}
               <Typography
                 variant="body2"
                 sx={
@@ -252,7 +263,7 @@ function Notifications() {
         )}
       </Box>
 
-      
+      {/* Pagination */}
       {pageCount > 1 && (
         <Box sx={{ display: "flex", justifyContent: "center", mt: 3 }}>
           <Pagination
@@ -265,6 +276,15 @@ function Notifications() {
             color="primary"
           />
         </Box>
+      )}
+
+      {/* Single shared modal instance — only mounts when a URL is selected */}
+      {modalUrl && (
+        <SiteModal
+          url={modalUrl}
+          isOpen={true}
+          closeModal={() => setModalUrl(null)}
+        />
       )}
     </Box>
   );
