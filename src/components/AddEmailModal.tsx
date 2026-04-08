@@ -25,15 +25,30 @@ type Props = {
 
 export default function AddEmailModal({ updateUserData, isAccount, open, onClose, onError }: Props) {
   const [newEmail, setNewEmail] = useState("");
+  const [emailError, setEmailError] = useState(false);
+  const [emailErrorMessage, setEmailErrorMessage] = useState("");
 
   function handleClose() {
     setNewEmail("");
+    setEmailError(false);
+    setEmailErrorMessage("");
     onClose();
   }
 
+  function validateEmail() {
+    if (!newEmail.trim() || !/\S+@\S+\.\S+/.test(newEmail.trim())) {
+      setEmailError(true);
+      setEmailErrorMessage("Please enter a valid email address.");
+      return false;
+    } else {
+      setEmailError(false);
+      setEmailErrorMessage("");
+    }
+    return true;
+  }
+
   function handleConfirm() {
-    if (newEmail.trim() === "") {
-      console.log("New email cannot be empty.");
+    if (!validateEmail()) {
       return;
     }
 
@@ -72,6 +87,8 @@ export default function AddEmailModal({ updateUserData, isAccount, open, onClose
           New Email Address
         </Typography>
         <TextField
+          error={emailError}
+          helperText={emailErrorMessage}
           fullWidth
           placeholder="joesmith@example.com"
           value={newEmail}
