@@ -118,13 +118,16 @@ function History() {
 
   return (
     <Box
+      component="main"
+      role="main"
+      aria-labelledby="history-title"
       sx={{
         minHeight: "100vh",
         bgcolor: "background.default",
         px: 0,
       }}
     >
-      <Box sx={{ px: 2.5 }}>
+      <Box component="header" aria-label="page header" sx={{ px: 2.5 }}>
         {/* ── Title ── */}
         <Typography
           variant="h1" 
@@ -132,7 +135,7 @@ function History() {
           sx={{ 
             fontSize: "2rem",
             letterSpacing: "-0.02em",
-            mb: 2,
+            mb: 3,
             fontWeight: "bold",
             color: "#01579b",
             alignSelf: "center",
@@ -144,6 +147,8 @@ function History() {
 
         {/* ── Stats bar — stacks vertically on narrow, row on wider ── */}
         <Paper
+          role="region"
+          aria-label="history"
           elevation={0}
           sx={{
             display: "flex",
@@ -189,11 +194,10 @@ function History() {
               <Typography
                 variant="caption"
                 sx={{
-                  fontFamily: "monospace",
                   fontSize: "0.55rem",
                   letterSpacing: "0.1em",
                   textTransform: "uppercase",
-                  color: "rgba(255,255,255,0.55)",
+                  color: "white",
                 }}
               >
                 {stat.label}
@@ -205,16 +209,19 @@ function History() {
         <Divider sx={{ mb: 3 }} />
 
         {/* ── Device filter ── */}
-        <Box sx={{ mb: 4 }}>
+        <Box 
+          sx={{ mb: 4 }}
+          component="section"
+          role="region"
+          aria-label="device filter"
+        >
           <Typography
             variant="caption"
             sx={{
-              fontFamily: "monospace",
               fontSize: "0.68rem",
               letterSpacing: "0.11em",
               textTransform: "uppercase",
-              color: "text.primary",
-              opacity: 0.6,
+              color: "black",
               display: "block",
               mb: 1.5,
             }}
@@ -231,7 +238,12 @@ function History() {
 
       {/* ── Visit list — full bleed so cards touch the container edges ── */}
       {Object.keys(visits).length === 0 ? (
-        <Box sx={{ textAlign: "center", py: 8 }}>
+        <Box 
+          sx={{ textAlign: "center", py: 8 }}
+          component="section"
+          role="region"
+          aria-label="visit list"
+        >
           <Typography
             variant="caption"
             sx={{
@@ -252,7 +264,11 @@ function History() {
               (a, b) => b.startDateTime.getTime() - a.startDateTime.getTime(),
             );
             return (
-              <Box key={key} sx={{ mb: 3 }}>
+              <Box key={key} sx={{ mb: 3 }}
+                component="ul"
+                role="region"
+                aria-label="visit list entry"              
+              >
                 {/* Day header — padded to match content */}
                 <Stack
                   direction="row"
@@ -263,7 +279,6 @@ function History() {
                   <Typography
                     variant="caption"
                     sx={{
-                      fontFamily: "monospace",
                       fontSize: "0.65rem",
                       letterSpacing: "0.1em",
                       textTransform: "uppercase",
@@ -283,7 +298,6 @@ function History() {
                     sx={{
                       height: 18,
                       fontSize: "0.55rem",
-                      fontFamily: "monospace",
                       "& .MuiChip-label": { px: 0.75 },
                     }}
                   />
@@ -317,7 +331,6 @@ function History() {
                         <Typography
                           variant="caption"
                           sx={{
-                            fontFamily: "monospace",
                             fontSize: "0.65rem",
                             letterSpacing: "0.1em",
                             textTransform: "uppercase",
