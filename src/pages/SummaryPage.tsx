@@ -8,6 +8,12 @@ import {
   Divider,
   FormControlLabel,
   Paper,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
   ToggleButton,
   ToggleButtonGroup,
   Typography,
@@ -42,6 +48,28 @@ function Summary() {
   const [siteUrl, setSiteUrl] = useState("");
 
   const MS2HR = 1000 * 60 * 60;
+
+  // Color-blind friendly palette (Wong 2011)
+  const colorPalette = [
+    "#000000",
+    "#E69F00",
+    "#56B4E9",
+    "#009E73",
+    "#F0E442",
+    "#0072B2",
+    "#D55E00",
+    "#CC79A7",
+  ];
+
+  const formatTimeSpent = (milliseconds: number): string => {
+    const totalMinutes = Math.floor(milliseconds / (1000 * 60));
+    const hours = Math.floor(totalMinutes / 60);
+    const minutes = totalMinutes % 60;
+    if (hours === 0) {
+      return `${minutes} min${minutes !== 1 ? "s" : ""}`;
+    }
+    return `${hours} hr${hours !== 1 ? "s" : ""} ${minutes} min${minutes !== 1 ? "s" : ""}`;
+  };
 
   const closeModal = () => {
     setModalOpen(false);
@@ -413,6 +441,21 @@ function Summary() {
       categorySiteTotals,
     } = displayInfo;
 
+    const colorMap = useMemo(() => {
+      const allCats = new Set<string>();
+      Object.values(rawTimePerDayCategorySite).forEach((catMap) => {
+        Object.keys(catMap).forEach((cat) => allCats.add(cat));
+      });
+      const sortedCats = Array.from(allCats).sort();
+      const map: Record<string, string> = {};
+      sortedCats.forEach((cat, i) => {
+        map[cat] = colorPalette[i % colorPalette.length];
+      });
+      // Assign a fixed color to "Other" to keep it consistent
+      map["Other"] = "#999999";
+      return map;
+    }, [rawTimePerDayCategorySite]);
+
     function getAllSites(cat: string) {
       return cat === "Other"
         ? otherCategories.flatMap((otherCat) =>
@@ -543,6 +586,7 @@ function Summary() {
       setSiteFilters,
       displayCategories,
       displayCategorySites,
+      colorMap,
     };
   }
 
@@ -561,6 +605,7 @@ function Summary() {
     setSiteFilters,
     displayCategories,
     displayCategorySites,
+    colorMap,
   } = useData();
 
   function getStatsBar() {
@@ -581,10 +626,10 @@ function Summary() {
       >
         {[
           {
-            value: Object.values(timePerSite)
-              .reduce((sum, h) => sum + h / MS2HR, 0)
-              .toFixed(2),
-            label: "Hours",
+            value: formatTimeSpent(
+              Object.values(timePerSite).reduce((sum, ms) => sum + ms, 0),
+            ),
+            label: "Time Spent",
           },
           {
             value: selectedDevices.some((d) => d.id === "__all__")
@@ -741,71 +786,82 @@ function Summary() {
         <Typography variant="h2" sx={{ mb: 1, fontSize: "1.5rem" }}>
           Category Trends
         </Typography>
-        <Paper
+        <TableContainer
+          component={Paper}
           sx={{
-            px: 2,
-            py: 1.5,
             backgroundColor: "background.paper",
             borderRadius: 2,
           }}
         >
           {Object.entries(timePerCategoryCurr).length === 0 ? (
-            <Typography variant="caption" sx={{ color: "text.secondary" }}>
-              No category data available.
-            </Typography>
-          ) : (
-            <Box component="ul" sx={{ listStyle: "none", m: 0, p: 0 }}>
-              {Object.entries(timePerCategoryCurr)
-                .sort((a, b) => b[1] - a[1])
-                .map(([cat, time]) => {
-                  const prevTime = (timePerCategoryPrev[cat] || 0) / MS2HR;
-                  const currTime = time / MS2HR;
-                  const trend =
-                    currTime - prevTime < -0.1
-                      ? "decrease"
-                      : currTime - prevTime > 0.1
-                        ? "increase"
-                        : "same";
-                  const hours = currTime.toFixed(2);
-                  const prevHours = prevTime.toFixed(2);
-                  return (
-                    <Box
-                      component="li"
-                      key={cat}
-                      sx={{
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "space-between",
-                        fontSize: "0.9rem",
-                        py: 0.5,
-                      }}
-                    >
-                      <Typography sx={{ flex: 1 }}>{cat}</Typography>
-                      <Box
-                        sx={{
-                          display: "flex",
-                          alignItems: "center",
-                          width: 32,
-                          justifyContent: "right",
-                        }}
-                      >
-                        {trend === "increase" && <TrendingUp color="action" />}
-                        {trend === "decrease" && (
-                          <TrendingDown color="action" />
-                        )}
-                        {trend === "same" && <TrendingFlat color="action" />}
-                      </Box>
-                      <Typography
-                        sx={{ ml: 2, textAlign: "right", minWidth: 160 }}
-                      >
-                        {hours} hrs ({prevHours} hrs prev)
-                      </Typography>
-                    </Box>
-                  );
-                })}
+            <Box sx={{ p: 2 }}>
+              <Typography variant="caption" sx={{ color: "text.secondary" }}>
+                No category data available.
+              </Typography>
             </Box>
+          ) : (
+            <Table size="small">
+              <TableHead>
+                <TableRow sx={{ backgroundColor: "action.hover" }}>
+                  <TableCell sx={{ py: 1 }}>Category</TableCell>
+                  <TableCell align="center" sx={{ width: 60, py: 1 }}>
+                    Trend
+                  </TableCell>
+                  <TableCell align="right" sx={{ minWidth: 110, py: 1 }}>
+                    Time
+                  </TableCell>
+                  <TableCell align="right" sx={{ minWidth: 110, py: 1 }}>
+                    Previous
+                  </TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {Object.entries(timePerCategoryCurr)
+                  .sort((a, b) => b[1] - a[1])
+                  .map(([cat, time]) => {
+                    const prevTime = (timePerCategoryPrev[cat] || 0) / MS2HR;
+                    const currTime = time / MS2HR;
+                    const trend =
+                      currTime - prevTime < -0.1
+                        ? "decrease"
+                        : currTime - prevTime > 0.1
+                          ? "increase"
+                          : "same";
+                    const timeStr = formatTimeSpent(time);
+                    const prevTimeStr = formatTimeSpent(
+                      timePerCategoryPrev[cat] || 0,
+                    );
+                    return (
+                      <TableRow key={cat}>
+                        <TableCell sx={{ py: 0.75 }}>{cat}</TableCell>
+                        <TableCell align="center" sx={{ py: 0.75 }}>
+                          {trend === "increase" && (
+                            <TrendingUp color="action" />
+                          )}
+                          {trend === "decrease" && (
+                            <TrendingDown color="action" />
+                          )}
+                          {trend === "same" && <TrendingFlat color="action" />}
+                        </TableCell>
+                        <TableCell
+                          align="right"
+                          sx={{ minWidth: 110, py: 0.75 }}
+                        >
+                          {timeStr}
+                        </TableCell>
+                        <TableCell
+                          align="right"
+                          sx={{ minWidth: 110, py: 0.75 }}
+                        >
+                          {prevTimeStr}
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+              </TableBody>
+            </Table>
           )}
-        </Paper>
+        </TableContainer>
       </Box>
     );
   }
@@ -853,7 +909,7 @@ function Summary() {
                   >
                     {site}
                   </Button>
-                  <Box component="span">{(time / MS2HR).toFixed(2)} hrs</Box>
+                  <Box component="span">{formatTimeSpent(time)}</Box>
                 </Box>
               ))}
           </Box>
@@ -887,6 +943,7 @@ function Summary() {
                   dataKey: cat,
                   label: cat,
                   showMark: false,
+                  color: colorMap[cat],
                 }))
             : []
         }
