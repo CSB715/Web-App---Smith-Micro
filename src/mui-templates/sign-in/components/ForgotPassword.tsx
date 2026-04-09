@@ -6,6 +6,9 @@ import DialogContent from '@mui/material/DialogContent';
 import DialogContentText from '@mui/material/DialogContentText';
 import DialogTitle from '@mui/material/DialogTitle';
 import OutlinedInput from '@mui/material/OutlinedInput';
+import CircularProgress from '@mui/material/CircularProgress';
+import Alert from '@mui/material/Alert';
+import { getAuth, sendPasswordResetEmail } from 'firebase/auth';
 
 interface ForgotPasswordProps {
   open: boolean;
@@ -13,17 +16,43 @@ interface ForgotPasswordProps {
 }
 
 export default function ForgotPassword({ open, handleClose }: ForgotPasswordProps) {
+  const [loading, setLoading] = React.useState(false);
+  const [error, setError] = React.useState<string | null>(null);
+  const [success, setSuccess] = React.useState(false);
+
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const email = (event.currentTarget.elements.namedItem('email') as HTMLInputElement).value;
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      const auth = getAuth();
+      await sendPasswordResetEmail(auth, email);
+      setSuccess(true);
+    } catch (err: any) {
+      setError(err.message ?? 'Failed to send reset email. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDialogClose = () => {
+    setError(null);
+    setSuccess(false);
+    setLoading(false);
+    handleClose();
+  };
+
   return (
     <Dialog
       open={open}
-      onClose={handleClose}
+      onClose={handleDialogClose}
       slotProps={{
         paper: {
           component: 'form',
-          onSubmit: (event: React.FormEvent<HTMLFormElement>) => {
-            event.preventDefault();
-            handleClose();
-          },
+          onSubmit: handleSubmit,
           sx: { backgroundImage: 'none' },
         },
       }}
@@ -32,27 +61,39 @@ export default function ForgotPassword({ open, handleClose }: ForgotPasswordProp
       <DialogContent
         sx={{ display: 'flex', flexDirection: 'column', gap: 2, width: '100%' }}
       >
-        <DialogContentText>
-          Enter your account&apos;s email address, and we&apos;ll send you a link to
-          reset your password.
-        </DialogContentText>
-        <OutlinedInput
-          autoFocus
-          required
-          margin="dense"
-          id="email"
-          name="email"
-          label="Email address"
-          placeholder="Email address"
-          type="email"
-          fullWidth
-        />
+        {success ? (
+          <Alert severity="success">
+            Password reset email sent! Check your inbox.
+          </Alert>
+        ) : (
+          <>
+            <DialogContentText>
+              Enter your account&apos;s email address, and we&apos;ll send you a link to
+              reset your password.
+            </DialogContentText>
+            {error && <Alert severity="error">{error}</Alert>}
+            <OutlinedInput
+              autoFocus
+              required
+              margin="dense"
+              id="email"
+              name="email"
+              label="Email address"
+              placeholder="Email address"
+              type="email"
+              fullWidth
+              disabled={loading}
+            />
+          </>
+        )}
       </DialogContent>
       <DialogActions sx={{ pb: 3, px: 3 }}>
-        <Button onClick={handleClose}>Cancel</Button>
-        <Button variant="contained" type="submit">
-          Continue
-        </Button>
+        <Button onClick={handleDialogClose} disabled={loading}>{success ? 'Close' : 'Cancel'}</Button>
+        {!success && (
+          <Button variant="contained" type="submit" disabled={loading}>
+            {loading ? <CircularProgress size={20} color="inherit" /> : 'Continue'}
+          </Button>
+        )}
       </DialogActions>
     </Dialog>
   );
