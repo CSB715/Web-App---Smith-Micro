@@ -50,7 +50,6 @@ interface SearchResult {
 }
 
 function AdminDashboard() {
-  const hasMounted = useRef(false);
   const navigate = useNavigate();
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
