@@ -1,7 +1,6 @@
 import { BottomNavigation, BottomNavigationAction } from "@mui/material";
 import { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router";
-import "../styles/NavBar.css";
 
 export default function NavBar() {
   const navigate = useNavigate();

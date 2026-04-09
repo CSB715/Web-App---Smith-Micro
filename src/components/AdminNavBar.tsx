@@ -1,7 +1,6 @@
 import { BottomNavigation, BottomNavigationAction } from "@mui/material";
 import { useEffect, useState } from "react";
 import { useNavigate, useLocation, useSearchParams } from "react-router";
-import "../styles/NavBar.css";
 
 export default function AdminNavBar() {
   const navigate = useNavigate();

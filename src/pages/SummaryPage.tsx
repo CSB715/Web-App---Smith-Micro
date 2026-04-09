@@ -22,6 +22,7 @@ import {
   getAuthInstance,
   GetCategorization,
   GetDevices,
+  GetOverride,
   GetVisits,
 } from "../utils/firestore";
 import { useNavigate } from "react-router";
@@ -31,6 +32,7 @@ import { type Device } from "../utils/models";
 import DeviceSelect from "../components/DeviceSelect";
 import { LineChart } from "@mui/x-charts";
 import SiteModal from "../components/SiteModal";
+import { type DocumentData } from "firebase/firestore";
 
 function Summary() {
   const navigate = useNavigate();
@@ -39,7 +41,11 @@ function Summary() {
   const [modalOpen, setModalOpen] = useState(false);
   const [siteUrl, setSiteUrl] = useState("");
 
-  const closeModal = () => {setModalOpen(false);}
+  const MS2HR = 1000 * 60 * 60;
+
+  const closeModal = () => {
+    setModalOpen(false);
+  };
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(getAuthInstance(), (user) => {
@@ -77,16 +83,20 @@ function Summary() {
       const categoryTotals: Record<string, number> = {};
       const categorySiteTotals: Record<string, Record<string, number>> = {};
 
-      Object.values(rawTimePerDayCategorySite).forEach((catMap) => {
-        Object.entries(catMap).forEach(([cat, siteMap]) => {
-          Object.entries(siteMap).forEach(([site, ms]) => {
-            categoryTotals[cat] = (categoryTotals[cat] || 0) + ms;
-            categorySiteTotals[cat] = categorySiteTotals[cat] || {};
-            categorySiteTotals[cat][site] =
-              (categorySiteTotals[cat][site] || 0) + ms;
+      function getCategorySiteTotals() {
+        Object.values(rawTimePerDayCategorySite).forEach((catMap) => {
+          Object.entries(catMap).forEach(([cat, siteMap]) => {
+            Object.entries(siteMap).forEach(([site, ms]) => {
+              categoryTotals[cat] = (categoryTotals[cat] || 0) + ms;
+              categorySiteTotals[cat] = categorySiteTotals[cat] || {};
+              categorySiteTotals[cat][site] =
+                (categorySiteTotals[cat][site] || 0) + ms;
+            });
           });
         });
-      });
+      }
+
+      getCategorySiteTotals();
 
       const sortedCategories = Object.entries(categoryTotals)
         .sort((a, b) => b[1] - a[1])
@@ -107,22 +117,27 @@ function Summary() {
 
       const displayCategorySites: Record<string, string[]> = {};
 
-      displayCategories.forEach((cat) => {
-        if (cat === "Other") {
-          const otherSiteTotals: Record<string, number> = {};
-          otherCategories.forEach((otherCat) => {
-            const sites = categorySiteTotals[otherCat] || {};
-            Object.entries(sites).forEach(([site, ms]) => {
-              otherSiteTotals[site] = (otherSiteTotals[site] || 0) + ms;
+      function getDisplayCategorySites() {
+        displayCategories.forEach((cat) => {
+          if (cat === "Other") {
+            const otherSiteTotals: Record<string, number> = {};
+            otherCategories.forEach((otherCat) => {
+              const sites = categorySiteTotals[otherCat] || {};
+              Object.entries(sites).forEach(([site, ms]) => {
+                otherSiteTotals[site] = (otherSiteTotals[site] || 0) + ms;
+              });
             });
-          });
-          displayCategorySites[cat] = computeSitesForCategory(otherSiteTotals);
-        } else {
-          displayCategorySites[cat] = computeSitesForCategory(
-            categorySiteTotals[cat] || {},
-          );
-        }
-      });
+            displayCategorySites[cat] =
+              computeSitesForCategory(otherSiteTotals);
+          } else {
+            displayCategorySites[cat] = computeSitesForCategory(
+              categorySiteTotals[cat] || {},
+            );
+          }
+        });
+      }
+
+      getDisplayCategorySites();
 
       return {
         displayCategories,
@@ -136,11 +151,17 @@ function Summary() {
       if (!userId) return;
 
       async function load() {
-        const devicesData = await GetDevices(userId);
-        const normalizedDevices: Device[] = devicesData.map((d) => ({
-          id: d.id,
-          name: d.data.name,
-        }));
+        let normalizedDevices: Device[] = [];
+        try {
+          const devicesData = await GetDevices(userId);
+          normalizedDevices = devicesData.map((d) => ({
+            id: d.id,
+            name: d.data.name,
+          }));
+        } catch {
+          console.error("Unable to load devices");
+        }
+
         setDevices(normalizedDevices);
         setSelectedDevices(normalizedDevices);
       }
@@ -148,22 +169,96 @@ function Summary() {
       load();
     }, [userId]);
 
+    async function getVisitsData() {
+      return await Promise.all(
+        selectedDevices
+          .filter((d) => d.id !== "__all__")
+          .map((d) => {
+            try {
+              return GetVisits(userId, d.id);
+            } catch {
+              return null;
+            }
+          })
+          .filter((d) => d != null),
+      );
+    }
+
+    function normalizeVisits(
+      visitsData: {
+        id: string;
+        data: DocumentData;
+      }[][],
+    ) {
+      return visitsData.flat().map((v) => ({
+        id: v.id,
+        siteUrl: getDisplayUrl(v.data.siteUrl).replace(/^www\./, ""), // remove www. for better display
+        startDateTime: new Date(v.data.startDateTime),
+        endDateTime: new Date(v.data.endDateTime),
+      }));
+    }
+
+    async function getCategorizationData(visit: Visit) {
+      try {
+        const override = await GetOverride(userId, visit.siteUrl); // ensure override is loaded for this site (for accurate categorization)
+        if (override && override.data.category.length > 0) {
+          return {
+            id: visit.siteUrl,
+            data: {
+              category: override.data.category,
+              is_flagged: override.data.is_flagged,
+            },
+          };
+        } else {
+          return await GetCategorization(visit.siteUrl);
+        }
+      } catch {
+        console.error("Unable to load categorization");
+        return null;
+      }
+    }
+
+    function normalizeCategorization(
+      categorizationData: {
+        id: string;
+        data: DocumentData;
+      } | null,
+      visit: Visit,
+    ): Categorization {
+      if (categorizationData) {
+        return {
+          siteUrl: categorizationData.id,
+          category: categorizationData.data.category,
+          is_flagged: categorizationData.data.is_flagged,
+        };
+      } else {
+        return {
+          siteUrl: visit.siteUrl,
+          category: ["Unknown"],
+          is_flagged: false,
+        };
+      }
+    }
+
+    function getOrderedDateKeys() {
+      // Calculate ordered dates from (timeFrame - 1) days ago through today
+      const today = new Date();
+      const orderedDateKeys: string[] = [];
+      for (let daysAgo = timeFrame - 1; daysAgo >= 0; daysAgo--) {
+        const d = new Date(today);
+        d.setDate(d.getDate() - daysAgo);
+        orderedDateKeys.push(d.toISOString().slice(0, 10));
+      }
+      return orderedDateKeys;
+    }
+
     useEffect(() => {
       if (!userId) return;
 
       async function load() {
-        const visitsData = await Promise.all(
-          selectedDevices
-            .filter((d) => d.id !== "__all__")
-            .map((d) => GetVisits(userId, d.id)),
-        );
+        const visitsData = await getVisitsData();
 
-        const normalizedVisits: Visit[] = visitsData.flat().map((v) => ({
-          id: v.id,
-          siteUrl: getDisplayUrl(v.data.siteUrl).replace(/^www\./, ""), // remove www. for better display
-          startDateTime: new Date(v.data.startDateTime),
-          endDateTime: new Date(v.data.endDateTime),
-        }));
+        const normalizedVisits: Visit[] = normalizeVisits(visitsData);
 
         const timePerCategoryCurr: Record<string, number> = {};
         const timePerCategoryPrev: Record<string, number> = {};
@@ -181,62 +276,98 @@ function Summary() {
         const yesterday = new Date();
         yesterday.setDate(yesterday.getDate() - 1);
 
+        function updateTimePerDayCategorySite(
+          dayKey: string,
+          cat: string,
+          visit: Visit,
+          timeSpent: number,
+        ) {
+          // raw per-day / per-category / per-site breakdown (for filtering)
+          timePerDayCategorySite[dayKey] = timePerDayCategorySite[dayKey] || {};
+          timePerDayCategorySite[dayKey][cat] =
+            timePerDayCategorySite[dayKey][cat] || {};
+          timePerDayCategorySite[dayKey][cat][visit.siteUrl] =
+            (timePerDayCategorySite[dayKey][cat][visit.siteUrl] || 0) +
+            timeSpent;
+        }
+
+        function updateTimePerCategoryCurr(
+          normalizedCategorization: Categorization,
+          timeSpent: number,
+          visit: Visit,
+        ) {
+          normalizedCategorization.category.forEach((cat) => {
+            timePerCategoryCurr[cat] =
+              (timePerCategoryCurr[cat] || 0) + timeSpent;
+            const dayKey = visit.startDateTime.toISOString().slice(0, 10); // YYYY-MM-DD
+
+            updateTimePerDayCategorySite(dayKey, cat, visit, timeSpent);
+
+            // track available sites per category
+            categorySites[cat] = categorySites[cat] || new Set();
+            categorySites[cat].add(visit.siteUrl);
+          });
+        }
+
+        function addSite(visit: Visit) {
+          if (visit.startDateTime >= yesterday) {
+            sitesVisitedCurr.add(visit.siteUrl);
+          } else {
+            sitesVisitedPrev.add(visit.siteUrl);
+          }
+        }
+
+        function updateTimePerCategoryPrev(
+          normalizedCategorization: Categorization,
+          timeSpent: number,
+        ) {
+          normalizedCategorization.category.forEach((cat) => {
+            timePerCategoryPrev[cat] =
+              (timePerCategoryPrev[cat] || 0) + timeSpent;
+          });
+        }
+
+        function parseVisit(
+          visit: Visit,
+          normalizedCategorization: Categorization,
+          timeSpent: number,
+        ) {
+          if (visit.startDateTime >= cutoffDate) {
+            updateTimePerCategoryCurr(
+              normalizedCategorization,
+              timeSpent,
+              visit,
+            );
+            addSite(visit);
+            timePerSite[visit.siteUrl] =
+              (timePerSite[visit.siteUrl] || 0) + timeSpent;
+          } else {
+            updateTimePerCategoryPrev(normalizedCategorization, timeSpent);
+            sitesVisitedPrev.add(visit.siteUrl);
+          }
+        }
+
+        function normalizeCategorySites() {
+          return Object.fromEntries(
+            Object.entries(categorySites).map(([cat, sites]) => [
+              cat,
+              Array.from(sites).sort(),
+            ]),
+          );
+        }
+
         await Promise.all(
           normalizedVisits.map(async (visit) => {
             const timeSpent =
               visit.endDateTime.getTime() - visit.startDateTime.getTime();
 
-            const categorizationData = await GetCategorization(visit.siteUrl);
+            const categorizationData = await getCategorizationData(visit);
+            const normalizedCategorization = normalizeCategorization(
+              categorizationData,
+              visit,
+            );
 
-            let normalizedCategorization: Categorization;
-
-            if (categorizationData) {
-              normalizedCategorization = {
-                siteUrl: categorizationData.id,
-                category: categorizationData.data.category,
-                is_flagged: categorizationData.data.is_flagged,
-              };
-            } else {
-              normalizedCategorization = {
-                siteUrl: visit.siteUrl,
-                category: ["Unknown"],
-                is_flagged: false,
-              };
-            }
-
-            if (visit.startDateTime >= cutoffDate) {
-              normalizedCategorization.category.forEach((cat) => {
-                timePerCategoryCurr[cat] =
-                  (timePerCategoryCurr[cat] || 0) + timeSpent;
-                const dayKey = visit.startDateTime.toISOString().slice(0, 10); // YYYY-MM-DD
-
-                // raw per-day / per-category / per-site breakdown (for filtering)
-                timePerDayCategorySite[dayKey] =
-                  timePerDayCategorySite[dayKey] || {};
-                timePerDayCategorySite[dayKey][cat] =
-                  timePerDayCategorySite[dayKey][cat] || {};
-                timePerDayCategorySite[dayKey][cat][visit.siteUrl] =
-                  (timePerDayCategorySite[dayKey][cat][visit.siteUrl] || 0) +
-                  timeSpent;
-
-                // track available sites per category
-                categorySites[cat] = categorySites[cat] || new Set();
-                categorySites[cat].add(visit.siteUrl);
-              });
-              if (visit.startDateTime >= yesterday) {
-                sitesVisitedCurr.add(visit.siteUrl);
-              } else {
-                sitesVisitedPrev.add(visit.siteUrl);
-              }
-              timePerSite[visit.siteUrl] =
-                (timePerSite[visit.siteUrl] || 0) + timeSpent;
-            } else {
-              normalizedCategorization.category.forEach((cat) => {
-                timePerCategoryPrev[cat] =
-                  (timePerCategoryPrev[cat] || 0) + timeSpent;
-              });
-              sitesVisitedPrev.add(visit.siteUrl);
-            }
+            parseVisit(visit, normalizedCategorization, timeSpent);
           }),
         );
         const newSites = new Set<string>(
@@ -250,12 +381,7 @@ function Summary() {
         setTimePerSite(timePerSite);
         setNewSites(newSites);
         setRawTimePerDayCategorySite(timePerDayCategorySite);
-        const normalizedCategorySites = Object.fromEntries(
-          Object.entries(categorySites).map(([cat, sites]) => [
-            cat,
-            Array.from(sites).sort(),
-          ]),
-        );
+        const normalizedCategorySites = normalizeCategorySites();
 
         // Prepare the initial filter state for all categories + sites.
         setCategoryFilters((prev) => {
@@ -287,6 +413,81 @@ function Summary() {
       categorySiteTotals,
     } = displayInfo;
 
+    function getAllSites(cat: string) {
+      return cat === "Other"
+        ? otherCategories.flatMap((otherCat) =>
+            Object.keys(categorySiteTotals[otherCat] || {}),
+          )
+        : Object.keys(categorySiteTotals[cat] || {});
+    }
+
+    function calculateOtherTimeSpent(
+      cat: string,
+      dateKey: string,
+      otherSite: string,
+    ) {
+      return cat === "Other"
+        ? otherCategories.reduce(
+            (acc, otherCat) =>
+              acc +
+              (rawTimePerDayCategorySite[dateKey]?.[otherCat]?.[otherSite] ||
+                0),
+            0,
+          )
+        : rawTimePerDayCategorySite[dateKey]?.[cat]?.[otherSite] || 0;
+    }
+
+    function calculateTimeSpent(cat: string, dateKey: string, site: string) {
+      return cat === "Other"
+        ? otherCategories.reduce(
+            (acc, otherCat) =>
+              acc +
+              (rawTimePerDayCategorySite[dateKey]?.[otherCat]?.[site] || 0),
+            0,
+          )
+        : rawTimePerDayCategorySite[dateKey]?.[cat]?.[site] || 0;
+    }
+
+    function calculateTotalTime(
+      sites: string[],
+      cat: string,
+      topSites: string[],
+      dateKey: string,
+    ) {
+      let sum = 0;
+
+      sites.forEach((site) => {
+        const key = `${cat}||${site}`;
+        if (!siteFilters[key]) return;
+
+        if (site === "Other") {
+          const allSites = getAllSites(cat);
+
+          const otherSites = allSites.filter((s) => !topSites.includes(s));
+          otherSites.forEach((otherSite) => {
+            sum += calculateOtherTimeSpent(cat, dateKey, otherSite);
+          });
+        } else {
+          sum += calculateTimeSpent(cat, dateKey, site);
+        }
+      });
+      return sum;
+    }
+
+    function updateDisplayCategories(dateKey: string) {
+      const obj: Record<string, any> = { day: dateKey };
+      displayCategories.forEach((cat) => {
+        if (!categoryFilters[cat]) return;
+
+        const sites = displayCategorySites[cat] || [];
+        const topSites = sites.filter((s) => s !== "Other");
+        const sum = calculateTotalTime(sites, cat, topSites, dateKey);
+
+        obj[cat] = sum / MS2HR;
+      });
+      return obj;
+    }
+
     useEffect(() => {
       // Initialize filter state when the set of displayed categories/sites changes
       setCategoryFilters((prev) => {
@@ -310,73 +511,10 @@ function Summary() {
     }, [displayCategories, displayCategorySites]);
 
     useEffect(() => {
-      // Calculate ordered dates from (timeFrame - 1) days ago through today
-      const today = new Date();
-      const orderedDateKeys: string[] = [];
-      for (let daysAgo = timeFrame - 1; daysAgo >= 0; daysAgo--) {
-        const d = new Date(today);
-        d.setDate(d.getDate() - daysAgo);
-        orderedDateKeys.push(d.toISOString().slice(0, 10));
-      }
+      const orderedDateKeys = getOrderedDateKeys();
 
       const computedChartData = orderedDateKeys.map((dateKey) => {
-        const obj: Record<string, any> = { day: dateKey };
-
-        displayCategories.forEach((cat) => {
-          if (!categoryFilters[cat]) return;
-
-          const sites = displayCategorySites[cat] || [];
-          const topSites = sites.filter((s) => s !== "Other");
-          let sum = 0;
-
-          sites.forEach((site) => {
-            const key = `${cat}||${site}`;
-            if (!siteFilters[key]) return;
-
-            if (site === "Other") {
-              const allSites =
-                cat === "Other"
-                  ? otherCategories.flatMap((otherCat) =>
-                      Object.keys(categorySiteTotals[otherCat] || {}),
-                    )
-                  : Object.keys(categorySiteTotals[cat] || {});
-
-              const otherSites = allSites.filter((s) => !topSites.includes(s));
-              otherSites.forEach((otherSite) => {
-                const ms =
-                  cat === "Other"
-                    ? otherCategories.reduce(
-                        (acc, otherCat) =>
-                          acc +
-                          (rawTimePerDayCategorySite[dateKey]?.[otherCat]?.[
-                            otherSite
-                          ] || 0),
-                        0,
-                      )
-                    : rawTimePerDayCategorySite[dateKey]?.[cat]?.[otherSite] ||
-                      0;
-                sum += ms;
-              });
-            } else {
-              const ms =
-                cat === "Other"
-                  ? otherCategories.reduce(
-                      (acc, otherCat) =>
-                        acc +
-                        (rawTimePerDayCategorySite[dateKey]?.[otherCat]?.[
-                          site
-                        ] || 0),
-                      0,
-                    )
-                  : rawTimePerDayCategorySite[dateKey]?.[cat]?.[site] || 0;
-              sum += ms;
-            }
-          });
-
-          obj[cat] = sum / (1000 * 60 * 60);
-        });
-
-        return obj;
+        return updateDisplayCategories(dateKey);
       });
 
       setChartData(computedChartData);
@@ -425,37 +563,8 @@ function Summary() {
     displayCategorySites,
   } = useData();
 
-  return (
-    <Box
-      component="main"
-      role="main"
-      aria-labelledby="summary-title"
-      sx={{
-        minHeight: "100vh",
-        bgcolor: "background.default",
-        px: 2.5,
-      }}
-    >
-      {/* Page header */}
-      <Box component="header" aria-label="page header">
-        {/* ── Title ── */}
-        <Typography
-          variant="h1"
-          sx={{
-            fontWeight: "bold",
-            letterSpacing: "-0.02em",
-            mb: 3,
-            color: "#01579b",
-            alignSelf: "center",
-            textAlign: "center",
-            fontSize: "2rem",
-          }}
-        >
-          Summary
-        </Typography>
-      </Box>
-
-      {/* ── Stats bar ── */}
+  function getStatsBar() {
+    return (
       <Paper
         role="region"
         aria-label="summary statistics"
@@ -473,7 +582,7 @@ function Summary() {
         {[
           {
             value: Object.values(timePerSite)
-              .reduce((sum, h) => sum + h / (1000 * 60 * 60), 0)
+              .reduce((sum, h) => sum + h / MS2HR, 0)
               .toFixed(2),
             label: "Hours",
           },
@@ -519,10 +628,11 @@ function Summary() {
           </Box>
         ))}
       </Paper>
+    );
+  }
 
-      <Divider sx={{ mb: 3 }} />
-
-      {/* ── Device filter ── */}
+  function getDeviceFilter() {
+    return (
       <Box
         sx={{ mb: 4 }}
         component="section"
@@ -548,8 +658,11 @@ function Summary() {
           setSelectedDevices={setSelectedDevices}
         />
       </Box>
+    );
+  }
 
-      {/* ── What's New ── */}
+  function getWhatsNew() {
+    return (
       <Box
         sx={{ mb: 3 }}
         component="section"
@@ -574,12 +687,13 @@ function Summary() {
           ) : (
             <Box component="ul" sx={{ listStyle: "none", m: 0, p: 0 }}>
               {Array.from(newSites).map((site) => (
-                <Box
-                  component="li"
-                  key={site}
-                  sx={{ fontSize: "0.9rem" }}
-                >
-                  <Button onClick={() => {setSiteUrl(site); setModalOpen(true);}}>
+                <Box component="li" key={site} sx={{ fontSize: "0.9rem" }}>
+                  <Button
+                    onClick={() => {
+                      setSiteUrl(site);
+                      setModalOpen(true);
+                    }}
+                  >
                     {site}
                   </Button>
                 </Box>
@@ -588,8 +702,11 @@ function Summary() {
           )}
         </Paper>
       </Box>
+    );
+  }
 
-      {/* ── Timeframe ── */}
+  function getTimeFrame() {
+    return (
       <Box
         sx={{ mb: 3 }}
         component="section"
@@ -610,8 +727,11 @@ function Summary() {
           <ToggleButton value={90}>90 Days</ToggleButton>
         </ToggleButtonGroup>
       </Box>
+    );
+  }
 
-      {/* ── Category Trends ── */}
+  function getCategoryTrends() {
+    return (
       <Box
         sx={{ mb: 3 }}
         component="section"
@@ -638,9 +758,8 @@ function Summary() {
               {Object.entries(timePerCategoryCurr)
                 .sort((a, b) => b[1] - a[1])
                 .map(([cat, time]) => {
-                  const prevTime =
-                    (timePerCategoryPrev[cat] || 0) / (1000 * 60 * 60);
-                  const currTime = time / (1000 * 60 * 60);
+                  const prevTime = (timePerCategoryPrev[cat] || 0) / MS2HR;
+                  const currTime = time / MS2HR;
                   const trend =
                     currTime - prevTime < -0.1
                       ? "decrease"
@@ -688,8 +807,11 @@ function Summary() {
           )}
         </Paper>
       </Box>
+    );
+  }
 
-      {/* ── Top Sites ── */}
+  function getTopSites() {
+    return (
       <Box
         sx={{ mb: 3 }}
         component="section"
@@ -723,19 +845,123 @@ function Summary() {
                     py: 0.5,
                   }}
                 >
-                  <Button onClick={() => {setSiteUrl(site); setModalOpen(true);}}>
+                  <Button
+                    onClick={() => {
+                      setSiteUrl(site);
+                      setModalOpen(true);
+                    }}
+                  >
                     {site}
                   </Button>
-                  <Box component="span" sx={{ opacity: 0.7 }}>
-                    {(time / (1000 * 60 * 60)).toFixed(2)} hrs
-                  </Box>
+                  <Box component="span">{(time / MS2HR).toFixed(2)} hrs</Box>
                 </Box>
               ))}
           </Box>
         </Paper>
       </Box>
+    );
+  }
 
-      {/* ── Hours Spent ── */}
+  function getGraph() {
+    return (
+      <LineChart
+        dataset={chartData}
+        xAxis={[
+          {
+            scaleType: "band",
+            dataKey: "day",
+            valueFormatter: (value) => {
+              try {
+                return new Date(value).toLocaleDateString();
+              } catch {
+                return String(value);
+              }
+            },
+          },
+        ]}
+        series={
+          chartData.length > 0
+            ? Object.keys(chartData[0])
+                .filter((k) => k !== "day" && (categoryFilters[k] ?? true))
+                .map((cat) => ({
+                  dataKey: cat,
+                  label: cat,
+                  showMark: false,
+                }))
+            : []
+        }
+        height={275}
+        yAxis={[{ label: "Hours Spent" }]}
+      />
+    );
+  }
+
+  function getFilters() {
+    return displayCategories.map((cat) => {
+      const sites = displayCategorySites[cat] || [];
+      return (
+        <Accordion key={cat} disableGutters>
+          <AccordionSummary
+            expandIcon={<ExpandMoreIcon />}
+            aria-controls={`${cat}-content`}
+            id={`${cat}-header`}
+          >
+            <FormControlLabel
+              control={
+                <Checkbox
+                  checked={categoryFilters[cat] ?? true}
+                  onChange={() =>
+                    setCategoryFilters((prev) => ({
+                      ...prev,
+                      [cat]: !prev[cat],
+                    }))
+                  }
+                  onClick={(e) => e.stopPropagation()}
+                />
+              }
+              label={cat}
+              sx={{ width: "100%" }}
+            />
+          </AccordionSummary>
+          <AccordionDetails>
+            <Box
+              sx={{
+                display: "flex",
+                flexDirection: "column",
+                gap: 1,
+                marginLeft: 2,
+              }}
+            >
+              {sites.map((site) => {
+                const key = `${cat}||${site}`;
+                return (
+                  <FormControlLabel
+                    key={key}
+                    control={
+                      <Checkbox
+                        checked={siteFilters[key] ?? true}
+                        disabled={!categoryFilters[cat]}
+                        onChange={() =>
+                          setSiteFilters((prev) => ({
+                            ...prev,
+                            [key]: !prev[key],
+                          }))
+                        }
+                      />
+                    }
+                    label={site}
+                  />
+                );
+              })}
+            </Box>
+          </AccordionDetails>
+        </Accordion>
+      );
+    });
+  }
+
+  function getHoursSpent() {
+    return (
       <Box
         sx={{ mb: 3 }}
         component="section"
@@ -752,107 +978,61 @@ function Summary() {
             backgroundColor: "background.paper",
           }}
         >
-          {/* ── Graph ── */}
-          <LineChart
-            dataset={chartData}
-            xAxis={[
-              {
-                scaleType: "band",
-                dataKey: "day",
-                valueFormatter: (value) => {
-                  try {
-                    return new Date(value).toLocaleDateString();
-                  } catch {
-                    return String(value);
-                  }
-                },
-              },
-            ]}
-            series={
-              chartData.length > 0
-                ? Object.keys(chartData[0])
-                    .filter((k) => k !== "day" && (categoryFilters[k] ?? true))
-                    .map((cat) => ({
-                      dataKey: cat,
-                      label: cat,
-                      showMark: false,
-                    }))
-                : []
-            }
-            height={275}
-            yAxis={[{ label: "Hours Spent" }]}
-          />
+          {getGraph()}
 
-          {/* ── Filters ── */}
-          {displayCategories.map((cat) => {
-            const sites = displayCategorySites[cat] || [];
-            return (
-              <Accordion key={cat} disableGutters>
-                <AccordionSummary
-                  expandIcon={<ExpandMoreIcon />}
-                  aria-controls={`${cat}-content`}
-                  id={`${cat}-header`}
-                >
-                  <FormControlLabel
-                    control={
-                      <Checkbox
-                        checked={categoryFilters[cat] ?? true}
-                        onChange={() =>
-                          setCategoryFilters((prev) => ({
-                            ...prev,
-                            [cat]: !prev[cat],
-                          }))
-                        }
-                        onClick={(e) => e.stopPropagation()}
-                      />
-                    }
-                    label={cat}
-                    sx={{ width: "100%" }}
-                  />
-                </AccordionSummary>
-                <AccordionDetails>
-                  <Box
-                    sx={{
-                      display: "flex",
-                      flexDirection: "column",
-                      gap: 1,
-                      marginLeft: 2,
-                    }}
-                  >
-                    {sites.map((site) => {
-                      const key = `${cat}||${site}`;
-                      return (
-                        <FormControlLabel
-                          key={key}
-                          control={
-                            <Checkbox
-                              checked={siteFilters[key] ?? true}
-                              disabled={!categoryFilters[cat]}
-                              onChange={() =>
-                                setSiteFilters((prev) => ({
-                                  ...prev,
-                                  [key]: !prev[key],
-                                }))
-                              }
-                            />
-                          }
-                          label={site}
-                        />
-                      );
-                    })}
-                  </Box>
-                </AccordionDetails>
-              </Accordion>
-            );
-          })}
+          {getFilters()}
         </Paper>
       </Box>
+    );
+  }
 
-      <SiteModal
-        url={siteUrl}
-        isOpen={modalOpen}
-        closeModal={closeModal}
-      />
+  return (
+    <Box
+      component="main"
+      role="main"
+      aria-labelledby="summary-title"
+      sx={{
+        minHeight: "100vh",
+        bgcolor: "background.default",
+        px: 2.5,
+      }}
+    >
+      {/* Page header */}
+      <Box component="header" aria-label="page header">
+        {/* ── Title ── */}
+        <Typography
+          variant="h1"
+          sx={{
+            fontWeight: "bold",
+            letterSpacing: "-0.02em",
+            mb: 3,
+            color: "#01579b",
+            alignSelf: "center",
+            textAlign: "center",
+            fontSize: "2rem",
+          }}
+        >
+          Summary
+        </Typography>
+      </Box>
+
+      {getStatsBar()}
+
+      <Divider sx={{ mb: 3 }} />
+
+      {getDeviceFilter()}
+
+      {getWhatsNew()}
+
+      {getTimeFrame()}
+
+      {getCategoryTrends()}
+
+      {getTopSites()}
+
+      {getHoursSpent()}
+
+      <SiteModal url={siteUrl} isOpen={modalOpen} closeModal={closeModal} />
     </Box>
   );
 }

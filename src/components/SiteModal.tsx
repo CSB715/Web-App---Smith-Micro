@@ -1,4 +1,12 @@
-import { Autocomplete, Modal, Button, Box, TextField, Typography, Link } from "@mui/material";
+import {
+  Autocomplete,
+  Modal,
+  Button,
+  Box,
+  TextField,
+  Typography,
+  Link,
+} from "@mui/material";
 import { useState, useEffect } from "react";
 import {
   GetCategorization,
@@ -18,7 +26,6 @@ import { classifyURL } from "../utils/classifier";
 import { getAuthInstance } from "../utils/firestore";
 import { onAuthStateChanged } from "firebase/auth";
 import { useNavigate } from "react-router";
-
 
 const style = {
   position: "absolute",
@@ -41,7 +48,6 @@ export default function SiteModal({
   isOpen: boolean;
   closeModal: () => void;
 }) {
-
   const navigate = useNavigate();
   const [userId, setUserId] = useState<string>("");
 
@@ -172,17 +178,27 @@ export default function SiteModal({
             padding: 2,
           }}
         >
-          <Typography variant="h2" id="modal-modal-title" sx={{ fontSize: "1.5rem", fontWeight: "bold" }}>
+          <Typography
+            variant="h2"
+            id="modal-modal-title"
+            sx={{ fontSize: "1.5rem", fontWeight: "bold" }}
+          >
             {url}
           </Typography>
           <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
             <Button onClick={() => closeModal()}>X</Button>
-            <Link href={url} target="_blank" rel="noopener noreferrer">
+            <Link
+              href={`https://${url}`}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
               visit site
             </Link>
           </Box>
         </Box>
-        <Typography variant="h3" sx={{ fontSize: "1rem", fontWeight: "bold" }}>System Classification:</Typography>
+        <Typography variant="h3" sx={{ fontSize: "1rem", fontWeight: "bold" }}>
+          System Classification:
+        </Typography>
         <Autocomplete
           multiple
           disabled
@@ -191,7 +207,9 @@ export default function SiteModal({
           renderInput={(params) => <TextField {...params} />}
         />
         <br />
-        <Typography variant="h3" sx={{ fontSize: "1rem", fontWeight: "bold" }}>My Categories:</Typography>
+        <Typography variant="h3" sx={{ fontSize: "1rem", fontWeight: "bold" }}>
+          My Categories:
+        </Typography>
         <Autocomplete
           multiple
           value={override.category}
@@ -202,7 +220,9 @@ export default function SiteModal({
           renderInput={(params) => <TextField {...params} />}
         />
         <br />
-        <Typography variant="h3" sx={{ fontSize: "1rem", fontWeight: "bold" }}>Flagged For Devices:</Typography>
+        <Typography variant="h3" sx={{ fontSize: "1rem", fontWeight: "bold" }}>
+          Flagged For Devices:
+        </Typography>
         <DeviceSelect
           devices={devices}
           selectedDevices={selectedDevices}
