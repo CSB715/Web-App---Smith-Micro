@@ -62,6 +62,7 @@ function FlaggedSites() {
   const [newModalOpen, setNewModalOpen] = useState(false);
   const [siteUrl, setSiteUrl] = useState("");
   const fetchedData = useRef(false);
+  const [uid, setUID] = useState<string>("");
 
   const closeSiteModal = () => {setSiteModalOpen(false);}
   const closeNewModal = () => {setNewModalOpen(false);}
@@ -70,6 +71,7 @@ function FlaggedSites() {
     fetchedData.current = false;
     onAuthStateChanged(getAuthInstance(), (user) => {
       if (user) {
+        setUID(user.uid);
         useSites(user.uid, setFlaggedSites);
         fetchedData.current = true;
       } else {
@@ -78,7 +80,9 @@ function FlaggedSites() {
     });
   }, [navigate]);
 
-
+  function reloadData() {
+    useSites(uid, setFlaggedSites);
+  }
 
   return (
     <Box
@@ -151,7 +155,7 @@ function FlaggedSites() {
       </List>
       <Button variant="contained" color="primary" onClick={() => setNewModalOpen(true)}>Add Site</Button>
 
-      <AddFlaggedSiteModal isOpen={newModalOpen} closeModal={closeNewModal} />
+      <AddFlaggedSiteModal isOpen={newModalOpen} closeModal={closeNewModal} reloadData={reloadData}/>
       <SiteModal url={siteUrl} isOpen={siteModalOpen} closeModal={closeSiteModal} />
     </Box>
   );
