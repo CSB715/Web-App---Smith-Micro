@@ -42,6 +42,22 @@ type Props = {
 
 export default function AddSiteModal( { isOpen, closeModal, openSiteModal } : Props) {
   const [url, setUrl] = useState("");
+  const [siteError, setSiteError] = useState(false);
+  const [siteErrorMessage, setSiteErrorMessage] = useState("");
+
+
+  function validateSite(siteURL : string) {
+    if (!siteURL.trim() || !/\S+\.\S+/.test(siteURL.trim())) {
+      setSiteError(true);
+      setSiteErrorMessage("Please enter a valid web address.");
+      return false;
+    } else {
+      setSiteError(false);
+      setSiteErrorMessage("");
+    }
+    return true;
+  }
+
 
   return (
     <Modal
@@ -67,6 +83,8 @@ export default function AddSiteModal( { isOpen, closeModal, openSiteModal } : Pr
           </Box>
         </Box>
         <TextField
+          error={siteError}
+          helperText={siteErrorMessage}
           aria-labelledby="url-input-text-field"
           placeholder="www.example.com"
           onChange={(event) => {
@@ -76,7 +94,10 @@ export default function AddSiteModal( { isOpen, closeModal, openSiteModal } : Pr
         />
         <Stack direction="row" spacing={2} justifyContent="flex-end" sx={{ mt: 2 }}>
           <Button variant="outlined" onClick={closeModal}>Cancel</Button>
-          <Button variant="contained" onClick={() => addSite(closeModal, url, openSiteModal)}>Confirm</Button>
+          <Button variant="contained" onClick={() => {
+            if (!validateSite(url)) {return;}
+            addSite(closeModal, url, openSiteModal);
+          }}>Confirm</Button>
         </Stack>
       </Box>
     </Modal>

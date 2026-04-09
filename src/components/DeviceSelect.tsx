@@ -15,10 +15,12 @@ export default function DeviceSelect({
   devices,
   selectedDevices,
   setSelectedDevices,
+  submitted = false 
 }: {
   devices: Device[];
   selectedDevices: Device[];
   setSelectedDevices: (devices: Device[]) => void;
+  submitted? : boolean;
 }) {
   const icon = <CheckBoxOutlineBlankIcon fontSize="small" />;
   const checkedIcon = <CheckBoxIcon fontSize="small" />;
@@ -78,7 +80,9 @@ export default function DeviceSelect({
             });
         }}
         renderInput={(params) => (
-          <TextField {...params} placeholder="Select Devices..." />
+          <TextField {...params} placeholder="Select Devices..." 
+            error={submitted && selectedDevices.length === 0} 
+            helperText={submitted && selectedDevices.length === 0 ? "Required" : ""} />
         )}
       />
     </>

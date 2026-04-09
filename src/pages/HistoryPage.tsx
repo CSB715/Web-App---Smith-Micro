@@ -342,13 +342,16 @@ function History() {
 
   return (
     <Box
+      component="main"
+      role="main"
+      aria-labelledby="history-title"
       sx={{
         minHeight: "100vh",
         bgcolor: "background.default",
         px: 0,
       }}
     >
-      <Box sx={{ px: 2.5 }}>
+      <Box component="header" aria-label="page header" sx={{ px: 2.5 }}>
         {/* ── Title ── */}
         <Typography
           variant="h1"

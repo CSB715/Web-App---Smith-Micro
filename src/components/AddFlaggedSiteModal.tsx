@@ -17,8 +17,13 @@ const style = {
   p: 4,
 };
 
-export default function AddFlaggedSiteModal({ closeModal, isOpen } : 
-  {closeModal: () => void, isOpen: boolean}) {
+type Props = {
+  closeModal: () => void, 
+  isOpen: boolean,
+  reloadData: () => void
+}
+
+export default function AddFlaggedSiteModal({ closeModal, isOpen, reloadData } : Props) {
   const navigate = useNavigate();
   const handleClose = () => {
     closeModal();
@@ -26,6 +31,21 @@ export default function AddFlaggedSiteModal({ closeModal, isOpen } :
   };
   const [_, setSaving] = useState(false);
   const [userId, setUserId] = useState("");
+  const [siteError, setSiteError] = useState(false);
+  const [siteErrorMessage, setSiteErrorMessage] = useState("");
+
+
+  function validateSite(siteURL : string) {
+    if (!siteURL.trim() || !/\S+\.\S+/.test(siteURL.trim())) {
+      setSiteError(true);
+      setSiteErrorMessage("Please enter a valid web address.");
+      return false;
+    } else {
+      setSiteError(false);
+      setSiteErrorMessage("");
+    }
+    return true;
+  }
 
   useEffect(() => {
     onAuthStateChanged(getAuthInstance(), (user) => {
@@ -39,8 +59,12 @@ export default function AddFlaggedSiteModal({ closeModal, isOpen } :
 
   const handleSave = async () => {
     setSaving(true);
+    if (!validateSite(url)) {
+      return;
+    }
     try {
       await WriteOverride(userId, url, override);
+      reloadData();
       handleClose();
     } catch (e) {
       console.error(e);
@@ -118,6 +142,8 @@ export default function AddFlaggedSiteModal({ closeModal, isOpen } :
           </Box>
         </Box>
         <TextField
+          error={siteError}
+          helperText={siteErrorMessage}
           aria-labelledby="url-input-text-field"
           placeholder="www.example.com"
           onChange={(event) => {
