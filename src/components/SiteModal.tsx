@@ -207,6 +207,7 @@ export default function SiteModal({
           devices={devices}
           selectedDevices={selectedDevices}
           setSelectedDevices={setSelectedDevices}
+          submitted={false}
         />
         <Box
           sx={{

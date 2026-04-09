@@ -51,6 +51,23 @@ export default function CreateNotificationTriggerPage() {
 
   const [advancedView, setAdvancedView] = useState<boolean>(false);
 
+  
+  const [siteError, setSiteError] = useState(false);
+  const [siteErrorMessage, setSiteErrorMessage] = useState("");
+
+
+  function validateSite(siteURL : string) {
+    if (!siteURL.trim() || !/\S+\.\S+/.test(siteURL.trim())) {
+      setSiteError(true);
+      setSiteErrorMessage("Please enter a valid web address.");
+      return false;
+    } else {
+      setSiteError(false);
+      setSiteErrorMessage("");
+    }
+    return true;
+  }
+
   async function loadNotificationTrigger(notifID: string, uid: string) {
     // load selected devices and categories
     const notifRef = doc(getDb(), "Users", uid, "NotificationTriggers", notifID);
@@ -115,10 +132,27 @@ export default function CreateNotificationTriggerPage() {
     setText(event.target.checked);
   }
 
-  function createNotification() {
+  const [submitted, setSubmitted] = useState(false);
+
+  function createNotification(e: React.FormEvent<HTMLFormElement>) {
+    setSubmitted(true);
+
+    if (categories.length === 0 || selectedDevices.length === 0) {
+      e.preventDefault();
+      console.log("Nope.")
+      return;
+    }
+
+    e.preventDefault();
     const nameInput = document.getElementById(
       "newNotification",
     ) as HTMLInputElement;
+
+    for (const site of sites) {
+      if (!validateSite(site)) {
+        return; 
+      }
+    }
 
     const notif : NotificationTrigger = {
       uid : uid,
@@ -143,7 +177,8 @@ export default function CreateNotificationTriggerPage() {
 
   return (
     <Box 
-      component="main"
+      component="form"
+      onSubmit={createNotification}
       role="main"
       aria-labelledby="create-notification"
       sx={{
@@ -179,6 +214,7 @@ export default function CreateNotificationTriggerPage() {
           value={name} 
           fullWidth
           onChange={(e) => setName(e.target.value)} 
+          required
         />
         
         {/* Devices */}
@@ -186,6 +222,7 @@ export default function CreateNotificationTriggerPage() {
           devices={devices}
           selectedDevices={selectedDevices}
           setSelectedDevices={setSelectedDevices}
+          submitted={submitted}
         />
 
         {/* Alert Type - Sites or Categories */}
@@ -213,7 +250,9 @@ export default function CreateNotificationTriggerPage() {
                 setCategories(newValue);
               }}
               options={categoriesArr}
-              renderInput={(params) => <TextField {...params} placeholder="Pick categories"/>}
+              renderInput={(params) => <TextField {...params} placeholder="Pick categories" 
+                  error={submitted && categories.length === 0} 
+                  helperText={submitted && categories.length === 0 ? "Required" : ""} />}
             />
           )}
 
@@ -226,7 +265,8 @@ export default function CreateNotificationTriggerPage() {
                 setSites(newValue);
               }}
               options={[]} /* add site names maybe?  */
-              renderInput={(params) => <TextField {...params} placeholder="Enter site URLs"/>}
+              renderInput={(params) => <TextField {...params} error={siteError} helperText={siteErrorMessage} 
+                  placeholder="Enter site URLs" />}
             />
           )}
         </Box>
@@ -334,9 +374,8 @@ export default function CreateNotificationTriggerPage() {
           >
             Cancel
           </Button>
-          <Button variant="contained" color="primary"
-            id="createNewNotification" 
-            onClick={() => createNotification()}>
+          <Button variant="contained" color="primary" type="submit"
+            id="createNewNotification">
               {notifID ? "Edit" : "Create"}
           </Button>
         </Box>
