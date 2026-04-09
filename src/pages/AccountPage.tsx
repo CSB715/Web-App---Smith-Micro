@@ -327,7 +327,11 @@ function Account() {
               }}
             >
               <Typography sx={{ flex: 1, fontSize: "0.9rem" }}>
-                {phone}
+                {phone.startsWith("+1") && phone.length === 12
+                  ? `${phone.slice(2, 5)}-${phone.slice(5, 8)}-${phone.slice(8)}`
+                  : phone.length === 10
+                    ? `${phone.slice(0, 3)}-${phone.slice(3, 6)}-${phone.slice(6)}`
+                    : phone}
               </Typography>
               <Button
                 variant="outlined"
@@ -453,7 +457,11 @@ function Account() {
             Are you sure you want to delete this {pendingDelete?.type}?
           </Typography>
           <Typography sx={{ color: "text.secondary", mb: 3 }}>
-            {pendingDelete?.value}
+            {pendingDelete?.type === "phone" && pendingDelete.value.startsWith("+1") && pendingDelete.value.length === 12
+              ? `${pendingDelete.value.slice(2, 5)}-${pendingDelete.value.slice(5, 8)}-${pendingDelete.value.slice(8)}`
+              : pendingDelete?.type === "phone" && pendingDelete.value.length === 10
+                ? `${pendingDelete.value.slice(0, 3)}-${pendingDelete.value.slice(3, 6)}-${pendingDelete.value.slice(6)}`
+                : pendingDelete?.value}
           </Typography>
           <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 1 }}>
             <Button variant="outlined" onClick={() => setPendingDelete(null)}>
