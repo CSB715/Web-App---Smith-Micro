@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState, useCallback } from "react";
-import { useNavigate } from "react-router";
+import { useNavigate, useSearchParams } from "react-router";
 import { onAuthStateChanged } from "firebase/auth";
-import { getAuthInstance, getDb } from '../utils/firestore';
+import { getAuthInstance, getDb } from "../utils/firestore";
+
 import {
   collection,
   doc,
@@ -40,7 +41,6 @@ import FlagOutlinedIcon from "@mui/icons-material/FlagOutlined";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import CategoryIcon from "@mui/icons-material/Category";
 
-
 const PAGE_LIMIT = 50;
 
 interface SearchResult {
@@ -52,7 +52,6 @@ interface SearchResult {
 function AdminDashboard() {
   const hasMounted = useRef(false);
   const navigate = useNavigate();
-  const [searchQuery, setSearchQuery] = useState<string>("");
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [anchorElCategories, setAnchorElCategories] =
@@ -65,6 +64,13 @@ function AdminDashboard() {
   const currentQuery = useRef("");
   const db = getDb();
   const auth = getAuthInstance();
+  const [SearchParams, SetSearchParams] = useSearchParams();
+  const [authChecked, setAuthChecked] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  const [searchQuery, setSearchQuery] = useState<string>(
+    SearchParams.get("q_name") ?? "",
+  );
 
   // Fetch a page of results from Firestore using prefix search
   const fetchResults = useCallback(
@@ -128,41 +134,71 @@ function AdminDashboard() {
   );
 
   useEffect(() => {
-    if (!hasMounted.current) {
-      hasMounted.current = true;
-
-      const unsubscribe = onAuthStateChanged(auth, async (user) => {
-        if (user) {
-          try {
-            const userDoc = await getDoc(doc(db, "Users", user.uid));
-            const data = userDoc.data() as DocumentData;
-            if (!data?.isAdmin) {
-              await auth.signOut();
-              navigate("/login", { replace: true });
-            }
-          } catch {
-            navigate("/login", { replace: true });
-          }
-        } else {
-          navigate("/login", { replace: true });
-        }
+    const timeout = setTimeout(() => {
+      setLastDoc(null);
+      fetchResults(searchQuery, null);
+      SetSearchParams(searchQuery ? { q_name: searchQuery } : {}, {
+        replace: true,
       });
+    }, 150);
+    return () => clearTimeout(timeout);
+  }, [searchQuery, fetchResults]);
 
-      // Initial load
-      fetchResults("", null);
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      if (!user) {
+        navigate("/login", { replace: true });
+        return;
+      }
 
-      // Load categories
-      (async () => {
-        const categoriesSnapshot = await getDocs(collection(db, "Categories"));
-        categoriesSnapshot.forEach((doc) => {
-          const data = doc.data() as DocumentData;
-          setCategories((prev) => [...prev, data.label as string]);
-        });
-      })();
+      try {
+        const userDoc = await getDoc(doc(db, "Users", user.uid));
+        const data = userDoc.data() as DocumentData;
 
-      return () => unsubscribe();
-    }
-  }, [navigate, fetchResults]);
+        if (!data?.isAdmin) {
+          await auth.signOut();
+          navigate("/login", { replace: true });
+          return;
+        }
+
+        setIsAdmin(true);
+      } catch {
+        await auth.signOut();
+        navigate("/login", { replace: true });
+      } finally {
+        setAuthChecked(true);
+      }
+    });
+
+    return () => unsubscribe();
+  }, [navigate]);
+
+  useEffect(() => {
+    if (!isAdmin) return;
+
+    const site = SearchParams.get("q_name");
+    fetchResults(site || "", null);
+
+    (async () => {
+      const categoriesSnapshot = await getDocs(collection(db, "Categories"));
+      categoriesSnapshot.forEach((doc) => {
+        const data = doc.data() as DocumentData;
+        setCategories((prev) => [...prev, data.label as string]);
+      });
+    })();
+  }, [isAdmin]);
+
+  useEffect(() => {
+    if (!isAdmin) return;
+    const timeout = setTimeout(() => {
+      setLastDoc(null);
+      fetchResults(searchQuery, null);
+      SetSearchParams(searchQuery ? { q_name: searchQuery } : {}, {
+        replace: true,
+      });
+    }, 150);
+    return () => clearTimeout(timeout);
+  }, [searchQuery, fetchResults, isAdmin]);
 
   // Debounced search
   useEffect(() => {
@@ -246,6 +282,18 @@ function AdminDashboard() {
     handleMenuClose();
   };
 
+  if (!authChecked) {
+    return (
+      <Box sx={{ display: "flex", justifyContent: "center", mt: 8 }}>
+        <Typography color="text.secondary">Verifying access...</Typography>
+      </Box>
+    );
+  }
+
+  if (!isAdmin) {
+    return null; // navigate() is already in flight
+  }
+
   return (
     <Container maxWidth={false} sx={{ py: 1 }}>
       <Box sx={{ mb: 4 }}>
@@ -262,11 +310,7 @@ function AdminDashboard() {
             border: 1,
             borderColor: "grey.200",
           }}
-        >
-          <Typography variant="body2" color="text.secondary">
-            <strong>Logged in as:</strong> {auth.currentUser?.email}
-          </Typography>
-        </Paper>
+        ></Paper>
 
         <TextField
           fullWidth
@@ -404,40 +448,49 @@ function AdminDashboard() {
         anchorOrigin={{ vertical: "center", horizontal: "center" }}
         transformOrigin={{ vertical: "center", horizontal: "center" }}
       >
-        {categoryList.map((category, index) => (
-          <MenuItem
-            key={index}
-            onClick={() =>
-              handleToggleCategory(
-                category,
-                !searchResults[selectedIndex ?? 0].categories.includes(
+        {categoryList.map((category, index) => {
+          const currentResult =
+            selectedIndex !== null ? searchResults[selectedIndex] : null;
+          if (!currentResult) return null;
+          return (
+            <MenuItem
+              key={index}
+              onClick={() =>
+                handleToggleCategory(
                   category,
-                ),
-              )
-            }
-          >
-            <ListItemIcon>
-              <CategoryIcon fontSize="small" />
-            </ListItemIcon>
-            <ListItemText primary={category} />
+                  !searchResults[selectedIndex ?? 0].categories.includes(
+                    category,
+                  ),
+                )
+              }
+            >
+              <ListItemIcon>
+                <CategoryIcon fontSize="small" />
+              </ListItemIcon>
+              <ListItemText primary={category} />
 
-            <Chip
-              label={
-                searchResults[selectedIndex ?? 0].categories.includes(category)
-                  ? "Yes"
-                  : "No"
-              }
-              color={
-                searchResults[selectedIndex ?? 0].categories.includes(category)
-                  ? "success"
-                  : "default"
-              }
-              size="small"
-              variant="outlined"
-              sx={{ ml: 2 }}
-            />
-          </MenuItem>
-        ))}
+              <Chip
+                label={
+                  searchResults[selectedIndex ?? 0].categories.includes(
+                    category,
+                  )
+                    ? "Yes"
+                    : "No"
+                }
+                color={
+                  searchResults[selectedIndex ?? 0].categories.includes(
+                    category,
+                  )
+                    ? "success"
+                    : "default"
+                }
+                size="small"
+                variant="outlined"
+                sx={{ ml: 2 }}
+              />
+            </MenuItem>
+          );
+        })}
       </Menu>
     </Container>
   );

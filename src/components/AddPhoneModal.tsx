@@ -24,21 +24,36 @@ type Props = {
 
 export default function AddPhoneModal({ updateUserData, open, onClose, onError }: Props) {
   const [newPhone, setNewPhone] = useState("");
+  const [phoneError, setPhoneError] = useState(false);
+  const [phoneErrorMessage, setPhoneErrorMessage] = useState("");
 
   function handleClose() {
     setNewPhone("");
+    setPhoneError(false);
+    setPhoneErrorMessage("");
     onClose();
   }
 
+  function validatePhone() {
+    if (!newPhone.trim() || !/^\d{3}-\d{3}-\d{4}$/.test(newPhone.trim())) {
+      setPhoneError(true);
+      setPhoneErrorMessage("Please enter a valid phone number (xxx-xxx-xxxx).");
+      return false;
+    } else {
+      setPhoneError(false);
+      setPhoneErrorMessage("");
+    }
+    return true;
+  }
+
   function handleConfirm() {
-    if (newPhone.trim() === "") {
-      console.log("New phone number cannot be empty.");
+    if (!validatePhone()) {
       return;
     }
 
     const userDoc = doc(getDb(), "Users", getAuthInstance().currentUser!.uid)
     getDoc(userDoc).then((snap) => {
-        updateDoc(snap.ref, { phones: arrayUnion(newPhone) })
+        updateDoc(snap.ref, { phones: arrayUnion("+1" + newPhone.replace(/-/g, "")) })
         .then(async () => {
             handleClose()
             updateUserData((await GetDoc(snap!.ref.path))!.data as UserData);
@@ -63,10 +78,18 @@ export default function AddPhoneModal({ updateUserData, open, onClose, onError }
           New Phone Number
         </Typography>
         <TextField
+          error={phoneError}
+          helperText={phoneErrorMessage}
           fullWidth
-          placeholder="(555) 555-5555"
+          placeholder="555-555-5555"
           value={newPhone}
-          onChange={(e) => setNewPhone(e.target.value)}
+          onChange={(e) => {
+            const digits = e.target.value.replace(/\D/g, "").slice(0, 10);
+            let formatted = digits;
+            if (digits.length > 6) formatted = `${digits.slice(0, 3)}-${digits.slice(3, 6)}-${digits.slice(6)}`;
+            else if (digits.length > 3) formatted = `${digits.slice(0, 3)}-${digits.slice(3)}`;
+            setNewPhone(formatted);
+          }}
           onKeyDown={(e) => {
             if (e.key === "Enter") {
               e.preventDefault();
