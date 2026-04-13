@@ -17,6 +17,7 @@ import {
   type DocumentReference,
   type Firestore,
   getFirestore,
+  DocumentSnapshot,
 } from "firebase/firestore";
 import type { NotificationTrigger } from "./models";
 // TODO: Add SDKs for Firebase products that you want to use
@@ -275,6 +276,20 @@ export async function DeleteUser(path: string) {
   });
 }
 
+export async function DeleteTrigger(trigger: DocumentSnapshot) {
+  // delete trigger - no devices attached
+
+  const docRef = doc(
+      getDb(),
+      "Users",
+      getAuthInstance().currentUser!.uid,
+      "NotificationTriggers",
+      trigger.id
+    );
+
+  await deleteDoc(docRef);
+}
+
 export async function DeleteDevice(device: DocumentData) {
   const docRef = doc(
     getDb(),
@@ -299,15 +314,15 @@ export async function DeleteDevice(device: DocumentData) {
         0
       ) {
         // delete trigger - no devices attached
-        await deleteDoc(
-          doc(
-            getDb(),
-            "Users",
-            getAuthInstance().currentUser!.uid,
-            "NotificationTriggers",
-            trigger.id,
-          ),
-        );
+          await deleteDoc(
+            doc(
+              getDb(),
+              "Users",
+              getAuthInstance().currentUser!.uid,
+              "NotificationTriggers",
+              trigger.id
+            ),
+          );
       } else {
         // remove device from trigger list
 

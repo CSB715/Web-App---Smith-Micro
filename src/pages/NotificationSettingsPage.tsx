@@ -4,12 +4,12 @@ import {
   DocumentSnapshot,
   getDocs,
   collection,
-  deleteDoc,
 } from "firebase/firestore";
 import { getDb, getAuthInstance } from "../utils/firestore";
 import { useNavigate } from "react-router";
 import { onAuthStateChanged } from "firebase/auth";
 import { Button, List, ListItem, ListItemText, Box, Typography } from "@mui/material";
+import DeleteTriggerModal from "../components/DeleteTriggerModal";
 
 async function getNotifications() {
   const snap = await getDocs(
@@ -22,6 +22,8 @@ function NotificationSettings() {
   const navigate = useNavigate();
   const hasMounted = useRef(false);
   const [notifications, setNotifications] = useState<DocumentSnapshot[]>([]);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [currTrigger, setCurrTrigger] = useState<DocumentSnapshot | null>(null);
 
   useEffect(() => {
     if (!hasMounted.current) {
@@ -38,32 +40,25 @@ function NotificationSettings() {
     }
   }, []);
 
-  const handleDeleteNotification = (notification: DocumentSnapshot) => {
-    deleteDoc(notification.ref).then(async () => {
-      setNotifications(await getNotifications());
-    });
-  };
-
   return (
-    <>
-      <Box sx={{ px: 2.5 }}>
-        <Box
-          onClick={() => navigate("/settings")}
-          sx={{
-            display: "inline-flex",
-            alignItems: "center",
-            color: "text.disabled",
-            cursor: "pointer",
-            mb: 1,
-            transition: "opacity 0.15s ease",
-            "&:hover": { opacity: 0.7 },
-          }}
-        >
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <polyline points="15 18 9 12 15 6" />
-          </svg>
-        </Box>
+    <Box sx={{ px: 2.5 }}>
+      <Box
+        onClick={() => navigate("/settings")}
+        sx={{
+          display: "inline-flex",
+          alignItems: "center",
+          color: "text.disabled",
+          cursor: "pointer",
+          mb: 1,
+          transition: "opacity 0.15s ease",
+          "&:hover": { opacity: 0.7 },
+        }}
+      >
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <polyline points="15 18 9 12 15 6" />
+        </svg>
       </Box>
+      
       <Typography
         variant="h1"
         id="notification-settings-title"
@@ -79,6 +74,12 @@ function NotificationSettings() {
       >
         Notification Settings
       </Typography>
+
+      <Button variant="contained" fullWidth
+        onClick={() => navigate("/settings/notifications/create-notification", { state : {notifID : "" } })}
+      >
+        New Notification
+      </Button>
 
       <Box component="section">
         <List>
@@ -105,7 +106,7 @@ function NotificationSettings() {
                   height: 30,
                   justifyContent: "center",
                  }}
-                  onClick={() => handleDeleteNotification(notification)}
+                  onClick={() => {setCurrTrigger(notification); setDeleteModalOpen(true)}}
                   variant="outlined" color="error"
                 >
                   Del
@@ -116,12 +117,15 @@ function NotificationSettings() {
         </List>
       </Box>
 
-      <Button variant="contained"
-        onClick={() => navigate("/settings/notifications/create-notification", { state : {notifID : "" } })}
-      >
-        New Notification
-      </Button>
-    </>
+      <DeleteTriggerModal
+        currTrigger={currTrigger}
+        open={deleteModalOpen}
+        onClose={async () => {
+          setNotifications(await getNotifications());
+          setDeleteModalOpen(false);
+        }}
+      />
+    </Box>
   );
 }
 

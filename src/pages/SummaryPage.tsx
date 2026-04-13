@@ -229,13 +229,13 @@ function Summary() {
         return {
           siteUrl: categorizationData.id,
           category: categorizationData.data.category,
-          is_flagged: categorizationData.data.is_flagged,
+          flagged_for: categorizationData.data.flagged_for,
         };
       } else {
         return {
           siteUrl: visit.siteUrl,
           category: ["Unknown"],
-          is_flagged: false,
+          flagged_for: [],
         };
       }
     }
