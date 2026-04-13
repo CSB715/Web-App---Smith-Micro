@@ -23,7 +23,7 @@ export type Notification = {
 export type Categorization = {
   siteUrl: string;
   category: string[];
-  is_flagged: boolean;
+  flagged_for: string[];
 };
 
 export type Override = {

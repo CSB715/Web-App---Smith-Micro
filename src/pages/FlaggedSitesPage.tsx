@@ -2,7 +2,6 @@ import { useEffect, useState, useRef } from "react";
 import { onAuthStateChanged } from "firebase/auth";
 import {
   getAuthInstance,
-  GetCategorizations,
   GetOverrides,
 } from "../utils/firestore";
 import { useNavigate } from "react-router";
@@ -10,25 +9,26 @@ import type { Categorization } from "../utils/models";
 import SiteModal from "../components/SiteModal";
 import AddFlaggedSiteModal from "../components/AddFlaggedSiteModal";
 import { type DocumentData } from "firebase/firestore";
-import { Typography, Box, List, ListItem, ListItemButton, CircularProgress, Button } from "@mui/material";
+import { Typography, Box, List, ListItem, ListItemButton, CircularProgress, Button, IconButton } from "@mui/material";
+import DeleteIcon from '@mui/icons-material/Delete';
 
-function combineURLS(flaggedFromCats: Categorization[], flaggedFromOvers: Categorization[]) {
-  return flaggedFromCats.concat(
-    flaggedFromOvers.filter(
-      (site) => !flaggedFromCats.some((c) => c.siteUrl === site.siteUrl),
-    ),
-  );
-}
+// function combineURLS(flaggedFromCats: Categorization[], flaggedFromOvers: Categorization[]) {
+//   return flaggedFromCats.concat(
+//     flaggedFromOvers.filter(
+//       (site) => !flaggedFromCats.some((c) => c.siteUrl === site.siteUrl),
+//     ),
+//   );
+// }
 
-function getFlaggedSitesFromCategorizations(catsData: {id: string, data: DocumentData}[]) {
-  return catsData
-  .filter((cat) => cat.data.is_flagged === true)
-  .map((cat) => ({
-    siteUrl: cat.id,
-    category: cat.data.category,
-    is_flagged: cat.data.is_flagged,
-  }));
-}
+// function getFlaggedSitesFromCategorizations(catsData: {id: string, data: DocumentData}[]) {
+//   return catsData
+//   .filter((cat) => cat.data.is_flagged === true)
+//   .map((cat) => ({
+//     siteUrl: cat.id,
+//     category: cat.data.category,
+//     flagged_for: [],
+//   }));
+// }
 
 function getFlaggedSitesFromOverrides(oversData: {id: string, data: DocumentData}[]) {
   return oversData
@@ -36,21 +36,22 @@ function getFlaggedSitesFromOverrides(oversData: {id: string, data: DocumentData
   .map((override) => ({
     siteUrl: override.id,
     category: override.data.category,
-    is_flagged: true,
+    flagged_for: override.data.flagged_for,
   }));
 }
 
-function useSites(userId: string, setFlaggedSites: (sites: Categorization[]) => void) {
+function useSites(fetchedData: React.RefObject<boolean>, userId: string, setFlaggedSites: (sites: Categorization[]) => void) {
   // Fetch both categorizations and overrides initially
-  Promise.all([GetCategorizations(), GetOverrides(userId)]).then(
-    ([catsData, oversData]) => {
-      const flaggedFromCats = getFlaggedSitesFromCategorizations(catsData);
+  Promise.all([GetOverrides(userId)]).then(
+    ([oversData]) => {
+      // const flaggedFromCats = getFlaggedSitesFromCategorizations(catsData);
       const flaggedFromOvers = getFlaggedSitesFromOverrides(oversData);
 
       // Combine and deduplicate by siteUrl
-      const combined = combineURLS(flaggedFromCats, flaggedFromOvers);
+      // const combined = combineURLS(flaggedFromCats, flaggedFromOvers);
 
-      setFlaggedSites(combined);
+      setFlaggedSites(flaggedFromOvers);
+      fetchedData.current = true;
     },
   );
 }
@@ -72,8 +73,7 @@ function FlaggedSites() {
     onAuthStateChanged(getAuthInstance(), (user) => {
       if (user) {
         setUID(user.uid);
-        useSites(user.uid, setFlaggedSites);
-        fetchedData.current = true;
+        useSites(fetchedData, user.uid, setFlaggedSites);
       } else {
         navigate("/login", { replace: true });
       }
@@ -81,7 +81,7 @@ function FlaggedSites() {
   }, [navigate]);
 
   function reloadData() {
-    useSites(uid, setFlaggedSites);
+    useSites(fetchedData, uid, setFlaggedSites);
   }
 
   return (
@@ -129,13 +129,25 @@ function FlaggedSites() {
         Flagged Sites
       </Typography>
 
+      <Button variant="contained" color="primary" onClick={() => setNewModalOpen(true)}>Add Site</Button>
+
       { !fetchedData.current && 
         <CircularProgress sx={{ justifySelf: "center", alignSelf: "center", mt: 2 }} />
       }
 
       <List aria-label="List of flagged sites">
         {flaggedSites.map((site) => (
-          <ListItem key={site.siteUrl}>
+          <ListItem key={site.siteUrl}
+            secondaryAction={
+              <IconButton edge="end" aria-label="delete"
+                onClick={async () => {
+                }}
+              >
+                <DeleteIcon />
+              </IconButton>
+            }
+          
+          >
             <ListItemButton 
               sx={{
                 textTransform: "uppercase",
@@ -153,7 +165,6 @@ function FlaggedSites() {
           </ListItem>
         ))}
       </List>
-      <Button variant="contained" color="primary" onClick={() => setNewModalOpen(true)}>Add Site</Button>
 
       <AddFlaggedSiteModal isOpen={newModalOpen} closeModal={closeNewModal} reloadData={reloadData}/>
       <SiteModal url={siteUrl} isOpen={siteModalOpen} closeModal={closeSiteModal} />

@@ -8,7 +8,7 @@ import {
 import { getDb, getAuthInstance } from "../utils/firestore";
 import { useNavigate } from "react-router";
 import { onAuthStateChanged } from "firebase/auth";
-import { Button, List, ListItem, ListItemText, Box, Typography } from "@mui/material";
+import { Button, List, ListItem, ListItemText, Box, Typography, CircularProgress } from "@mui/material";
 import DeleteTriggerModal from "../components/DeleteTriggerModal";
 
 async function getNotifications() {
@@ -24,14 +24,17 @@ function NotificationSettings() {
   const [notifications, setNotifications] = useState<DocumentSnapshot[]>([]);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [currTrigger, setCurrTrigger] = useState<DocumentSnapshot | null>(null);
+  const fetchedData = useRef(false);
 
   useEffect(() => {
     if (!hasMounted.current) {
       onAuthStateChanged(getAuthInstance(), (user) => {
         if (user) {
+          fetchedData.current = false;
           getNotifications().then((notifs) => {
             setNotifications(notifs);
           });
+          fetchedData.current = true;
         } else {
           navigate("/login", { replace: true });
         }
@@ -41,7 +44,7 @@ function NotificationSettings() {
   }, []);
 
   return (
-    <Box sx={{ px: 2.5 }}>
+    <Box sx={{ px: 2.5, display: "flex", flexDirection: "column", height: "100%" }} >
       <Box
         onClick={() => navigate("/settings")}
         sx={{
@@ -80,6 +83,10 @@ function NotificationSettings() {
       >
         New Notification
       </Button>
+
+      { !fetchedData.current && 
+        <CircularProgress sx={{ justifySelf: "center", alignSelf: "center", mt: 2 }} />
+      }
 
       <Box component="section">
         <List>
