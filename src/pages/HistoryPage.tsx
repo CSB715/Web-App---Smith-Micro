@@ -310,7 +310,8 @@ function History() {
                           setModalOpen(true);
                         }}
                       >
-                        {visit.siteUrl}
+                        {visit.siteUrl.substring(0, 20) +
+                          (visit.siteUrl.length > 20 ? "..." : "")}
                       </Button>
                       <Typography
                         variant="caption"

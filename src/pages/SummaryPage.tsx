@@ -738,7 +738,7 @@ function Summary() {
                       setModalOpen(true);
                     }}
                   >
-                    {site}
+                    {site.substring(0, 20) + (site.length > 20 ? "..." : "")}
                   </Button>
                 </Box>
               ))}
