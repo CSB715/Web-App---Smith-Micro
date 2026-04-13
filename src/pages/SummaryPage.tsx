@@ -642,9 +642,8 @@ function Summary() {
         <Typography
           variant="caption"
           sx={{
-            fontSize: "0.68rem",
-            letterSpacing: "0.11em",
-            textTransform: "uppercase",
+            fontSize: "1rem",
+            letterSpacing: "0.04em",
             color: "black",
             display: "block",
             mb: 1.5,
