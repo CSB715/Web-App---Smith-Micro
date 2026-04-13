@@ -802,7 +802,7 @@ function Summary() {
             <Table size="small">
               <TableHead>
                 <TableRow sx={{ backgroundColor: "action.hover", py: 1 }}>
-                  <TableCell>Category</TableCell>
+                  <TableCell align="center">Category</TableCell>
                   <TableCell align="center">Trend</TableCell>
                   <TableCell align="center">Time</TableCell>
                   <TableCell align="center">Previous</TableCell>
@@ -826,7 +826,7 @@ function Summary() {
                     );
                     return (
                       <TableRow key={cat} sx={{ py: 0.75 }}>
-                        <TableCell>{cat}</TableCell>
+                        <TableCell align="center">{cat}</TableCell>
                         <TableCell align="center">
                           {trend === "increase" && (
                             <TrendingUp color="action" />
