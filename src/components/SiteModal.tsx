@@ -81,7 +81,7 @@ export default function SiteModal({
     const [categorization, setCategorization] = useState<Categorization>({
       siteUrl: url,
       category: [],
-      is_flagged: false,
+      flagged_for: [],
     });
     const [override, setOverride] = useState<Override>({
       category: [],
@@ -104,7 +104,7 @@ export default function SiteModal({
         const cat = {
           siteUrl: url,
           category: catData?.data.category ?? ["Unknown"],
-          is_flagged: catData?.data.is_flagged ?? false,
+          flagged_for: catData?.data.flagged_for ?? [],
         };
         setCategorization(cat);
 

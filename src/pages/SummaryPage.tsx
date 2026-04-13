@@ -257,13 +257,13 @@ function Summary() {
         return {
           siteUrl: categorizationData.id,
           category: categorizationData.data.category,
-          is_flagged: categorizationData.data.is_flagged,
+          flagged_for: categorizationData.data.flagged_for,
         };
       } else {
         return {
           siteUrl: visit.siteUrl,
           category: ["Unknown"],
-          is_flagged: false,
+          flagged_for: [],
         };
       }
     }
@@ -687,9 +687,8 @@ function Summary() {
         <Typography
           variant="caption"
           sx={{
-            fontSize: "0.68rem",
-            letterSpacing: "0.11em",
-            textTransform: "uppercase",
+            fontSize: "1rem",
+            letterSpacing: "0.04em",
             color: "black",
             display: "block",
             mb: 1.5,
