@@ -801,17 +801,11 @@ function Summary() {
           ) : (
             <Table size="small">
               <TableHead>
-                <TableRow sx={{ backgroundColor: "action.hover" }}>
-                  <TableCell sx={{ py: 1 }}>Category</TableCell>
-                  <TableCell align="center" sx={{ width: 60, py: 1 }}>
-                    Trend
-                  </TableCell>
-                  <TableCell align="right" sx={{ minWidth: 110, py: 1 }}>
-                    Time
-                  </TableCell>
-                  <TableCell align="right" sx={{ minWidth: 110, py: 1 }}>
-                    Previous
-                  </TableCell>
+                <TableRow sx={{ backgroundColor: "action.hover", py: 1 }}>
+                  <TableCell>Category</TableCell>
+                  <TableCell align="center">Trend</TableCell>
+                  <TableCell align="center">Time</TableCell>
+                  <TableCell align="center">Previous</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -831,9 +825,9 @@ function Summary() {
                       timePerCategoryPrev[cat] || 0,
                     );
                     return (
-                      <TableRow key={cat}>
-                        <TableCell sx={{ py: 0.75 }}>{cat}</TableCell>
-                        <TableCell align="center" sx={{ py: 0.75 }}>
+                      <TableRow key={cat} sx={{ py: 0.75 }}>
+                        <TableCell>{cat}</TableCell>
+                        <TableCell align="center">
                           {trend === "increase" && (
                             <TrendingUp color="action" />
                           )}
@@ -842,18 +836,8 @@ function Summary() {
                           )}
                           {trend === "same" && <TrendingFlat color="action" />}
                         </TableCell>
-                        <TableCell
-                          align="right"
-                          sx={{ minWidth: 110, py: 0.75 }}
-                        >
-                          {timeStr}
-                        </TableCell>
-                        <TableCell
-                          align="right"
-                          sx={{ minWidth: 110, py: 0.75 }}
-                        >
-                          {prevTimeStr}
-                        </TableCell>
+                        <TableCell align="center">{timeStr}</TableCell>
+                        <TableCell align="center">{prevTimeStr}</TableCell>
                       </TableRow>
                     );
                   })}
