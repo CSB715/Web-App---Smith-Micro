@@ -5,13 +5,17 @@ import AddSiteModal from "../components/AddSiteModal";
 import SiteModal from "../components/SiteModal";
 import { useNavigate } from "react-router";
 import { onAuthStateChanged } from "firebase/auth"; 
-import { Button, Box, Typography, CircularProgress, List, ListItem, ListItemButton } from "@mui/material";
+import { classifyURL } from "../utils/classifier";
+import { Button, Box, Typography, CircularProgress, List, ListItem, ListItemButton, IconButton } from "@mui/material";
+import { deleteDoc, doc } from "firebase/firestore";
+import DeleteIcon from '@mui/icons-material/Delete';
+
 
 
 async function loadOverrides(uid: string) {
   const userRef = await GetUserRef(uid);
   const sitesArr = await GetUserOverrides(userRef);
-  const siteURLS = [];
+  const siteURLS : string[] = [];
   for (const site of sitesArr.docs) {
     siteURLS.push(site.id);
   }
@@ -78,7 +82,6 @@ function SiteCategories() {
           sx={{
             fontSize: "2rem",
             letterSpacing: "-0.02em",
-            mb: 2,
             fontWeight: "bold",
             color: "#01579b",
             alignSelf: "center",
@@ -89,6 +92,7 @@ function SiteCategories() {
         </Typography>
       </Box>
 
+      <Button variant="contained" onClick={() => setModalOpen(true)}>Set Site Category</Button>
 
       { !fetchedData.current && 
         <CircularProgress sx={{ justifySelf: "center", alignSelf: "center", mt: 2 }} />
@@ -96,7 +100,22 @@ function SiteCategories() {
 
       <List aria-label="List of flagged sites">
         {sites.map((site) => (
-          <ListItem key={site}>
+          <ListItem key={site} 
+            secondaryAction={
+              <IconButton edge="end" aria-label="delete"
+                onClick={async () => {
+                  const uref = await GetUserRef(uid);
+                  const siteRef = doc(uref, "Overrides", site);
+
+                  deleteDoc(siteRef).then(async () => {
+                    setSites(await loadOverrides(uid));
+                  });
+                }}
+              >
+                <DeleteIcon />
+              </IconButton>
+            }
+          >
             <ListItemButton 
               sx={{
                 textTransform: "uppercase",
@@ -117,7 +136,6 @@ function SiteCategories() {
 
       <br />
 
-      <Button variant="contained" onClick={() => setModalOpen(true)}>Set Site Category</Button>
 
 
       {/* Modals */}
@@ -126,11 +144,14 @@ function SiteCategories() {
         isOpen={siteModalOpen}
         closeModal={async () => {setSites(await loadOverrides(uid)); setSiteModalOpen(false)}}
       />
-      <AddSiteModal isOpen={modalOpen} closeModal={() => {setModalOpen(false)}} openSiteModal={(url: string) => {
-        setSiteUrl(url);
-        setSiteModalOpen(true);
-      }} />
-    </ Box>
+      <AddSiteModal isOpen={modalOpen} closeModal={() => {setModalOpen(false)}} 
+        openSiteModal={(url: string) => {
+          classifyURL(url);
+          setSiteUrl(url);
+          setSiteModalOpen(true);
+        }}
+      />
+    </Box>
   );
 }
 

@@ -1,9 +1,11 @@
-import { Button, Modal, Box, TextField, Autocomplete, Typography } from "@mui/material";
+import { Button, Modal, Box, TextField, Typography } from "@mui/material";
 import { useEffect, useState } from "react";
 import { WriteOverride, GetDevices, GetCategories, getAuthInstance } from "../utils/firestore";
 import { type Override } from "../utils/models";
 import { onAuthStateChanged } from "firebase/auth";
 import { useNavigate } from "react-router";
+import DeviceSelect from "./DeviceSelect";
+import { type Device } from "../utils/models";
 
 const style = {
   position: "absolute",
@@ -27,12 +29,13 @@ export default function AddFlaggedSiteModal({ closeModal, isOpen, reloadData } :
   const navigate = useNavigate();
   const handleClose = () => {
     closeModal();
-    setCategories([]);
   };
   const [_, setSaving] = useState(false);
   const [userId, setUserId] = useState("");
   const [siteError, setSiteError] = useState(false);
   const [siteErrorMessage, setSiteErrorMessage] = useState("");
+  const [devices, setDevices] = useState<Device[]>([]);
+  const [selectedDevices, setSelectedDevices] = useState<Device[]>([]);
 
 
   function validateSite(siteURL : string) {
@@ -80,7 +83,6 @@ export default function AddFlaggedSiteModal({ closeModal, isOpen, reloadData } :
       category: [],
       flagged_for: [],
     });
-    const [devices, setDevices] = useState<string[]>([]);
     const [allCategories, setAllCategories] = useState<string[]>([]);
 
     useEffect(() => {
@@ -88,8 +90,11 @@ export default function AddFlaggedSiteModal({ closeModal, isOpen, reloadData } :
 
       async function load() {
         const devicesData = await GetDevices(userId);
-        const devices: string[] = devicesData.map((d) => d.data.name);
-        setDevices(devices);
+        const normalizedDevices: Device[] = devicesData.map((d) => ({
+          id: d.id,
+          name: d.data.name,
+        }));
+        setDevices(normalizedDevices);
         const categoriesData = await GetCategories();
         const allCategories: string[] = categoriesData.map((c) => c.data.label);
         setAllCategories(allCategories);
@@ -101,7 +106,7 @@ export default function AddFlaggedSiteModal({ closeModal, isOpen, reloadData } :
     useEffect(() => {
       if (!open) return;
 
-      setOverride({ category: categories, flagged_for: devices });
+      setOverride({ category: categories, flagged_for: selectedDevices.map((d) => d.name) });
     }, [categories, url]);
 
     return {
@@ -114,7 +119,7 @@ export default function AddFlaggedSiteModal({ closeModal, isOpen, reloadData } :
     };
   }
 
-  const { categories, setCategories, url, setUrl, override, allCategories } =
+  const { url, setUrl, override } =
     useData(userId, isOpen);
 
   return (
@@ -152,18 +157,12 @@ export default function AddFlaggedSiteModal({ closeModal, isOpen, reloadData } :
           sx={{ width: "100%" }}
         />
         <Typography variant="h3" sx={{ mt: 2, fontSize: "1.2rem" }}>
-          Add Categories:
+          Choose devices to flag on:
         </Typography>
-        <Autocomplete
-          aria-label="categories-autocomplete"
-          aria-labelledby="categories-autocomplete"
-          multiple
-          value={categories}
-          onChange={(_: any, newValue: Array<string>) => {
-            setCategories(newValue);
-          }}
-          options={allCategories}
-          renderInput={(params) => <TextField {...params} />}
+        <DeviceSelect
+          devices={devices}
+          selectedDevices={selectedDevices}
+          setSelectedDevices={setSelectedDevices}
         />
         <br />
         <Button sx={{ width: "100%" }} variant="contained" color="primary" onClick={handleSave}>Save</Button>

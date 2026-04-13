@@ -23,7 +23,7 @@ const settingsLinks = [
   {
     to: "/settings/site-categories",
     label: "Site Categories",
-    description: "Organise sites into content categories",
+    description: "Organize sites into content categories",
     icon: (
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75">
         <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
@@ -125,7 +125,7 @@ function Settings() {
                 <Typography sx={{ fontWeight: 500, fontSize: "0.9rem", lineHeight: 1.2 }}>
                   {item.label}
                 </Typography>
-                <Typography variant="caption" sx={{ color: "text.primary", opacity: 0.55, fontSize: "0.68rem", fontFamily: "monospace", letterSpacing: "0.03em" }}>
+                <Typography variant="caption" sx={{ color: "text.primary", opacity: 0.55, fontSize: "0.68rem", letterSpacing: "0.03em" }}>
                   {item.description}
                 </Typography>
               </Box>
