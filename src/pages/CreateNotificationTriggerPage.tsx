@@ -54,6 +54,8 @@ export default function CreateNotificationTriggerPage() {
   
   const [siteError, setSiteError] = useState(false);
   const [siteErrorMessage, setSiteErrorMessage] = useState("");
+  const [timeError, setTimeError] = useState(false);
+  const [timeErrorMessage, setTimeErrorMessage] = useState("");
 
 
   function validateSite(siteURL : string) {
@@ -64,6 +66,18 @@ export default function CreateNotificationTriggerPage() {
     } else {
       setSiteError(false);
       setSiteErrorMessage("");
+    }
+    return true;
+  }
+
+  function validateTime() {
+    if (startTime > endTime) {
+      setTimeError(true);
+      setTimeErrorMessage("Start time must be before end time.");
+      return false;
+    } else {
+      setTimeError(false);
+      setTimeErrorMessage("");
     }
     return true;
   }
@@ -152,6 +166,10 @@ export default function CreateNotificationTriggerPage() {
       if (!validateSite(site)) {
         return; 
       }
+    }
+
+    if (!validateTime()) {
+      return;
     }
 
     const notif : NotificationTrigger = {
@@ -280,9 +298,9 @@ export default function CreateNotificationTriggerPage() {
 
           <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2, alignItems: 'start' }}>
             <Box sx={{ minWidth: 0, boxSizing: 'border-box' }}>
-              <label htmlFor="hours" className="numberFieldLabel">
+              <FormLabel htmlFor="hours" className="numberFieldLabel">
                 Hrs
-              </label>
+              </FormLabel>
               <NumberField.Root 
                 id="hours"
                 defaultValue={0} 
@@ -306,9 +324,9 @@ export default function CreateNotificationTriggerPage() {
             </Box>
 
             <Box sx={{ minWidth: 0, boxSizing: 'border-box' }}>
-              <label htmlFor="mins" className="numberFieldLabel">
+              <FormLabel htmlFor="mins" className="numberFieldLabel">
                 Mins
-              </label>
+              </FormLabel>
               <NumberField.Root 
                 id="mins"
                 defaultValue={0} 
@@ -354,12 +372,16 @@ export default function CreateNotificationTriggerPage() {
               <TimePicker 
                 label="Start Time"
                 value={startTime}
+                maxTime={endTime}
                 onChange={(newValue) => setStartTime(dayjs(newValue))}
+                slotProps={{ textField: { error: timeError, helperText: timeError ? timeErrorMessage : "" } }}
               />
               <TimePicker
                 label="End Time"
                 value={endTime}
+                minTime={startTime}
                 onChange={(newValue) => setEndTime(dayjs(newValue))} 
+                slotProps={{ textField: { error: timeError, helperText: timeError ? timeErrorMessage : "" } }}
               />
             </LocalizationProvider>
 
@@ -376,7 +398,7 @@ export default function CreateNotificationTriggerPage() {
           </Button>
           <Button variant="contained" color="primary" type="submit"
             id="createNewNotification">
-              {notifID ? "Edit" : "Create"}
+              {notifID ? "Save" : "Create"}
           </Button>
         </Box>
       </FormControl>
@@ -388,7 +410,8 @@ export default function CreateNotificationTriggerPage() {
           textAlign: 'center',
           mx: 'auto',
           mt: 2,
-          cursor: 'pointer'
+          cursor: 'pointer',
+          fontFamily: 'Roboto, sans-serif',
         }}
         onClick={() => setAdvancedView(!advancedView)}>
         {advancedView ? "Hide Advanced Options" : "Show Advanced Options"}
