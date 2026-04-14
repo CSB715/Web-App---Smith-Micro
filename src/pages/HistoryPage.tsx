@@ -18,6 +18,7 @@ import {
   Chip,
   List,
   ListItem,
+  Pagination,
 } from "@mui/material";
 
 function sortVisitsByDate(visits: { [key: string]: Visit[] }) {
@@ -31,6 +32,8 @@ function History() {
   const [userId, setUserId] = useState<string>("");
   const [modalOpen, setModalOpen] = useState(false);
   const [siteUrl, setSiteUrl] = useState("");
+  const DAYS_PER_PAGE = 7; // each page is one week of history
+  const [page, setPage] = useState(1);
 
   const closeModal = () => {
     setModalOpen(false);
@@ -81,6 +84,11 @@ function History() {
       }
       load();
     }, [userId]);
+
+    // reset to page 1 whenever the visits change.
+    useEffect(() => {
+      setPage(1);
+    }, [visits]);
 
     useEffect(() => {
       // if there are no selected devices we should clear the visits
@@ -133,6 +141,15 @@ function History() {
   const { devices, visits, selectedDevices, setSelectedDevices } = useData();
   const totalVisits = Object.values(visits).flat().length;
   const totalDays = Object.keys(visits).length;
+
+  
+  const allDayEntries = Object.entries(visits); // all [date, Visit[]] pairs
+  const pageCount = Math.ceil(allDayEntries.length / DAYS_PER_PAGE);
+
+  const paginatedEntries = allDayEntries.slice(
+    (page - 1) * DAYS_PER_PAGE,
+    page * DAYS_PER_PAGE
+  );
 
   function getStatsBar() {
     return (
@@ -242,8 +259,9 @@ function History() {
         </Typography>
       </Box>
     ) : (
+      <>
       <List disablePadding>
-        {Object.entries(visits).map(([key, value]: [string, Visit[]]) => {
+        {paginatedEntries.map(([key, value]: [string, Visit[]]) => {
           const sortedValues = value.sort(
             (a, b) => b.startDateTime.getTime() - a.startDateTime.getTime(),
           );
@@ -325,9 +343,21 @@ function History() {
                           marginRight: "5%",
                         }}
                       >
-                        {visit.startDateTime.getHours() +
+                        {(visit.startDateTime.getHours() % 12) +
                           ":" +
-                          visit.startDateTime.getMinutes()}
+                          visit.startDateTime.getMinutes().toString().padStart(2, "0") +
+                          " " +
+                          (visit.startDateTime.getHours() >= 12
+                            ? "PM"
+                            : "AM" +
+                              " - " +
+                              (visit.endDateTime.getHours() % 12) +
+                              ":" +
+                              visit.endDateTime.getMinutes().toString().padStart(2, "0") +
+                              " " +
+                              (visit.endDateTime.getHours() >= 12
+                                ? "PM"
+                                : "AM"))}
                       </Typography>
                     </ListItem>
                   ))}
@@ -337,6 +367,19 @@ function History() {
           );
         })}
       </List>
+      
+      {pageCount > 1 && (
+        <Box sx={{ display: "flex", justifyContent: "center", py: 3 }}>
+          <Pagination
+            count={pageCount}
+            page={page}
+             onChange={(_, value) => setPage(value)}
+            color="primary"
+            size="small"
+          />
+        </Box>
+      )}
+      </>
     );
   }
 
