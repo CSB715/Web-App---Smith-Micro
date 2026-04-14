@@ -15,7 +15,7 @@ import {
   type DocumentData,
   DocumentSnapshot,
 } from "firebase/firestore";
-import { onAuthStateChanged, sendPasswordResetEmail} from "firebase/auth";
+import { onAuthStateChanged, sendPasswordResetEmail } from "firebase/auth";
 import ErrorAlert from "../components/ErrorAlert";
 import PasswordResetAlert from "../components/PasswordResetAlert";
 import DeleteAccountModal from "../components/DeleteAccountModal";
@@ -42,7 +42,6 @@ const style = {
   p: 4,
 };
 
-
 function Account() {
   const hasMounted = useRef(false);
 
@@ -52,7 +51,9 @@ function Account() {
   const [devices, setDevices] = useState<Array<DocumentData>>([]);
   const [currDevice, setCurrDevice] = useState<DocumentData | null>(null);
   const [isAccount, setIsAccount] = useState<boolean>(false);
-  const [lastResetEmailDateTime, setLastResetEmailDateTime] = useState<number | null>(null);
+  const [lastResetEmailDateTime, setLastResetEmailDateTime] = useState<
+    number | null
+  >(null);
   const [deleteDeviceOpen, setDeleteDeviceOpen] = useState(false);
   const [renameDeviceOpen, setRenameDeviceOpen] = useState(false);
   const [addEmailOpen, setAddEmailOpen] = useState(false);
@@ -60,7 +61,10 @@ function Account() {
   const [deleteAccountOpen, setDeleteAccountOpen] = useState(false);
   const [resetAlertOpen, setResetAlertOpen] = useState(false);
   const [errorAlertOpen, setErrorAlertOpen] = useState(false);
-  const [pendingDelete, setPendingDelete] = useState<{ type: "email" | "phone"; value: string } | null>(null);
+  const [pendingDelete, setPendingDelete] = useState<{
+    type: "email" | "phone";
+    value: string;
+  } | null>(null);
 
   const updateUserData: (data: UserData) => void = (data) => {
     setUserData(data);
@@ -119,19 +123,25 @@ function Account() {
   async function handleResetPassword() {
     const auth = getAuthInstance();
     try {
-        if(lastResetEmailDateTime && new Date().getTime() - lastResetEmailDateTime < 120000) {
-            const secondsLeft = Math.ceil((120000 - (new Date().getTime() - lastResetEmailDateTime)) / 1000);
-            alert(`Please wait ${secondsLeft} seconds before sending another password reset email.`);
-            return;
-        }
-        await sendPasswordResetEmail(auth, auth.currentUser!.email!);
-        setLastResetEmailDateTime(new Date().getTime());
-        setResetAlertOpen(true);
+      if (
+        lastResetEmailDateTime &&
+        new Date().getTime() - lastResetEmailDateTime < 120000
+      ) {
+        const secondsLeft = Math.ceil(
+          (120000 - (new Date().getTime() - lastResetEmailDateTime)) / 1000,
+        );
+        alert(
+          `Please wait ${secondsLeft} seconds before sending another password reset email.`,
+        );
+        return;
+      }
+      await sendPasswordResetEmail(auth, auth.currentUser!.email!);
+      setLastResetEmailDateTime(new Date().getTime());
+      setResetAlertOpen(true);
     } catch (error: any) {
-        alert(`Error: ${error.message}`);
+      alert(`Error: ${error.message}`);
     }
   }
-
 
   return (
     <Box sx={{ px: 0 }}>
@@ -149,7 +159,14 @@ function Account() {
             "&:hover": { opacity: 0.7 },
           }}
         >
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <svg
+            width="22"
+            height="22"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+          >
             <polyline points="15 18 9 12 15 6" />
           </svg>
         </Box>
@@ -187,7 +204,13 @@ function Account() {
       </Box>
       <Paper
         variant="outlined"
-        sx={{ borderRadius: 0, borderLeft: "none", borderRight: "none", overflow: "hidden", bgcolor: "background.paper" }}
+        sx={{
+          borderRadius: 0,
+          borderLeft: "none",
+          borderRight: "none",
+          overflow: "hidden",
+          bgcolor: "background.paper",
+        }}
       >
         <Box
           sx={{
@@ -200,19 +223,35 @@ function Account() {
         >
           <Box
             sx={{
-              width: 38, height: 38, borderRadius: 2, flexShrink: 0,
-              bgcolor: "primary.main", opacity: 0.9,
-              display: "flex", alignItems: "center", justifyContent: "center",
+              width: 38,
+              height: 38,
+              borderRadius: 2,
+              flexShrink: 0,
+              bgcolor: "primary.main",
+              opacity: 0.9,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
               color: "#fff",
             }}
           >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75">
-              <rect x="2" y="4" width="20" height="16" rx="2" /><polyline points="22,7 12,13 2,7" />
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.75"
+            >
+              <rect x="2" y="4" width="20" height="16" rx="2" />
+              <polyline points="22,7 12,13 2,7" />
             </svg>
           </Box>
 
           <Box sx={{ flex: 1, minWidth: 0 }}>
-            <Typography sx={{ fontWeight: 500, fontSize: "0.9rem", lineHeight: 1.2 }}>
+            <Typography
+              sx={{ fontWeight: 500, fontSize: "0.9rem", lineHeight: 1.2 }}
+            >
               {getAuthInstance().currentUser?.email}
             </Typography>
           </Box>
@@ -249,7 +288,13 @@ function Account() {
       </Box>
       <Paper
         variant="outlined"
-        sx={{ borderRadius: 0, borderLeft: "none", borderRight: "none", overflow: "hidden", bgcolor: "background.paper" }}
+        sx={{
+          borderRadius: 0,
+          borderLeft: "none",
+          borderRight: "none",
+          overflow: "hidden",
+          bgcolor: "background.paper",
+        }}
       >
         {userData?.emails?.map((email, idx) => (
           <Box key={email}>
@@ -265,14 +310,16 @@ function Account() {
               }}
             >
               <Typography sx={{ flex: 1, fontSize: "0.9rem" }}>
-                {email}
+                {email.substring(0, 20) + (email.length > 20 ? "..." : "")}
               </Typography>
               <Button
                 variant="outlined"
                 color="error"
                 size="small"
                 sx={{ width: 80, height: 30, justifyContent: "center" }}
-                onClick={() => setPendingDelete({ type: "email", value: email })}
+                onClick={() =>
+                  setPendingDelete({ type: "email", value: email })
+                }
               >
                 Del
               </Button>
@@ -311,7 +358,13 @@ function Account() {
       </Box>
       <Paper
         variant="outlined"
-        sx={{ borderRadius: 0, borderLeft: "none", borderRight: "none", overflow: "hidden", bgcolor: "background.paper" }}
+        sx={{
+          borderRadius: 0,
+          borderLeft: "none",
+          borderRight: "none",
+          overflow: "hidden",
+          bgcolor: "background.paper",
+        }}
       >
         {userData?.phones?.map((phone, idx) => (
           <Box key={phone}>
@@ -338,7 +391,9 @@ function Account() {
                 color="error"
                 size="small"
                 sx={{ width: 80, height: 30, justifyContent: "center" }}
-                onClick={() => setPendingDelete({ type: "phone", value: phone })}
+                onClick={() =>
+                  setPendingDelete({ type: "phone", value: phone })
+                }
               >
                 Del
               </Button>
@@ -348,10 +403,7 @@ function Account() {
         ))}
       </Paper>
       <Box sx={{ px: 2.5, mt: 1.5 }}>
-        <Button
-          variant="contained"
-          onClick={() => setAddPhoneOpen(true)}
-        >
+        <Button variant="contained" onClick={() => setAddPhoneOpen(true)}>
           Add Phone Number
         </Button>
       </Box>
@@ -374,7 +426,13 @@ function Account() {
       </Box>
       <Paper
         variant="outlined"
-        sx={{ borderRadius: 0, borderLeft: "none", borderRight: "none", overflow: "hidden", bgcolor: "background.paper" }}
+        sx={{
+          borderRadius: 0,
+          borderLeft: "none",
+          borderRight: "none",
+          overflow: "hidden",
+          bgcolor: "background.paper",
+        }}
       >
         {devices.map((device, idx) => (
           <Box key={device.id}>
@@ -391,14 +449,29 @@ function Account() {
             >
               <Box
                 sx={{
-                  width: 38, height: 38, borderRadius: 2, flexShrink: 0,
-                  bgcolor: "primary.main", opacity: 0.9,
-                  display: "flex", alignItems: "center", justifyContent: "center",
+                  width: 38,
+                  height: 38,
+                  borderRadius: 2,
+                  flexShrink: 0,
+                  bgcolor: "primary.main",
+                  opacity: 0.9,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
                   color: "#fff",
                 }}
               >
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75">
-                  <rect x="2" y="3" width="20" height="14" rx="2" ry="2" /><line x1="8" y1="21" x2="16" y2="21" /><line x1="12" y1="17" x2="12" y2="21" />
+                <svg
+                  width="18"
+                  height="18"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.75"
+                >
+                  <rect x="2" y="3" width="20" height="14" rx="2" ry="2" />
+                  <line x1="8" y1="21" x2="16" y2="21" />
+                  <line x1="12" y1="17" x2="12" y2="21" />
                 </svg>
               </Box>
 
@@ -433,14 +506,35 @@ function Account() {
 
       {/* ── Account Actions ── */}
       <Divider sx={{ mt: 4, mb: 3 }} />
-      <Box sx={{ px: 2.5, display: "flex", flexDirection: "column", gap: 1.5, mb: 3 }}>
-        <Button variant="outlined" fullWidth onClick={() => handleResetPassword()}>
+      <Box
+        sx={{
+          px: 2.5,
+          display: "flex",
+          flexDirection: "column",
+          gap: 1.5,
+          mb: 3,
+        }}
+      >
+        <Button
+          variant="outlined"
+          fullWidth
+          onClick={() => handleResetPassword()}
+        >
           Reset Password
         </Button>
-        <Button variant="outlined" fullWidth onClick={() => getAuthInstance().signOut()}>
+        <Button
+          variant="outlined"
+          fullWidth
+          onClick={() => getAuthInstance().signOut()}
+        >
           Sign Out
         </Button>
-        <Button variant="outlined" color="error" fullWidth onClick={() => setDeleteAccountOpen(true)}>
+        <Button
+          variant="outlined"
+          color="error"
+          fullWidth
+          onClick={() => setDeleteAccountOpen(true)}
+        >
           Delete Account
         </Button>
       </Box>
@@ -457,9 +551,12 @@ function Account() {
             Are you sure you want to delete this {pendingDelete?.type}?
           </Typography>
           <Typography sx={{ color: "text.secondary", mb: 3 }}>
-            {pendingDelete?.type === "phone" && pendingDelete.value.startsWith("+1") && pendingDelete.value.length === 12
+            {pendingDelete?.type === "phone" &&
+            pendingDelete.value.startsWith("+1") &&
+            pendingDelete.value.length === 12
               ? `${pendingDelete.value.slice(2, 5)}-${pendingDelete.value.slice(5, 8)}-${pendingDelete.value.slice(8)}`
-              : pendingDelete?.type === "phone" && pendingDelete.value.length === 10
+              : pendingDelete?.type === "phone" &&
+                  pendingDelete.value.length === 10
                 ? `${pendingDelete.value.slice(0, 3)}-${pendingDelete.value.slice(3, 6)}-${pendingDelete.value.slice(6)}`
                 : pendingDelete?.value}
           </Typography>
@@ -471,8 +568,10 @@ function Account() {
               variant="outlined"
               color="error"
               onClick={() => {
-                if (pendingDelete?.type === "email") handleDeleteEmail(pendingDelete.value);
-                else if (pendingDelete?.type === "phone") handleDeletePhone(pendingDelete.value);
+                if (pendingDelete?.type === "email")
+                  handleDeleteEmail(pendingDelete.value);
+                else if (pendingDelete?.type === "phone")
+                  handleDeletePhone(pendingDelete.value);
                 setPendingDelete(null);
               }}
             >

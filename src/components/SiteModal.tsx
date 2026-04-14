@@ -33,6 +33,8 @@ const style = {
   left: "50%",
   transform: "translate(-50%, -50%)",
   width: 400,
+  maxHeight: "90vh",
+  overflow: "auto",
   bgcolor: "background.paper",
   border: "2px solid #000",
   boxShadow: 24,
@@ -79,7 +81,7 @@ export default function SiteModal({
     const [categorization, setCategorization] = useState<Categorization>({
       siteUrl: url,
       category: [],
-      is_flagged: false,
+      flagged_for: [],
     });
     const [override, setOverride] = useState<Override>({
       category: [],
@@ -102,7 +104,7 @@ export default function SiteModal({
         const cat = {
           siteUrl: url,
           category: catData?.data.category ?? ["Unknown"],
-          is_flagged: catData?.data.is_flagged ?? false,
+          flagged_for: catData?.data.flagged_for ?? [],
         };
         setCategorization(cat);
 
@@ -183,7 +185,7 @@ export default function SiteModal({
             id="modal-modal-title"
             sx={{ fontSize: "1.5rem", fontWeight: "bold" }}
           >
-            {url}
+            {url.substring(0, 20) + (url.length > 20 ? "..." : "")}
           </Typography>
           <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
             <Button onClick={() => closeModal()}>X</Button>

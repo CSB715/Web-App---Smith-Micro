@@ -1,17 +1,32 @@
 import "../styles/Page.css";
-import { getAuthInstance, GetUserRef, GetUserOverrides } from "../utils/firestore";
+import {
+  getAuthInstance,
+  GetUserRef,
+  GetUserOverrides,
+} from "../utils/firestore";
 import { useState, useRef, useEffect } from "react";
 import AddSiteModal from "../components/AddSiteModal";
 import SiteModal from "../components/SiteModal";
 import { useNavigate } from "react-router";
-import { onAuthStateChanged } from "firebase/auth"; 
-import { Button, Box, Typography, CircularProgress, List, ListItem, ListItemButton } from "@mui/material";
-
+import { onAuthStateChanged } from "firebase/auth";
+import { classifyURL } from "../utils/classifier";
+import {
+  Button,
+  Box,
+  Typography,
+  CircularProgress,
+  List,
+  ListItem,
+  ListItemButton,
+  IconButton,
+} from "@mui/material";
+import { deleteDoc, doc } from "firebase/firestore";
+import DeleteIcon from "@mui/icons-material/Delete";
 
 async function loadOverrides(uid: string) {
   const userRef = await GetUserRef(uid);
   const sitesArr = await GetUserOverrides(userRef);
-  const siteURLS = [];
+  const siteURLS: string[] = [];
   for (const site of sitesArr.docs) {
     siteURLS.push(site.id);
   }
@@ -46,7 +61,7 @@ function SiteCategories() {
   }, []);
 
   return (
-    <Box       
+    <Box
       sx={{
         minHeight: "100vh",
         bgcolor: "background.default",
@@ -68,7 +83,14 @@ function SiteCategories() {
             "&:hover": { opacity: 0.7 },
           }}
         >
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <svg
+            width="22"
+            height="22"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+          >
             <polyline points="15 18 9 12 15 6" />
           </svg>
         </Box>
@@ -78,7 +100,6 @@ function SiteCategories() {
           sx={{
             fontSize: "2rem",
             letterSpacing: "-0.02em",
-            mb: 2,
             fontWeight: "bold",
             color: "#01579b",
             alignSelf: "center",
@@ -89,15 +110,38 @@ function SiteCategories() {
         </Typography>
       </Box>
 
+      <Button variant="contained" onClick={() => setModalOpen(true)}>
+        Set Site Category
+      </Button>
 
-      { !fetchedData.current && 
-        <CircularProgress sx={{ justifySelf: "center", alignSelf: "center", mt: 2 }} />
-      }
+      {!fetchedData.current && (
+        <CircularProgress
+          sx={{ justifySelf: "center", alignSelf: "center", mt: 2 }}
+        />
+      )}
 
       <List aria-label="List of flagged sites">
         {sites.map((site) => (
-          <ListItem key={site}>
-            <ListItemButton 
+          <ListItem
+            key={site}
+            secondaryAction={
+              <IconButton
+                edge="end"
+                aria-label="delete"
+                onClick={async () => {
+                  const uref = await GetUserRef(uid);
+                  const siteRef = doc(uref, "Overrides", site);
+
+                  deleteDoc(siteRef).then(async () => {
+                    setSites(await loadOverrides(uid));
+                  });
+                }}
+              >
+                <DeleteIcon />
+              </IconButton>
+            }
+          >
+            <ListItemButton
               sx={{
                 textTransform: "uppercase",
               }}
@@ -107,8 +151,8 @@ function SiteCategories() {
                 setSiteModalOpen(true);
               }}
             >
-              <Typography variant="body1" >
-                {site}
+              <Typography variant="body1">
+                {site.substring(0, 20) + (site.length > 20 ? "..." : "")}
               </Typography>
             </ListItemButton>
           </ListItem>
@@ -117,20 +161,27 @@ function SiteCategories() {
 
       <br />
 
-      <Button variant="contained" onClick={() => setModalOpen(true)}>Set Site Category</Button>
-
-
       {/* Modals */}
       <SiteModal
         url={siteUrl}
         isOpen={siteModalOpen}
-        closeModal={async () => {setSites(await loadOverrides(uid)); setSiteModalOpen(false)}}
+        closeModal={async () => {
+          setSites(await loadOverrides(uid));
+          setSiteModalOpen(false);
+        }}
       />
-      <AddSiteModal isOpen={modalOpen} closeModal={() => {setModalOpen(false)}} openSiteModal={(url: string) => {
-        setSiteUrl(url);
-        setSiteModalOpen(true);
-      }} />
-    </ Box>
+      <AddSiteModal
+        isOpen={modalOpen}
+        closeModal={() => {
+          setModalOpen(false);
+        }}
+        openSiteModal={(url: string) => {
+          classifyURL(url);
+          setSiteUrl(url);
+          setSiteModalOpen(true);
+        }}
+      />
+    </Box>
   );
 }
 

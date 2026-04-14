@@ -36,7 +36,21 @@ export default function WeekdayPicker({ selectedDays, setSelectedDays }: Weekday
           key={day}
           value={day}
           aria-label={day}
-          sx={{ flex: '1 1 0%', minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
+          sx={{
+            flex: '1 1 0%',
+            minWidth: 0,
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
+            // style the selected state using theme primary color
+            '&.Mui-selected': {
+              bgcolor: 'primary.main',
+              color: 'primary.contrastText',
+              '&:hover': {
+                bgcolor: 'primary.dark',
+              },
+            },
+          }}
         >
           {day}
         </ToggleButton>

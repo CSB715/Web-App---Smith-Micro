@@ -224,9 +224,8 @@ function History() {
         <Typography
           variant="caption"
           sx={{
-            fontSize: "0.68rem",
-            letterSpacing: "0.11em",
-            textTransform: "uppercase",
+            fontSize: "1rem",
+            letterSpacing: "0.04em",
             color: "black",
             display: "block",
             mb: 1.5,
@@ -329,7 +328,8 @@ function History() {
                           setModalOpen(true);
                         }}
                       >
-                        {visit.siteUrl}
+                        {visit.siteUrl.substring(0, 20) +
+                          (visit.siteUrl.length > 20 ? "..." : "")}
                       </Button>
                       <Typography
                         variant="caption"

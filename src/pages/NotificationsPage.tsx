@@ -165,11 +165,10 @@ function Notifications() {
         aria-label="device filter"
       >
         <Typography
-          variant="caption"
+          variant="h2"
           sx={{
-            fontSize: "0.68rem",
-            letterSpacing: "0.11em",
-            textTransform: "uppercase",
+            fontSize: "1rem",
+            letterSpacing: "0.04em",
             color: "black",
             display: "block",
             mb: 1.5,

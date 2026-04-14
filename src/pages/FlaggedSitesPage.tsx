@@ -1,58 +1,72 @@
 import { useEffect, useState, useRef } from "react";
 import { onAuthStateChanged } from "firebase/auth";
-import {
-  getAuthInstance,
-  GetCategorizations,
-  GetOverrides,
-} from "../utils/firestore";
+import { getAuthInstance, GetOverrides } from "../utils/firestore";
 import { useNavigate } from "react-router";
 import type { Categorization } from "../utils/models";
 import SiteModal from "../components/SiteModal";
 import AddFlaggedSiteModal from "../components/AddFlaggedSiteModal";
 import { type DocumentData } from "firebase/firestore";
-import { Typography, Box, List, ListItem, ListItemButton, CircularProgress, Button } from "@mui/material";
+import {
+  Typography,
+  Box,
+  List,
+  ListItem,
+  ListItemButton,
+  CircularProgress,
+  Button,
+  IconButton,
+} from "@mui/material";
+import DeleteIcon from "@mui/icons-material/Delete";
 
-function combineURLS(flaggedFromCats: Categorization[], flaggedFromOvers: Categorization[]) {
-  return flaggedFromCats.concat(
-    flaggedFromOvers.filter(
-      (site) => !flaggedFromCats.some((c) => c.siteUrl === site.siteUrl),
-    ),
-  );
-}
+// function combineURLS(flaggedFromCats: Categorization[], flaggedFromOvers: Categorization[]) {
+//   return flaggedFromCats.concat(
+//     flaggedFromOvers.filter(
+//       (site) => !flaggedFromCats.some((c) => c.siteUrl === site.siteUrl),
+//     ),
+//   );
+// }
 
-function getFlaggedSitesFromCategorizations(catsData: {id: string, data: DocumentData}[]) {
-  return catsData
-  .filter((cat) => cat.data.is_flagged === true)
-  .map((cat) => ({
-    siteUrl: cat.id,
-    category: cat.data.category,
-    is_flagged: cat.data.is_flagged,
-  }));
-}
+// function getFlaggedSitesFromCategorizations(catsData: {id: string, data: DocumentData}[]) {
+//   return catsData
+//   .filter((cat) => cat.data.is_flagged === true)
+//   .map((cat) => ({
+//     siteUrl: cat.id,
+//     category: cat.data.category,
+//     flagged_for: [],
+//   }));
+// }
 
-function getFlaggedSitesFromOverrides(oversData: {id: string, data: DocumentData}[]) {
+function getFlaggedSitesFromOverrides(
+  oversData: { id: string; data: DocumentData }[],
+) {
   return oversData
-  .filter((override) => 'flagged_for' in override.data && override.data.flagged_for.length > 0)
-  .map((override) => ({
-    siteUrl: override.id,
-    category: override.data.category,
-    is_flagged: true,
-  }));
+    .filter(
+      (override) =>
+        "flagged_for" in override.data && override.data.flagged_for.length > 0,
+    )
+    .map((override) => ({
+      siteUrl: override.id,
+      category: override.data.category,
+      flagged_for: override.data.flagged_for,
+    }));
 }
 
-function useSites(userId: string, setFlaggedSites: (sites: Categorization[]) => void) {
+function useSites(
+  fetchedData: React.RefObject<boolean>,
+  userId: string,
+  setFlaggedSites: (sites: Categorization[]) => void,
+) {
   // Fetch both categorizations and overrides initially
-  Promise.all([GetCategorizations(), GetOverrides(userId)]).then(
-    ([catsData, oversData]) => {
-      const flaggedFromCats = getFlaggedSitesFromCategorizations(catsData);
-      const flaggedFromOvers = getFlaggedSitesFromOverrides(oversData);
+  Promise.all([GetOverrides(userId)]).then(([oversData]) => {
+    // const flaggedFromCats = getFlaggedSitesFromCategorizations(catsData);
+    const flaggedFromOvers = getFlaggedSitesFromOverrides(oversData);
 
-      // Combine and deduplicate by siteUrl
-      const combined = combineURLS(flaggedFromCats, flaggedFromOvers);
+    // Combine and deduplicate by siteUrl
+    // const combined = combineURLS(flaggedFromCats, flaggedFromOvers);
 
-      setFlaggedSites(combined);
-    },
-  );
+    setFlaggedSites(flaggedFromOvers);
+    fetchedData.current = true;
+  });
 }
 
 function FlaggedSites() {
@@ -64,16 +78,19 @@ function FlaggedSites() {
   const fetchedData = useRef(false);
   const [uid, setUID] = useState<string>("");
 
-  const closeSiteModal = () => {setSiteModalOpen(false);}
-  const closeNewModal = () => {setNewModalOpen(false);}
+  const closeSiteModal = () => {
+    setSiteModalOpen(false);
+  };
+  const closeNewModal = () => {
+    setNewModalOpen(false);
+  };
 
   useEffect(() => {
     fetchedData.current = false;
     onAuthStateChanged(getAuthInstance(), (user) => {
       if (user) {
         setUID(user.uid);
-        useSites(user.uid, setFlaggedSites);
-        fetchedData.current = true;
+        useSites(fetchedData, user.uid, setFlaggedSites);
       } else {
         navigate("/login", { replace: true });
       }
@@ -81,7 +98,7 @@ function FlaggedSites() {
   }, [navigate]);
 
   function reloadData() {
-    useSites(uid, setFlaggedSites);
+    useSites(fetchedData, uid, setFlaggedSites);
   }
 
   return (
@@ -109,14 +126,21 @@ function FlaggedSites() {
           "&:hover": { opacity: 0.7 },
         }}
       >
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <svg
+          width="22"
+          height="22"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+        >
           <polyline points="15 18 9 12 15 6" />
         </svg>
       </Box>
       <Typography
         variant="h1"
         id="flagged-sites-title"
-        sx={{ 
+        sx={{
           fontSize: "2rem",
           letterSpacing: "-0.02em",
           mb: 2,
@@ -129,14 +153,35 @@ function FlaggedSites() {
         Flagged Sites
       </Typography>
 
-      { !fetchedData.current && 
-        <CircularProgress sx={{ justifySelf: "center", alignSelf: "center", mt: 2 }} />
-      }
+      <Button
+        variant="contained"
+        color="primary"
+        onClick={() => setNewModalOpen(true)}
+      >
+        Add Site
+      </Button>
+
+      {!fetchedData.current && (
+        <CircularProgress
+          sx={{ justifySelf: "center", alignSelf: "center", mt: 2 }}
+        />
+      )}
 
       <List aria-label="List of flagged sites">
         {flaggedSites.map((site) => (
-          <ListItem key={site.siteUrl}>
-            <ListItemButton 
+          <ListItem
+            key={site.siteUrl}
+            secondaryAction={
+              <IconButton
+                edge="end"
+                aria-label="delete"
+                onClick={async () => {}}
+              >
+                <DeleteIcon />
+              </IconButton>
+            }
+          >
+            <ListItemButton
               sx={{
                 textTransform: "uppercase",
               }}
@@ -146,17 +191,25 @@ function FlaggedSites() {
                 setSiteModalOpen(true);
               }}
             >
-              <Typography variant="body1" >
-                {site.siteUrl}
+              <Typography variant="body1">
+                {site.siteUrl.substring(0, 20) +
+                  (site.siteUrl.length > 20 ? "..." : "")}
               </Typography>
             </ListItemButton>
           </ListItem>
         ))}
       </List>
-      <Button variant="contained" color="primary" onClick={() => setNewModalOpen(true)}>Add Site</Button>
 
-      <AddFlaggedSiteModal isOpen={newModalOpen} closeModal={closeNewModal} reloadData={reloadData}/>
-      <SiteModal url={siteUrl} isOpen={siteModalOpen} closeModal={closeSiteModal} />
+      <AddFlaggedSiteModal
+        isOpen={newModalOpen}
+        closeModal={closeNewModal}
+        reloadData={reloadData}
+      />
+      <SiteModal
+        url={siteUrl}
+        isOpen={siteModalOpen}
+        closeModal={closeSiteModal}
+      />
     </Box>
   );
 }
