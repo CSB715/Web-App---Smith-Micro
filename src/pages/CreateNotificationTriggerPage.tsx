@@ -151,9 +151,15 @@ export default function CreateNotificationTriggerPage() {
   function createNotification(e: React.FormEvent<HTMLFormElement>) {
     setSubmitted(true);
 
-    if (categories.length === 0 || selectedDevices.length === 0) {
+    if (selectedDevices.length === 0) {
       e.preventDefault();
-      console.log("Nope.")
+      console.log("no devices");
+      return;
+    }
+
+    if (alertType === "Category" && categories.length === 0) {
+      e.preventDefault();
+      console.log("no categories");
       return;
     }
 

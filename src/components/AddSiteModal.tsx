@@ -86,7 +86,7 @@ export default function AddSiteModal( { isOpen, closeModal, openSiteModal } : Pr
           error={siteError}
           helperText={siteErrorMessage}
           aria-labelledby="url-input-text-field"
-          placeholder="www.example.com"
+          placeholder="example.com"
           onChange={(event) => {
             setUrl(event.target.value);
           }}
