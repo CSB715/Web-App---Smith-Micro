@@ -7,7 +7,6 @@ import {
   Checkbox,
   Divider,
   FormControlLabel,
-  minor,
   Paper,
   Table,
   TableBody,
