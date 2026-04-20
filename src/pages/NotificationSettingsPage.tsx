@@ -89,18 +89,52 @@ function NotificationSettings() {
       }
 
       <Box component="section">
-        <List>
+        <List sx={{ px: { xs: 0, sm: 0 } }}>
           {notifications.map((notification) => (
-            <ListItem key={notification.id} sx={{ display: "flex", alignItems: "center" }} >
-              <ListItemText sx={{ flex: 1, pl: 2 }} >
+            <ListItem
+              key={notification.id}
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                px: { xs: 0, sm: 2 },
+                py: { xs: 0.75, sm: 1 },
+                gap: { xs: 1, sm: 0 },
+              }}
+            >
+              <ListItemText
+                sx={{
+                  flex: 1,
+                  pl: { xs: 0, sm: 2 },
+                  pr: { xs: 1, sm: 0 },
+                  m: 0,
+                  "& .MuiListItemText-primary": {
+                    fontSize: { xs: "0.95rem", sm: "1rem" },
+                    lineHeight: 1.3,
+                    wordBreak: "break-word",
+                  },
+                }}
+              >
                 {notification.data()!.name}
               </ListItemText>
-              <Box sx={{ display: "flex", gap: 1, pr: 2, alignItems: 'center', justifyContent: 'center' }} >
-                <Button sx={{
-                  width: 80,
-                  height: 30,
+              <Box
+                sx={{
+                  display: "flex",
+                  gap: { xs: 0.75, sm: 1 },
+                  pr: { xs: 0, sm: 2 },
+                  alignItems: "center",
                   justifyContent: "center",
+                  flexShrink: 0,
                 }}
+              >
+                <Button
+                  sx={{
+                    width: { xs: 56, sm: 80 },
+                    minWidth: { xs: 56, sm: 64 },
+                    height: 30,
+                    px: { xs: 0.5, sm: 1 },
+                    fontSize: { xs: "0.75rem", sm: "0.875rem" },
+                    justifyContent: "center",
+                  }}
                   onClick={() =>
                     navigate("/settings/notifications/create-notification", { state : {notifID : notification.id } })
                   }
@@ -108,11 +142,15 @@ function NotificationSettings() {
                 >
                   Edit
                 </Button>
-                <Button sx={{ 
-                  width: 80,
-                  height: 30,
-                  justifyContent: "center",
-                 }}
+                <Button
+                  sx={{
+                    width: { xs: 56, sm: 80 },
+                    minWidth: { xs: 56, sm: 64 },
+                    height: 30,
+                    px: { xs: 0.5, sm: 1 },
+                    fontSize: { xs: "0.75rem", sm: "0.875rem" },
+                    justifyContent: "center",
+                  }}
                   onClick={() => {setCurrTrigger(notification); setDeleteModalOpen(true)}}
                   variant="outlined" color="error"
                 >

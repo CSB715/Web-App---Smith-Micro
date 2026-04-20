@@ -1,23 +1,13 @@
 import { Button, Modal, Box, TextField, Typography } from "@mui/material";
 import { useEffect, useState } from "react";
-import { WriteOverride, GetDevices, GetCategories, getAuthInstance } from "../utils/firestore";
-import { type Override } from "../utils/models";
+import { WriteFlag, GetDevices, getAuthInstance } from "../utils/firestore";
 import { onAuthStateChanged } from "firebase/auth";
 import { useNavigate } from "react-router";
 import DeviceSelect from "./DeviceSelect";
 import { type Device } from "../utils/models";
+import { getModalStyle } from "../utils/modalStyle";
 
-const style = {
-  position: "absolute",
-  top: "50%",
-  left: "50%",
-  transform: "translate(-50%, -50%)",
-  width: 400,
-  bgcolor: "background.paper",
-  border: "2px solid #000",
-  boxShadow: 24,
-  p: 4,
-};
+const style = getModalStyle("large");
 
 type Props = {
   closeModal: () => void, 
@@ -66,7 +56,8 @@ export default function AddFlaggedSiteModal({ closeModal, isOpen, reloadData } :
       return;
     }
     try {
-      await WriteOverride(userId, url, override);
+      const flagged_for = selectedDevices.map((d) => d.name);
+      await WriteFlag(userId, url, flagged_for);
       reloadData();
       handleClose();
     } catch (e) {
@@ -77,13 +68,7 @@ export default function AddFlaggedSiteModal({ closeModal, isOpen, reloadData } :
   };
 
   function useData(userId: string, open: boolean) {
-    const [categories, setCategories] = useState<string[]>([]);
     const [url, setUrl] = useState("");
-    const [override, setOverride] = useState<Override>({
-      category: [],
-      flagged_for: [],
-    });
-    const [allCategories, setAllCategories] = useState<string[]>([]);
 
     useEffect(() => {
       if (!open) return;
@@ -95,31 +80,19 @@ export default function AddFlaggedSiteModal({ closeModal, isOpen, reloadData } :
           name: d.data.name,
         }));
         setDevices(normalizedDevices);
-        const categoriesData = await GetCategories();
-        const allCategories: string[] = categoriesData.map((c) => c.data.label);
-        setAllCategories(allCategories);
       }
 
       load();
     }, [open, userId]);
 
-    useEffect(() => {
-      if (!open) return;
-
-      setOverride({ category: categories, flagged_for: selectedDevices.map((d) => d.name) });
-    }, [categories, url]);
 
     return {
-      categories,
-      setCategories,
       url,
-      setUrl,
-      override,
-      allCategories,
+      setUrl
     };
   }
 
-  const { url, setUrl, override } =
+  const { url, setUrl } =
     useData(userId, isOpen);
 
   return (
@@ -150,7 +123,7 @@ export default function AddFlaggedSiteModal({ closeModal, isOpen, reloadData } :
           error={siteError}
           helperText={siteErrorMessage}
           aria-labelledby="url-input-text-field"
-          placeholder="www.example.com"
+          placeholder="example.com"
           onChange={(event) => {
             setUrl(event.target.value);
           }}

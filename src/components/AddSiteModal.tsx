@@ -3,19 +3,10 @@ import { doc, DocumentSnapshot, getDoc } from "firebase/firestore";
 import { getDb } from "../utils/firestore";
 import { classifyURL } from "../utils/classifier";
 import { Modal, Box, Button, Typography, TextField, Stack } from "@mui/material";
+import { getModalStyle } from "../utils/modalStyle";
 import "../styles/Modal.css";
 
-const style = {
-  position: "absolute",
-  top: "50%",
-  left: "50%",
-  transform: "translate(-50%, -50%)",
-  width: 400,
-  bgcolor: "background.paper",
-  border: "2px solid #000",
-  boxShadow: 24,
-  p: 4,
-};
+const style = getModalStyle("medium");
 
 async function addSite(closeModal : () => void, url: string, showThisModal : (siteURL: string) => void) {
 
@@ -86,7 +77,7 @@ export default function AddSiteModal( { isOpen, closeModal, openSiteModal } : Pr
           error={siteError}
           helperText={siteErrorMessage}
           aria-labelledby="url-input-text-field"
-          placeholder="www.example.com"
+          placeholder="example.com"
           onChange={(event) => {
             setUrl(event.target.value);
           }}

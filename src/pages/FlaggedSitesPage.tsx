@@ -208,7 +208,7 @@ function FlaggedSites() {
       <SiteModal
         url={siteUrl}
         isOpen={siteModalOpen}
-        closeModal={closeSiteModal}
+        closeModal={() => { reloadData(); closeSiteModal()}}
       />
     </Box>
   );

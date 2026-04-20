@@ -18,6 +18,7 @@ import {
   Chip,
   List,
   ListItem,
+  Pagination,
 } from "@mui/material";
 
 function sortVisitsByDate(visits: { [key: string]: Visit[] }) {
@@ -31,6 +32,8 @@ function History() {
   const [userId, setUserId] = useState<string>("");
   const [modalOpen, setModalOpen] = useState(false);
   const [siteUrl, setSiteUrl] = useState("");
+  const DAYS_PER_PAGE = 7; // each page is one week of history
+  const [page, setPage] = useState(1);
 
   const closeModal = () => {
     setModalOpen(false);
@@ -81,6 +84,11 @@ function History() {
       }
       load();
     }, [userId]);
+
+    // reset to page 1 whenever the visits change.
+    useEffect(() => {
+      setPage(1);
+    }, [visits]);
 
     useEffect(() => {
       // if there are no selected devices we should clear the visits
@@ -133,6 +141,14 @@ function History() {
   const { devices, visits, selectedDevices, setSelectedDevices } = useData();
   const totalVisits = Object.values(visits).flat().length;
   const totalDays = Object.keys(visits).length;
+
+  const allDayEntries = Object.entries(visits); // all [date, Visit[]] pairs
+  const pageCount = Math.ceil(allDayEntries.length / DAYS_PER_PAGE);
+
+  const paginatedEntries = allDayEntries.slice(
+    (page - 1) * DAYS_PER_PAGE,
+    page * DAYS_PER_PAGE,
+  );
 
   function getStatsBar() {
     return (
@@ -241,102 +257,138 @@ function History() {
         </Typography>
       </Box>
     ) : (
-      <List disablePadding>
-        {Object.entries(visits).map(([key, value]: [string, Visit[]]) => {
-          const sortedValues = value.sort(
-            (a, b) => b.startDateTime.getTime() - a.startDateTime.getTime(),
-          );
-          return (
-            <Box key={key} sx={{ mb: 3 }}>
-              {/* Day header — padded to match content */}
-              <Stack
-                direction="row"
-                alignItems="center"
-                spacing={1}
-                sx={{ mb: 0.75, px: 2.5 }}
-              >
-                <Typography
-                  variant="caption"
-                  sx={{
-                    fontSize: "0.65rem",
-                    letterSpacing: "0.1em",
-                    textTransform: "uppercase",
-                    color: "text.primary",
-                    whiteSpace: "nowrap",
-                  }}
+      <>
+        <List disablePadding>
+          {paginatedEntries.map(([key, value]: [string, Visit[]]) => {
+            const sortedValues = value.sort(
+              (a, b) => b.startDateTime.getTime() - a.startDateTime.getTime(),
+            );
+            return (
+              <Box key={key} sx={{ mb: 3 }}>
+                {/* Day header — padded to match content */}
+                <Stack
+                  direction="row"
+                  alignItems="center"
+                  spacing={1}
+                  sx={{ mb: 0.75, px: 2.5 }}
                 >
-                  {key}
-                </Typography>
-                <Divider flexItem sx={{ flex: 1, alignSelf: "center" }} />
-                <Chip
-                  label={value.length}
-                  size="small"
-                  color="primary"
+                  <Typography
+                    variant="caption"
+                    sx={{
+                      fontSize: "0.65rem",
+                      letterSpacing: "0.1em",
+                      textTransform: "uppercase",
+                      color: "text.primary",
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    {key}
+                  </Typography>
+                  <Divider flexItem sx={{ flex: 1, alignSelf: "center" }} />
+                  <Chip
+                    label={value.length}
+                    size="small"
+                    color="primary"
+                    variant="outlined"
+                    sx={{
+                      height: 18,
+                      fontSize: "0.55rem",
+                      "& .MuiChip-label": { px: 0.75 },
+                    }}
+                  />
+                </Stack>
+
+                {/* Card — full bleed, no horizontal margin */}
+                <Paper
                   variant="outlined"
                   sx={{
-                    height: 18,
-                    fontSize: "0.55rem",
-                    "& .MuiChip-label": { px: 0.75 },
+                    borderRadius: 0,
+                    borderLeft: "none",
+                    borderRight: "none",
+                    overflow: "hidden",
+                    bgcolor: "background.paper",
                   }}
-                />
-              </Stack>
-
-              {/* Card — full bleed, no horizontal margin */}
-              <Paper
-                variant="outlined"
-                sx={{
-                  borderRadius: 0,
-                  borderLeft: "none",
-                  borderRight: "none",
-                  overflow: "hidden",
-                  bgcolor: "background.paper",
-                }}
-              >
-                <List disablePadding>
-                  {sortedValues.map((visit: Visit, idx: number) => (
-                    <ListItem
-                      key={visit.id}
-                      disablePadding
-                      divider={idx < value.length - 1}
-                      sx={{
-                        "&:hover": { bgcolor: "action.hover" },
-                        transition: "background 0.15s ease",
-                      }}
-                    >
-                      <Button
-                        sx={{ fontSize: "0.65rem" }}
-                        onClick={() => {
-                          setSiteUrl(visit.siteUrl);
-                          setModalOpen(true);
-                        }}
-                      >
-                        {visit.siteUrl.substring(0, 20) +
-                          (visit.siteUrl.length > 20 ? "..." : "")}
-                      </Button>
-                      <Typography
-                        variant="caption"
+                >
+                  <List disablePadding>
+                    {sortedValues.map((visit: Visit, idx: number) => (
+                      <ListItem
+                        key={visit.id}
+                        disablePadding
+                        divider={idx < value.length - 1}
                         sx={{
-                          fontSize: "0.65rem",
-                          letterSpacing: "0.1em",
-                          textTransform: "uppercase",
-                          color: "text.primary",
-                          whiteSpace: "nowrap",
-                          marginLeft: "auto",
-                          marginRight: "5%",
+                          "&:hover": { bgcolor: "action.hover" },
+                          transition: "background 0.15s ease",
                         }}
                       >
-                        {visit.startDateTime.getHours() +
-                          ":" +
-                          visit.startDateTime.getMinutes()}
-                      </Typography>
-                    </ListItem>
-                  ))}
-                </List>
-              </Paper>
-            </Box>
-          );
-        })}
-      </List>
+                        <Button
+                          sx={{ fontSize: "0.65rem" }}
+                          onClick={() => {
+                            setSiteUrl(visit.siteUrl);
+                            setModalOpen(true);
+                          }}
+                        >
+                          {visit.siteUrl.substring(0, 20) +
+                            (visit.siteUrl.length > 20 ? "..." : "")}
+                        </Button>
+                        <Typography
+                          variant="caption"
+                          sx={{
+                            fontSize: "0.65rem",
+                            letterSpacing: "0.1em",
+                            textTransform: "uppercase",
+                            color: "text.primary",
+                            whiteSpace: "nowrap",
+                            marginLeft: "auto",
+                            marginRight: "5%",
+                          }}
+                        >
+                          {(visit.startDateTime.getHours() % 12 === 0
+                            ? 12
+                            : visit.startDateTime.getHours() % 12) +
+                            ":" +
+                            visit.startDateTime
+                              .getMinutes()
+                              .toString()
+                              .padStart(2, "0") +
+                            " " +
+                            (visit.startDateTime.getHours() >= 12
+                              ? "PM"
+                              : "AM") +
+                                " - " +
+                                (visit.endDateTime.getHours() % 12 === 0
+                                  ? 12
+                                  : visit.endDateTime.getHours() % 12) +
+                                ":" +
+                                visit.endDateTime
+                                  .getMinutes()
+                                  .toString()
+                                  .padStart(2, "0") +
+                                " " +
+                                (visit.endDateTime.getHours() >= 12
+                                  ? "PM"
+                                  : "AM")}
+                        </Typography>
+                      </ListItem>
+                    ))}
+                  </List>
+                </Paper>
+              </Box>
+            );
+          })}
+        </List>
+
+        {pageCount > 1 && (
+          <Box sx={{ display: "flex", justifyContent: "center", py: 3 }}>
+            <Pagination
+              count={pageCount}
+              page={page}
+              onChange={(_, value) => setPage(value)}
+              color="primary"
+              size="small"
+            />
+          </Box>
+        )}
+      </>
     );
   }
 

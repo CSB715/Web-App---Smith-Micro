@@ -168,6 +168,17 @@ export async function GetOverrides(userId: string) {
   }));
 }
 
+export async function WriteFlag(
+  userId: string,
+  displayURL: string,
+  flagged_for: string[],
+) {
+  const overridesRef = doc(getDb(), "Users", userId, "Overrides", displayURL);
+  await setDoc(overridesRef, {
+    flagged_for: flagged_for,
+  });
+}
+
 export async function WriteOverride(
   userId: string,
   displayURL: string,
