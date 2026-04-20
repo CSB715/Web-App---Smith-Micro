@@ -122,7 +122,7 @@ function Notifications() {
   const allNotifications = useNotifications(userId || "");
 
   const filteredNotifications = allNotifications.filter((n) => {
-    if (selectedDevices.length === 0) return true;
+    if (selectedDevices.length === 0) return false;
     return selectedDevices.some(
       (d) => d.id === "__all__" || d.name === n.deviceName,
     );
