@@ -3,18 +3,9 @@ import { useState } from "react";
 import { updateDoc, doc } from "firebase/firestore";
 import { getDb, getAuthInstance, GetUserDevices } from "../utils/firestore";
 import { Modal, Box, Typography, Button, TextField } from "@mui/material";
+import { getModalStyle } from "../utils/modalStyle";
 
-const style = {
-  position: "absolute",
-  top: "50%",
-  left: "50%",
-  transform: "translate(-50%, -50%)",
-  width: 400,
-  bgcolor: "background.paper",
-  border: "2px solid #000",
-  boxShadow: 24,
-  p: 4,
-};
+const style = getModalStyle("medium");
 
 type Props = {
   currDevice: DocumentData | null;

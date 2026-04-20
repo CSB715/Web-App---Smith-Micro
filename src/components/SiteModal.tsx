@@ -24,22 +24,11 @@ import {
 import { getDisplayUrl } from "../utils/urls";
 import { classifyURL } from "../utils/classifier";
 import { getAuthInstance } from "../utils/firestore";
+import { getModalStyle } from "../utils/modalStyle";
 import { onAuthStateChanged } from "firebase/auth";
 import { useNavigate } from "react-router";
 
-const style = {
-  position: "absolute",
-  top: "50%",
-  left: "50%",
-  transform: "translate(-50%, -50%)",
-  width: 400,
-  maxHeight: "90vh",
-  overflow: "auto",
-  bgcolor: "background.paper",
-  border: "2px solid #000",
-  boxShadow: 24,
-  p: 4,
-};
+const style = getModalStyle("large");
 
 export default function SiteModal({
   url,
