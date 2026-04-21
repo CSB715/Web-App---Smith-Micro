@@ -1,7 +1,7 @@
 import type { DocumentData } from "firebase/firestore";
 import { useState } from "react";
 import { updateDoc, doc } from "firebase/firestore";
-import { getDb, getAuthInstance, GetUserDevices } from "../utils/firestore";
+import { getDb, getAuthInstance, GetUserDevices, GetNotifications } from "../utils/firestore";
 import { Modal, Box, Typography, Button, TextField } from "@mui/material";
 import { getModalStyle } from "../utils/modalStyle";
 
@@ -29,9 +29,25 @@ export default function RenameDeviceModal({ currDevice, updateDevices, open, onC
       return;
     }
 
+    const oldName = currDevice!.name;
+    const trimmedNewName = newName.trim();
+
     const docRef = doc(getDb(), "Users", getAuthInstance().currentUser!.uid, "Devices", currDevice!.id);
-    updateDoc(docRef, { name: newName.trim() })
+    updateDoc(docRef, { name: trimmedNewName })
       .then(async () => {
+        // Update notifications with the old device name to the new name
+        const userId = getAuthInstance().currentUser!.uid;
+        const notifications = await GetNotifications(userId);
+        const updatePromises = notifications
+          .filter((notif) => notif.data.deviceName === oldName)
+          .map((notif) =>
+            updateDoc(
+              doc(getDb(), "Users", userId, "Notifications", notif.id),
+              { deviceName: trimmedNewName }
+            )
+          );
+        await Promise.all(updatePromises);
+
         handleClose();
         GetUserDevices(doc(getDb(), "Users", getAuthInstance().currentUser!.uid)).then((docArr) => {
           updateDevices(docArr);
