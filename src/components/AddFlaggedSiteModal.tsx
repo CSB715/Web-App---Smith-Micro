@@ -5,18 +5,9 @@ import { onAuthStateChanged } from "firebase/auth";
 import { useNavigate } from "react-router";
 import DeviceSelect from "./DeviceSelect";
 import { type Device } from "../utils/models";
+import { getModalStyle } from "../utils/modalStyle";
 
-const style = {
-  position: "absolute",
-  top: "50%",
-  left: "50%",
-  transform: "translate(-50%, -50%)",
-  width: 400,
-  bgcolor: "background.paper",
-  border: "2px solid #000",
-  boxShadow: 24,
-  p: 4,
-};
+const style = getModalStyle("large");
 
 type Props = {
   closeModal: () => void, 

@@ -9,6 +9,7 @@ import { collection, Timestamp } from "firebase/firestore";
 import { type Notification } from "../utils/models";
 import { type Device } from "../utils/models";
 import { onSnapshot } from "firebase/firestore";
+import { getDisplayUrl } from "../utils/urls";
 
 const PAGE_SIZE = 20;
 
@@ -217,7 +218,7 @@ function Notifications() {
                     "&:hover": { textDecoration: "underline" },
                   }}
                 >
-                  {notification.siteUrl}
+                  {getDisplayUrl(notification.siteUrl).replace(/^www\./, "")}
                 </Typography>
               ) : (
                 <Typography
