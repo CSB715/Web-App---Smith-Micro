@@ -90,7 +90,12 @@ export default function AddSiteModal( { isOpen, closeModal, openSiteModal } : Pr
           onChange={(event) => {
             setUrl(event.target.value);
           }}
-            sx={{ width: "100%" }}
+          sx={{ width: "100%" }}
+          slotProps={{
+            htmlInput: {
+              maxLength: 100,
+            }
+          }}
         />
         <Stack direction="row" spacing={2} justifyContent="flex-end" sx={{ mt: 2 }}>
           <Button variant="outlined" onClick={closeModal}>Cancel</Button>
