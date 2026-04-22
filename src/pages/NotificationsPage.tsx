@@ -243,7 +243,8 @@ function Notifications() {
                       : {}
                   }
                 >
-                  {notification.deviceName}
+                  {notification.deviceName?.substring(0, 20) +
+                    ((notification.deviceName?.length ?? 0) > 20 ? "..." : "")}
                 </Box>
               </Typography>
 
