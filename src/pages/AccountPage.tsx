@@ -252,7 +252,10 @@ function Account() {
             <Typography
               sx={{ fontWeight: 500, fontSize: "0.9rem", lineHeight: 1.2 }}
             >
-              {getAuthInstance().currentUser?.email}
+              {getAuthInstance().currentUser?.email?.substring(0, 20) +
+                ((getAuthInstance().currentUser?.email?.length ?? 0) > 20
+                  ? "..."
+                  : "")}
             </Typography>
           </Box>
 
