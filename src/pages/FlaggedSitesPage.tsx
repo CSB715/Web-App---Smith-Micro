@@ -1,6 +1,10 @@
 import { useEffect, useState, useRef } from "react";
 import { onAuthStateChanged } from "firebase/auth";
-import { getAuthInstance, GetOverrides } from "../utils/firestore";
+import {
+  DeleteOverride,
+  getAuthInstance,
+  GetOverrides,
+} from "../utils/firestore";
 import { useNavigate } from "react-router";
 import type { Categorization } from "../utils/models";
 import SiteModal from "../components/SiteModal";
@@ -17,24 +21,6 @@ import {
   IconButton,
 } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
-
-// function combineURLS(flaggedFromCats: Categorization[], flaggedFromOvers: Categorization[]) {
-//   return flaggedFromCats.concat(
-//     flaggedFromOvers.filter(
-//       (site) => !flaggedFromCats.some((c) => c.siteUrl === site.siteUrl),
-//     ),
-//   );
-// }
-
-// function getFlaggedSitesFromCategorizations(catsData: {id: string, data: DocumentData}[]) {
-//   return catsData
-//   .filter((cat) => cat.data.is_flagged === true)
-//   .map((cat) => ({
-//     siteUrl: cat.id,
-//     category: cat.data.category,
-//     flagged_for: [],
-//   }));
-// }
 
 function getFlaggedSitesFromOverrides(
   oversData: { id: string; data: DocumentData }[],
@@ -58,11 +44,7 @@ function useSites(
 ) {
   // Fetch both categorizations and overrides initially
   Promise.all([GetOverrides(userId)]).then(([oversData]) => {
-    // const flaggedFromCats = getFlaggedSitesFromCategorizations(catsData);
     const flaggedFromOvers = getFlaggedSitesFromOverrides(oversData);
-
-    // Combine and deduplicate by siteUrl
-    // const combined = combineURLS(flaggedFromCats, flaggedFromOvers);
 
     setFlaggedSites(flaggedFromOvers);
     fetchedData.current = true;
@@ -99,6 +81,11 @@ function FlaggedSites() {
 
   function reloadData() {
     useSites(fetchedData, uid, setFlaggedSites);
+  }
+
+  async function handleDelete(siteUrl: string) {
+    await DeleteOverride(uid, siteUrl);
+    reloadData();
   }
 
   return (
@@ -175,7 +162,9 @@ function FlaggedSites() {
               <IconButton
                 edge="end"
                 aria-label="delete"
-                onClick={async () => {}}
+                onClick={async () => {
+                  await handleDelete(site.siteUrl);
+                }}
               >
                 <DeleteIcon />
               </IconButton>
@@ -206,9 +195,13 @@ function FlaggedSites() {
         reloadData={reloadData}
       />
       <SiteModal
+        userId={uid}
         url={siteUrl}
         isOpen={siteModalOpen}
-        closeModal={() => { reloadData(); closeSiteModal()}}
+        closeModal={() => {
+          reloadData();
+          closeSiteModal();
+        }}
       />
     </Box>
   );

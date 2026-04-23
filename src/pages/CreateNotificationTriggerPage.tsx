@@ -11,13 +11,27 @@ import {
 } from "../utils/firestore";
 import { doc, Timestamp } from "firebase/firestore";
 import DeviceSelect from "../components/DeviceSelect";
-import { Box, Typography, Autocomplete, Button, FormControl, RadioGroup, TextField, FormLabel, FormGroup, FormControlLabel, Radio, Checkbox, Link } from "@mui/material";
-import { NumberField } from '@base-ui/react/number-field';
-import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
-import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
-import { TimePicker } from '@mui/x-date-pickers/TimePicker';
-import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
-import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import {
+  Box,
+  Typography,
+  Autocomplete,
+  Button,
+  FormControl,
+  RadioGroup,
+  TextField,
+  FormLabel,
+  FormGroup,
+  FormControlLabel,
+  Radio,
+  Checkbox,
+  Link,
+} from "@mui/material";
+import { NumberField } from "@base-ui/react/number-field";
+import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
+import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
+import { TimePicker } from "@mui/x-date-pickers/TimePicker";
+import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
+import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import type { Device } from "../utils/models";
 import WeekdayPicker from "../components/WeekdayPicker";
 import "../styles/NumberField.css";
@@ -27,16 +41,16 @@ import dayjs, { Dayjs } from "dayjs";
 type AlertType = "Site" | "Category";
 
 export default function CreateNotificationTriggerPage() {
-  const notifID  = useLocation().state ? (useLocation().state as { notifID: string }).notifID : "";
+  const notifID = useLocation().state
+    ? (useLocation().state as { notifID: string }).notifID
+    : "";
   const hasMounted = useRef(false);
   const navigate = useNavigate();
 
   const [name, setName] = useState<string>("");
   const [categories, setCategories] = useState<string[]>([]);
   const [sites, setSites] = useState<string[]>([]);
-  const [devices, setDevices] = useState<Device[]>(
-    [],
-  );
+  const [devices, setDevices] = useState<Device[]>([]);
   const [selectedDevices, setSelectedDevices] = useState<Device[]>([]);
   const [uid, setUid] = useState<string>("");
   const [alertType, setAlertType] = useState<AlertType>("Category");
@@ -51,14 +65,12 @@ export default function CreateNotificationTriggerPage() {
 
   const [advancedView, setAdvancedView] = useState<boolean>(false);
 
-  
   const [siteError, setSiteError] = useState(false);
   const [siteErrorMessage, setSiteErrorMessage] = useState("");
   const [timeError, setTimeError] = useState(false);
   const [timeErrorMessage, setTimeErrorMessage] = useState("");
 
-
-  function validateSite(siteURL : string) {
+  function validateSite(siteURL: string) {
     if (!siteURL.trim() || !/\S+\.\S+/.test(siteURL.trim())) {
       setSiteError(true);
       setSiteErrorMessage("Please enter a valid web address.");
@@ -84,28 +96,36 @@ export default function CreateNotificationTriggerPage() {
 
   async function loadNotificationTrigger(notifID: string, uid: string) {
     // load selected devices and categories
-    const notifRef = doc(getDb(), "Users", uid, "NotificationTriggers", notifID);
+    const notifRef = doc(
+      getDb(),
+      "Users",
+      uid,
+      "NotificationTriggers",
+      notifID,
+    );
     const notifSnap = await GetDoc(notifRef.path);
 
     setName(notifSnap!.data.name);
-    setCategories(notifSnap!.data.categories ? notifSnap!.data.categories : [] );
-    let devicesTest: Device[] = [];
-    for (const deviceName of notifSnap!.data.devices) {
-      const deviceRef = doc(getDb(), "Users", uid, "Devices", deviceName);
-      const deviceSnap = await GetDoc(deviceRef.path);
-      if (deviceSnap) {
-        devicesTest=[...devicesTest, { id: deviceSnap.id, name: deviceSnap.data.name }];
-        setSelectedDevices(devicesTest);
-      }
-    }
-
-    setSites(notifSnap!.data.sites ? notifSnap!.data.sites : [] );
+    setCategories(notifSnap!.data.categories ? notifSnap!.data.categories : []);
+    const devices: Device[] = [];
+    notifSnap!.data.devices.forEach((deviceId: string) => {
+      const deviceRef = doc(getDb(), "Users", uid, "Devices", deviceId);
+      GetDoc(deviceRef.path).then((deviceSnap) => {
+        if (deviceSnap) {
+          devices.push({ id: deviceSnap.id, name: deviceSnap.data.name });
+        }
+      });
+    });
+    setSelectedDevices(devices);
+    setSites(notifSnap!.data.sites ? notifSnap!.data.sites : []);
     setLimit_Hr(notifSnap!.data.time_limit_hr);
     setLimit_Min(notifSnap!.data.time_limit_min);
     setAlertType(notifSnap!.data.categories ? "Category" : "Site");
     setEmail(notifSnap!.data.email ? true : false);
     setText(notifSnap!.data.text ? true : false);
-    const nameInput = document.getElementById("newNotification") as HTMLInputElement;
+    const nameInput = document.getElementById(
+      "newNotification",
+    ) as HTMLInputElement;
     nameInput.value = notifSnap!.data.name;
     setSelectedDays(notifSnap!.data.days ? notifSnap!.data.days : []);
     setStartTime(dayjs(notifSnap!.data.startTime.toDate()));
@@ -141,11 +161,15 @@ export default function CreateNotificationTriggerPage() {
     }
   }, [navigate]);
 
-  function handleCheckEmailBoxChange(event: React.ChangeEvent<HTMLInputElement>) {
+  function handleCheckEmailBoxChange(
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) {
     setEmail(event.target.checked);
   }
 
-  function handleCheckTextBoxChange(event: React.ChangeEvent<HTMLInputElement>) {
+  function handleCheckTextBoxChange(
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) {
     setText(event.target.checked);
   }
 
@@ -173,7 +197,7 @@ export default function CreateNotificationTriggerPage() {
 
     for (const site of sites) {
       if (!validateSite(site)) {
-        return; 
+        return;
       }
     }
 
@@ -181,10 +205,10 @@ export default function CreateNotificationTriggerPage() {
       return;
     }
 
-    const notif : NotificationTrigger = {
-      uid : uid,
+    const notif: NotificationTrigger = {
+      uid: uid,
       name: nameInput.value,
-      devices: selectedDevices,
+      devices: selectedDevices.filter((d) => d.id !== "__all__"),
       categories,
       sites,
       alertType,
@@ -193,17 +217,20 @@ export default function CreateNotificationTriggerPage() {
       limit_min,
       email,
       text,
-      days: (selectedDays.length > 0) ? selectedDays : [true, true, true, true, true, true, true], // if empty, default to all
+      days:
+        selectedDays.length > 0
+          ? selectedDays
+          : [true, true, true, true, true, true, true], // if empty, default to all
       startTime: Timestamp.fromDate(startTime.toDate()),
       endTime: Timestamp.fromDate(endTime.toDate()),
-    }
+    };
 
     CreateNotificationTrigger(notif);
     navigate("/settings/notifications");
   }
 
   return (
-    <Box 
+    <Box
       component="form"
       onSubmit={createNotification}
       role="main"
@@ -215,10 +242,10 @@ export default function CreateNotificationTriggerPage() {
       }}
     >
       {/* ── Title ── */}
-      <Typography 
-        variant="h1" 
-        id="create-notification-title" 
-        sx={{ 
+      <Typography
+        variant="h1"
+        id="create-notification-title"
+        sx={{
           fontSize: "2rem",
           mb: 2,
           fontWeight: "bold",
@@ -231,19 +258,28 @@ export default function CreateNotificationTriggerPage() {
       </Typography>
 
       {/* ── Form ── */}
-      <FormControl fullWidth sx={{ display: 'flex', flexDirection: 'column', gap: 2, alignItems: 'stretch', '& > *': { width: '100%' } }} >
-        
+      <FormControl
+        fullWidth
+        sx={{
+          display: "flex",
+          flexDirection: "column",
+          gap: 2,
+          alignItems: "stretch",
+          "& > *": { width: "100%" },
+        }}
+      >
         {/* Notification Name */}
-        <TextField id="newNotification" 
-          label="New Notification" 
-          variant="outlined" 
-          placeholder="New Notification" 
-          value={name} 
+        <TextField
+          id="newNotification"
+          label="New Notification"
+          variant="outlined"
+          placeholder="New Notification"
+          value={name}
           fullWidth
-          onChange={(e) => setName(e.target.value)} 
+          onChange={(e) => setName(e.target.value)}
           required
         />
-        
+
         {/* Devices */}
         <DeviceSelect
           devices={devices}
@@ -253,22 +289,25 @@ export default function CreateNotificationTriggerPage() {
         />
 
         {/* Alert Type - Sites or Categories */}
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
-          <Typography variant="h2"
-            sx={{ fontSize: "1.25rem", mb: 0 }}
-          >
+        <Box sx={{ display: "flex", flexDirection: "column", gap: 0 }}>
+          <Typography variant="h2" sx={{ fontSize: "1.25rem", mb: 0 }}>
             Alert Visits By...
           </Typography>
-          <RadioGroup row 
+          <RadioGroup
+            row
             aria-labelledby="site-or-category"
             name="site-or-category-group"
             value={alertType}
             onChange={(e) => setAlertType(e.target.value as AlertType)}
           >
             <FormControlLabel value="Site" control={<Radio />} label="Site" />
-            <FormControlLabel value="Category" control={<Radio />} label="Category" />
+            <FormControlLabel
+              value="Category"
+              control={<Radio />}
+              label="Category"
+            />
           </RadioGroup>
-        
+
           {alertType === "Category" && (
             <Autocomplete
               multiple
@@ -277,9 +316,16 @@ export default function CreateNotificationTriggerPage() {
                 setCategories(newValue);
               }}
               options={categoriesArr}
-              renderInput={(params) => <TextField {...params} placeholder="Pick categories" 
-                  error={submitted && categories.length === 0} 
-                  helperText={submitted && categories.length === 0 ? "Required" : ""} />}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  placeholder="Pick categories"
+                  error={submitted && categories.length === 0}
+                  helperText={
+                    submitted && categories.length === 0 ? "Required" : ""
+                  }
+                />
+              )}
             />
           )}
 
@@ -292,39 +338,50 @@ export default function CreateNotificationTriggerPage() {
                 setSites(newValue);
               }}
               options={[]} /* add site names maybe?  */
-              renderInput={(params) => <TextField {...params} error={siteError} helperText={siteErrorMessage} 
-                  placeholder="Enter site URLs" />}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  error={siteError}
+                  helperText={siteErrorMessage}
+                  placeholder="Enter site URLs"
+                />
+              )}
             />
           )}
         </Box>
 
         <Box component="section" role="region" aria-label="time limit">
-          <Typography variant="h2"
-            sx={{ fontSize: "1.25rem", mb: 1 }}
-          >
+          <Typography variant="h2" sx={{ fontSize: "1.25rem", mb: 1 }}>
             Time Limit Per Day
           </Typography>
 
-          <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2, alignItems: 'start' }}>
-            <Box sx={{ minWidth: 0, boxSizing: 'border-box' }}>
+          <Box
+            sx={{
+              display: "grid",
+              gridTemplateColumns: "1fr 1fr",
+              gap: 2,
+              alignItems: "start",
+            }}
+          >
+            <Box sx={{ minWidth: 0, boxSizing: "border-box" }}>
               <FormLabel htmlFor="hours" className="numberFieldLabel">
                 Hrs
               </FormLabel>
-              <NumberField.Root 
+              <NumberField.Root
                 id="hours"
-                defaultValue={0} 
-                min={0} 
-                max={24} 
-                value={limit_hr} 
+                defaultValue={0}
+                min={0}
+                max={24}
+                value={limit_hr}
                 onValueChange={(value) => setLimit_Hr(value || 0)}
               >
                 <NumberField.Group className="numberFieldGroup">
                   <NumberField.Input className="numberFieldInput" />
                   <div className="numberFieldButtons">
-                    <NumberField.Increment className="numberFieldButton" >
+                    <NumberField.Increment className="numberFieldButton">
                       <KeyboardArrowUpIcon fontSize="small" />
                     </NumberField.Increment>
-                    <NumberField.Decrement className="numberFieldButton" >
+                    <NumberField.Decrement className="numberFieldButton">
                       <KeyboardArrowDownIcon fontSize="small" />
                     </NumberField.Decrement>
                   </div>
@@ -332,25 +389,25 @@ export default function CreateNotificationTriggerPage() {
               </NumberField.Root>
             </Box>
 
-            <Box sx={{ minWidth: 0, boxSizing: 'border-box' }}>
+            <Box sx={{ minWidth: 0, boxSizing: "border-box" }}>
               <FormLabel htmlFor="mins" className="numberFieldLabel">
                 Mins
               </FormLabel>
-              <NumberField.Root 
+              <NumberField.Root
                 id="mins"
-                defaultValue={0} 
-                min={0} 
-                max={60} 
+                defaultValue={0}
+                min={0}
+                max={60}
                 value={limit_min}
                 onValueChange={(value) => setLimit_Min(value || 0)}
               >
                 <NumberField.Group className="numberFieldGroup">
-                  <NumberField.Input className="numberFieldInput" /> 
+                  <NumberField.Input className="numberFieldInput" />
                   <div className="numberFieldButtons">
-                    <NumberField.Increment className="numberFieldButton" >
+                    <NumberField.Increment className="numberFieldButton">
                       <KeyboardArrowUpIcon fontSize="small" />
                     </NumberField.Increment>
-                    <NumberField.Decrement className="numberFieldButton" >
+                    <NumberField.Decrement className="numberFieldButton">
                       <KeyboardArrowDownIcon fontSize="small" />
                     </NumberField.Decrement>
                   </div>
@@ -361,68 +418,126 @@ export default function CreateNotificationTriggerPage() {
         </Box>
 
         <FormControl fullWidth component="fieldset">
-          <FormLabel component="legend" sx={{ fontSize: "1.25rem", mb: 1, color: 'black' }}>Notify on site and...</FormLabel>
-          <FormGroup row sx={{ alignItems: 'center', justifyContent: 'center', gap: 2 }}>
+          <FormLabel
+            component="legend"
+            sx={{ fontSize: "1.25rem", mb: 1, color: "black" }}
+          >
+            Notify on site and...
+          </FormLabel>
+          <FormGroup
+            row
+            sx={{ alignItems: "center", justifyContent: "center", gap: 2 }}
+          >
             <FormControlLabel
-              control={<Checkbox checked={email} onChange={handleCheckEmailBoxChange} name="option1" />}
+              control={
+                <Checkbox
+                  checked={email}
+                  onChange={handleCheckEmailBoxChange}
+                  name="option1"
+                />
+              }
               label="Email"
             />
             <FormControlLabel
-              control={<Checkbox checked={text} onChange={handleCheckTextBoxChange} name="option2" />}
+              control={
+                <Checkbox
+                  checked={text}
+                  onChange={handleCheckTextBoxChange}
+                  name="option2"
+                />
+              }
               label="Text"
             />
           </FormGroup>
         </FormControl>
-        
+
         {advancedView && (
-          <Box component="section" role="region" aria-label="advanced options" sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-            <Typography variant="h2" sx={{ fontSize: "1.25rem", mb: 1 }}>Active During:</Typography>
+          <Box
+            component="section"
+            role="region"
+            aria-label="advanced options"
+            sx={{ display: "flex", flexDirection: "column", gap: 2 }}
+          >
+            <Typography variant="h2" sx={{ fontSize: "1.25rem", mb: 1 }}>
+              Active During:
+            </Typography>
             <LocalizationProvider dateAdapter={AdapterDayjs}>
-              <TimePicker 
+              <TimePicker
                 label="Start Time"
                 value={startTime}
                 maxTime={endTime}
                 onChange={(newValue) => setStartTime(dayjs(newValue))}
-                slotProps={{ textField: { error: timeError, helperText: timeError ? timeErrorMessage : "" } }}
+                slotProps={{
+                  textField: {
+                    error: timeError,
+                    helperText: timeError ? timeErrorMessage : "",
+                  },
+                }}
               />
               <TimePicker
                 label="End Time"
                 value={endTime}
                 minTime={startTime}
-                onChange={(newValue) => setEndTime(dayjs(newValue))} 
-                slotProps={{ textField: { error: timeError, helperText: timeError ? timeErrorMessage : "" } }}
+                onChange={(newValue) => setEndTime(dayjs(newValue))}
+                slotProps={{
+                  textField: {
+                    error: timeError,
+                    helperText: timeError ? timeErrorMessage : "",
+                  },
+                }}
               />
             </LocalizationProvider>
 
-            <WeekdayPicker selectedDays={selectedDays} setSelectedDays={setSelectedDays} />
+            <WeekdayPicker
+              selectedDays={selectedDays}
+              setSelectedDays={setSelectedDays}
+            />
           </Box>
         )}
 
-        <Box component="section" role="region" aria-label="cancel and create buttons" sx={{ display: 'flex', flexDirection: 'row', gap: 2, alignItems: 'center', justifyContent: 'center', width: '100%' }}>
-          <Button variant="outlined" color="error"
+        <Box
+          component="section"
+          role="region"
+          aria-label="cancel and create buttons"
+          sx={{
+            display: "flex",
+            flexDirection: "row",
+            gap: 2,
+            alignItems: "center",
+            justifyContent: "center",
+            width: "100%",
+          }}
+        >
+          <Button
+            variant="outlined"
+            color="error"
             id="cancelNewNotification"
             onClick={() => navigate("/settings/notifications")}
           >
             Cancel
           </Button>
-          <Button variant="contained" color="primary" type="submit"
-            id="createNewNotification">
-              {notifID ? "Save" : "Create"}
+          <Button
+            variant="contained"
+            color="primary"
+            type="submit"
+            id="createNewNotification"
+          >
+            {notifID ? "Save" : "Create"}
           </Button>
         </Box>
       </FormControl>
 
-
-      <Link 
+      <Link
         sx={{
-          display: 'block',
-          textAlign: 'center',
-          mx: 'auto',
+          display: "block",
+          textAlign: "center",
+          mx: "auto",
           mt: 2,
-          cursor: 'pointer',
-          fontFamily: 'Roboto, sans-serif',
+          cursor: "pointer",
+          fontFamily: "Roboto, sans-serif",
         }}
-        onClick={() => setAdvancedView(!advancedView)}>
+        onClick={() => setAdvancedView(!advancedView)}
+      >
         {advancedView ? "Hide Advanced Options" : "Show Advanced Options"}
       </Link>
     </Box>

@@ -1,6 +1,6 @@
 import { Button, Modal, Box, TextField, Typography } from "@mui/material";
 import { useEffect, useState } from "react";
-import { WriteFlag, GetDevices, getAuthInstance } from "../utils/firestore";
+import { GetDevices, getAuthInstance, WriteOverride } from "../utils/firestore";
 import { onAuthStateChanged } from "firebase/auth";
 import { useNavigate } from "react-router";
 import DeviceSelect from "./DeviceSelect";
@@ -10,12 +10,16 @@ import { getModalStyle } from "../utils/modalStyle";
 const style = getModalStyle("large");
 
 type Props = {
-  closeModal: () => void, 
-  isOpen: boolean,
-  reloadData: () => void
-}
+  closeModal: () => void;
+  isOpen: boolean;
+  reloadData: () => void;
+};
 
-export default function AddFlaggedSiteModal({ closeModal, isOpen, reloadData } : Props) {
+export default function AddFlaggedSiteModal({
+  closeModal,
+  isOpen,
+  reloadData,
+}: Props) {
   const navigate = useNavigate();
   const handleClose = () => {
     closeModal();
@@ -27,8 +31,7 @@ export default function AddFlaggedSiteModal({ closeModal, isOpen, reloadData } :
   const [devices, setDevices] = useState<Device[]>([]);
   const [selectedDevices, setSelectedDevices] = useState<Device[]>([]);
 
-
-  function validateSite(siteURL : string) {
+  function validateSite(siteURL: string) {
     if (!siteURL.trim() || !/\S+\.\S+/.test(siteURL.trim())) {
       setSiteError(true);
       setSiteErrorMessage("Please enter a valid web address.");
@@ -56,8 +59,13 @@ export default function AddFlaggedSiteModal({ closeModal, isOpen, reloadData } :
       return;
     }
     try {
-      const flagged_for = selectedDevices.map((d) => d.name);
-      await WriteFlag(userId, url, flagged_for);
+      const override = {
+        category: [],
+        flagged_for: selectedDevices
+          .filter((d) => d.id !== "__all__")
+          .map((d) => d.id),
+      };
+      await WriteOverride(userId, url, override);
       reloadData();
       handleClose();
     } catch (e) {
@@ -85,15 +93,13 @@ export default function AddFlaggedSiteModal({ closeModal, isOpen, reloadData } :
       load();
     }, [open, userId]);
 
-
     return {
       url,
-      setUrl
+      setUrl,
     };
   }
 
-  const { url, setUrl } =
-    useData(userId, isOpen);
+  const { url, setUrl } = useData(userId, isOpen);
 
   return (
     <Modal
@@ -112,7 +118,11 @@ export default function AddFlaggedSiteModal({ closeModal, isOpen, reloadData } :
             padding: 2,
           }}
         >
-          <Typography variant="h2" id="modal-modal-title" sx={{ fontSize: "1.5rem", fontWeight: "bold" }}>
+          <Typography
+            variant="h2"
+            id="modal-modal-title"
+            sx={{ fontSize: "1.5rem", fontWeight: "bold" }}
+          >
             Add Site
           </Typography>
           <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
@@ -143,7 +153,14 @@ export default function AddFlaggedSiteModal({ closeModal, isOpen, reloadData } :
           setSelectedDevices={setSelectedDevices}
         />
         <br />
-        <Button sx={{ width: "100%" }} variant="contained" color="primary" onClick={handleSave}>Save</Button>
+        <Button
+          sx={{ width: "100%" }}
+          variant="contained"
+          color="primary"
+          onClick={handleSave}
+        >
+          Save
+        </Button>
       </Box>
     </Modal>
   );

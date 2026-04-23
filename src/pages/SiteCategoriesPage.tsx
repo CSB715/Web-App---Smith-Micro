@@ -163,6 +163,7 @@ function SiteCategories() {
 
       {/* Modals */}
       <SiteModal
+        userId={uid}
         url={siteUrl}
         isOpen={siteModalOpen}
         closeModal={async () => {
