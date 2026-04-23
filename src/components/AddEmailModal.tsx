@@ -91,6 +91,11 @@ export default function AddEmailModal({ updateUserData, isAccount, open, onClose
             }
           }}
           sx={{ mb: 3 }}
+          slotProps={{
+            htmlInput: {
+              maxLength: 100,
+            }
+          }}
         />
         <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 1 }}>
           <Button variant="outlined" onClick={handleClose}>

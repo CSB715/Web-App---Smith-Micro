@@ -138,6 +138,11 @@ export default function AddFlaggedSiteModal({
             setUrl(event.target.value);
           }}
           sx={{ width: "100%" }}
+          slotProps={{
+            htmlInput: {
+              maxLength: 100,
+            }
+          }}
         />
         <Typography variant="h3" sx={{ mt: 2, fontSize: "1.2rem" }}>
           Choose devices to flag on:
