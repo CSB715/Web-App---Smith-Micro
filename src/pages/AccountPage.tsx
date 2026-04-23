@@ -252,7 +252,10 @@ function Account() {
             <Typography
               sx={{ fontWeight: 500, fontSize: "0.9rem", lineHeight: 1.2 }}
             >
-              {getAuthInstance().currentUser?.email}
+              {getAuthInstance().currentUser?.email?.substring(0, 20) +
+                ((getAuthInstance().currentUser?.email?.length ?? 0) > 20
+                  ? "..."
+                  : "")}
             </Typography>
           </Box>
 
@@ -476,7 +479,8 @@ function Account() {
               </Box>
 
               <Typography sx={{ flex: 1, fontWeight: 500, fontSize: "0.9rem" }}>
-                {device.name}
+                {device.name.substring(0, 20) +
+                  ((device.name.length ?? 0) > 20 ? "..." : "")}
               </Typography>
 
               <Box sx={{ display: "flex", gap: 1, alignItems: "center" }}>
