@@ -85,7 +85,7 @@ function getTimeDifferenceString(date: Date): string {
 
 function Notifications() {
   const navigate = useNavigate();
-  const [userId, setUserId] = useState<string | null>(null);
+  const [userId, setUserId] = useState<string>("");
   const [authReady, setAuthReady] = useState(false);
   const [devices, setDevices] = useState<Device[]>([]);
   const [selectedDevices, setSelectedDevices] = useState<Device[]>([]);
@@ -282,6 +282,7 @@ function Notifications() {
       {/* Single shared modal instance — only mounts when a URL is selected */}
       {modalUrl && (
         <SiteModal
+          userId={userId}
           url={modalUrl}
           isOpen={true}
           closeModal={() => setModalUrl(null)}

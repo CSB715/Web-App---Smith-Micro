@@ -19,7 +19,7 @@ import {
   getFirestore,
   DocumentSnapshot,
 } from "firebase/firestore";
-import type { NotificationTrigger } from "./models";
+import type { NotificationTrigger, Override } from "./models";
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
 
@@ -151,8 +151,8 @@ export async function GetCategorizations() {
 }
 
 export async function GetOverride(userId: string, url: string) {
-  const overridesCol = doc(getDb(), "Users", userId, "Overrides", url);
-  const overridesSnap = await getDoc(overridesCol);
+  const overridesRef = doc(getDb(), "Users", userId, "Overrides", url);
+  const overridesSnap = await getDoc(overridesRef);
   if (overridesSnap.exists()) {
     return { id: overridesSnap.id, data: overridesSnap.data() };
   }
@@ -166,6 +166,11 @@ export async function GetOverrides(userId: string) {
     id: doc.id,
     data: doc.data(),
   }));
+}
+
+export async function DeleteOverride(userId: string, url: string) {
+  const overrideRef = doc(getDb(), "Users", userId, "Overrides", url);
+  await deleteDoc(overrideRef);
 }
 
 export async function WriteFlag(
@@ -182,12 +187,12 @@ export async function WriteFlag(
 export async function WriteOverride(
   userId: string,
   displayURL: string,
-  overrides: any,
+  override: Override,
 ) {
   const overridesRef = doc(getDb(), "Users", userId, "Overrides", displayURL);
   await setDoc(overridesRef, {
-    category: overrides.category,
-    flagged_for: overrides.flagged_for,
+    category: override.category,
+    flagged_for: override.flagged_for,
   });
 }
 
@@ -291,12 +296,12 @@ export async function DeleteTrigger(trigger: DocumentSnapshot) {
   // delete trigger - no devices attached
 
   const docRef = doc(
-      getDb(),
-      "Users",
-      getAuthInstance().currentUser!.uid,
-      "NotificationTriggers",
-      trigger.id
-    );
+    getDb(),
+    "Users",
+    getAuthInstance().currentUser!.uid,
+    "NotificationTriggers",
+    trigger.id,
+  );
 
   await deleteDoc(docRef);
 }
@@ -325,15 +330,15 @@ export async function DeleteDevice(device: DocumentData) {
         0
       ) {
         // delete trigger - no devices attached
-          await deleteDoc(
-            doc(
-              getDb(),
-              "Users",
-              getAuthInstance().currentUser!.uid,
-              "NotificationTriggers",
-              trigger.id
-            ),
-          );
+        await deleteDoc(
+          doc(
+            getDb(),
+            "Users",
+            getAuthInstance().currentUser!.uid,
+            "NotificationTriggers",
+            trigger.id,
+          ),
+        );
       } else {
         // remove device from trigger list
 
@@ -377,9 +382,7 @@ export async function DeleteDevice(device: DocumentData) {
   await deleteDoc(docRef); // delete the device itself
 }
 
-export function CreateNotificationTrigger(
-  notif: NotificationTrigger,
-) {
+export function CreateNotificationTrigger(notif: NotificationTrigger) {
   const docObj =
     notif.alertType === "Category"
       ? {
@@ -409,10 +412,15 @@ export function CreateNotificationTrigger(
 
   if (notif.notifID != "") {
     // For cleanness remove existing notification
-    deleteDoc(doc(getDb(), "Users", notif.uid, "NotificationTriggers", notif.notifID));
+    deleteDoc(
+      doc(getDb(), "Users", notif.uid, "NotificationTriggers", notif.notifID),
+    );
   }
 
-  addDoc(collection(getDb(), "Users", notif.uid, "NotificationTriggers"), docObj);
+  addDoc(
+    collection(getDb(), "Users", notif.uid, "NotificationTriggers"),
+    docObj,
+  );
 }
 
 export async function AddNewClassification(
