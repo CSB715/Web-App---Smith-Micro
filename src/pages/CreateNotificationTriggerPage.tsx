@@ -89,13 +89,16 @@ export default function CreateNotificationTriggerPage() {
 
     setName(notifSnap!.data.name);
     setCategories(notifSnap!.data.categories ? notifSnap!.data.categories : [] );
+    let devicesTest: Device[] = [];
     for (const deviceName of notifSnap!.data.devices) {
       const deviceRef = doc(getDb(), "Users", uid, "Devices", deviceName);
       const deviceSnap = await GetDoc(deviceRef.path);
       if (deviceSnap) {
-        setSelectedDevices((prev) => [...prev, { id: deviceSnap.id, name: deviceSnap.data.name }]);
+        devicesTest=[...devicesTest, { id: deviceSnap.id, name: deviceSnap.data.name }];
+        setSelectedDevices(devicesTest);
       }
     }
+
     setSites(notifSnap!.data.sites ? notifSnap!.data.sites : [] );
     setLimit_Hr(notifSnap!.data.time_limit_hr);
     setLimit_Min(notifSnap!.data.time_limit_min);
