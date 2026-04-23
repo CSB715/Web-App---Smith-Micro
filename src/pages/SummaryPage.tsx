@@ -889,8 +889,9 @@ function Summary() {
                       setSiteUrl(site);
                       setModalOpen(true);
                     }}
+                    sx={{ justifyContent: "left" }}
                   >
-                    {site}
+                    {site.substring(0, 20) + (site.length > 20 ? "..." : "")}
                   </Button>
                   <Box component="span">{formatTimeSpent(time)}</Box>
                 </Box>
