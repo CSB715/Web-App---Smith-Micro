@@ -1,11 +1,11 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, use } from "react";
 import { onAuthStateChanged } from "firebase/auth";
-import { getAuthInstance, GetOverrides } from "../utils/firestore";
+import { getAuthInstance, GetOverrides, GetUserOverrides, GetUserRef } from "../utils/firestore";
 import { useNavigate } from "react-router";
 import type { Categorization } from "../utils/models";
 import SiteModal from "../components/SiteModal";
 import AddFlaggedSiteModal from "../components/AddFlaggedSiteModal";
-import { type DocumentData } from "firebase/firestore";
+import { deleteDoc, doc, type DocumentData } from "firebase/firestore";
 import {
   Typography,
   Box,
@@ -77,6 +77,7 @@ function FlaggedSites() {
   const [siteUrl, setSiteUrl] = useState("");
   const fetchedData = useRef(false);
   const [uid, setUID] = useState<string>("");
+  const [sites, setSites] = useState<string[]>([]);
 
   const closeSiteModal = () => {
     setSiteModalOpen(false);
@@ -87,10 +88,13 @@ function FlaggedSites() {
 
   useEffect(() => {
     fetchedData.current = false;
-    onAuthStateChanged(getAuthInstance(), (user) => {
+    onAuthStateChanged(getAuthInstance(), async (user) => {
       if (user) {
         setUID(user.uid);
         useSites(fetchedData, user.uid, setFlaggedSites);
+        const siteURLS = await loadOverrides(user.uid);
+        setSites(siteURLS);
+        fetchedData.current = true;
       } else {
         navigate("/login", { replace: true });
       }
@@ -99,6 +103,16 @@ function FlaggedSites() {
 
   function reloadData() {
     useSites(fetchedData, uid, setFlaggedSites);
+  }
+
+  async function loadOverrides(uid: string) {
+    const userRef = await GetUserRef(uid);
+    const sitesArr = await GetUserOverrides(userRef);
+    const siteURLS: string[] = [];
+    for (const site of sitesArr.docs) {
+      siteURLS.push(site.id);
+    }
+    return siteURLS;
   }
 
   return (
@@ -175,7 +189,20 @@ function FlaggedSites() {
               <IconButton
                 edge="end"
                 aria-label="delete"
-                onClick={async () => {}}
+                onClick={async () =>  {
+                  const uref = await GetUserRef(uid);
+                  const siteRef = doc(uref, "Overrides", site.siteUrl);
+
+                  deleteDoc(siteRef).then(async () => {
+                  fetchedData.current = false;
+
+                  useSites(fetchedData, uid, setFlaggedSites);
+                  
+                  });
+                  
+
+                  
+                }}
               >
                 <DeleteIcon />
               </IconButton>
