@@ -1072,7 +1072,12 @@ function Summary() {
 
       {getHoursSpent()}
 
-      <SiteModal url={siteUrl} isOpen={modalOpen} closeModal={closeModal} />
+      <SiteModal
+        userId={userId}
+        url={siteUrl}
+        isOpen={modalOpen}
+        closeModal={closeModal}
+      />
     </Box>
   );
 }

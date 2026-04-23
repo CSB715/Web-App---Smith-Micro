@@ -23,40 +23,28 @@ import {
 } from "../utils/models";
 import { getDisplayUrl } from "../utils/urls";
 import { classifyURL } from "../utils/classifier";
-import { getAuthInstance } from "../utils/firestore";
 import { getModalStyle } from "../utils/modalStyle";
-import { onAuthStateChanged } from "firebase/auth";
-import { useNavigate } from "react-router";
 
 const style = getModalStyle("large");
 
 export default function SiteModal({
+  userId,
   url,
   isOpen,
   closeModal,
 }: {
+  userId: string;
   url: string;
   isOpen: boolean;
   closeModal: () => void;
 }) {
-  const navigate = useNavigate();
-  const [userId, setUserId] = useState<string>("");
-
-  useEffect(() => {
-    onAuthStateChanged(getAuthInstance(), (user) => {
-      if (user) {
-        setUserId(user.uid);
-      } else {
-        navigate("/login", { replace: true });
-      }
-    });
-  }, [navigate]);
-
   const handleSave = async () => {
     try {
       await WriteOverride(userId, displayUrl, {
         category: override.category,
-        flagged_for: selectedDevices.map((d) => d.name),
+        flagged_for: selectedDevices
+          .filter((d) => d.id !== "__all__")
+          .map((d) => d.id),
       });
       closeModal();
     } catch (e) {
@@ -99,9 +87,14 @@ export default function SiteModal({
 
         const override = await GetOverride(userId, url);
         let normalized: Override;
-        if (override) {
+        if (override && override.data.category.length > 0) {
           normalized = {
             category: override.data.category,
+            flagged_for: override.data.flagged_for,
+          };
+        } else if (override && override.data.flagged_for.length > 0) {
+          normalized = {
+            category: cat.category[0] === "Unknown" ? [] : cat.category,
             flagged_for: override.data.flagged_for,
           };
         } else {
@@ -122,7 +115,7 @@ export default function SiteModal({
         setCategories(categories);
         setSelectedDevices(
           normalizedDevices.filter((d) =>
-            normalized.flagged_for.includes(d.name),
+            normalized.flagged_for.includes(d.id),
           ),
         );
       }

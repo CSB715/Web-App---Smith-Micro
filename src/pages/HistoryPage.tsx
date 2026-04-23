@@ -354,19 +354,17 @@ function History() {
                             (visit.startDateTime.getHours() >= 12
                               ? "PM"
                               : "AM") +
-                                " - " +
-                                (visit.endDateTime.getHours() % 12 === 0
-                                  ? 12
-                                  : visit.endDateTime.getHours() % 12) +
-                                ":" +
-                                visit.endDateTime
-                                  .getMinutes()
-                                  .toString()
-                                  .padStart(2, "0") +
-                                " " +
-                                (visit.endDateTime.getHours() >= 12
-                                  ? "PM"
-                                  : "AM")}
+                            " - " +
+                            (visit.endDateTime.getHours() % 12 === 0
+                              ? 12
+                              : visit.endDateTime.getHours() % 12) +
+                            ":" +
+                            visit.endDateTime
+                              .getMinutes()
+                              .toString()
+                              .padStart(2, "0") +
+                            " " +
+                            (visit.endDateTime.getHours() >= 12 ? "PM" : "AM")}
                         </Typography>
                       </ListItem>
                     ))}
@@ -430,7 +428,12 @@ function History() {
 
       {getVisits()}
 
-      <SiteModal url={siteUrl} isOpen={modalOpen} closeModal={closeModal} />
+      <SiteModal
+        userId={userId}
+        url={siteUrl}
+        isOpen={modalOpen}
+        closeModal={closeModal}
+      />
     </Box>
   );
 }
