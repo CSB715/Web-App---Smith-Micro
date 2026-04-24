@@ -25,15 +25,19 @@ import './styles/App.css';
 
 const App = () => {
   const location = useLocation();
+  const normalizedPath =
+    location.pathname.length > 1 && location.pathname.endsWith("/")
+      ? location.pathname.replace(/\/+$/, "")
+      : location.pathname;
 
   const pagesWithoutNavBar = ["/login", "/sign-up", "/admin-dashboard", "/password-reset", "/admin-dashboard/common-overrides"];
-  const showNavBar = !pagesWithoutNavBar.includes(location.pathname);
+  const showNavBar = !pagesWithoutNavBar.includes(normalizedPath);
 
   const fullWidthPages = ["/admin-dashboard", "/admin-dashboard/common-overrides"];
-  const isFullWidth = fullWidthPages.includes(location.pathname);
+  const isFullWidth = fullWidthPages.includes(normalizedPath);
 
   const pagesWithAdminNavBar = ["/admin-dashboard", "/admin-dashboard/common-overrides"];
-  const showAdmBar = pagesWithAdminNavBar.includes(location.pathname);
+  const showAdmBar = pagesWithAdminNavBar.includes(normalizedPath);
 
   return (
     <div className="app-viewport">
