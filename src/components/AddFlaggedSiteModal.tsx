@@ -6,6 +6,7 @@ import { useNavigate } from "react-router";
 import DeviceSelect from "./DeviceSelect";
 import { type Device } from "../utils/models";
 import { getModalStyle } from "../utils/modalStyle";
+import { trimUrl } from "../utils/urls";
 
 const style = getModalStyle("large");
 
@@ -30,6 +31,7 @@ export default function AddFlaggedSiteModal({
   const [siteErrorMessage, setSiteErrorMessage] = useState("");
   const [devices, setDevices] = useState<Device[]>([]);
   const [selectedDevices, setSelectedDevices] = useState<Device[]>([]);
+  const [url, setUrl] = useState<string>("");
 
   function validateSite(siteURL: string) {
     if (!siteURL.trim() || !/\S+\.\S+/.test(siteURL.trim())) {
@@ -76,8 +78,6 @@ export default function AddFlaggedSiteModal({
   };
 
   function useData(userId: string, open: boolean) {
-    const [url, setUrl] = useState("");
-
     useEffect(() => {
       if (!open) return;
 
@@ -92,14 +92,9 @@ export default function AddFlaggedSiteModal({
 
       load();
     }, [open, userId]);
-
-    return {
-      url,
-      setUrl,
-    };
   }
 
-  const { url, setUrl } = useData(userId, isOpen);
+  useData(userId, isOpen);
 
   return (
     <Modal
@@ -135,7 +130,8 @@ export default function AddFlaggedSiteModal({
           aria-labelledby="url-input-text-field"
           placeholder="example.com"
           onChange={(event) => {
-            setUrl(event.target.value);
+            const trimmedUrl = trimUrl(event.target.value);
+            setUrl(trimmedUrl);
           }}
           sx={{ width: "100%" }}
           slotProps={{
