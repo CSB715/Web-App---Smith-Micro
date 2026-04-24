@@ -258,18 +258,6 @@ function Account() {
                   : "")}
             </Typography>
           </Box>
-
-          <Button
-            variant="outlined"
-            size="small"
-            sx={{ flexShrink: 0 }}
-            onClick={() => {
-              setIsAccount(true);
-              setAddEmailOpen(true);
-            }}
-          >
-            Edit
-          </Button>
         </Box>
       </Paper>
 

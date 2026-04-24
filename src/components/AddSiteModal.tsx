@@ -5,6 +5,7 @@ import { classifyURL } from "../utils/classifier";
 import { Modal, Box, Button, Typography, TextField, Stack } from "@mui/material";
 import { getModalStyle } from "../utils/modalStyle";
 import "../styles/Modal.css";
+import { trimUrl } from "../utils/urls";
 
 const style = getModalStyle("medium");
 
@@ -79,7 +80,8 @@ export default function AddSiteModal( { isOpen, closeModal, openSiteModal } : Pr
           aria-labelledby="url-input-text-field"
           placeholder="example.com"
           onChange={(event) => {
-            setUrl(event.target.value);
+            const trimmedUrl = trimUrl(event.target.value);
+            setUrl(trimmedUrl);
           }}
           sx={{ width: "100%" }}
           slotProps={{

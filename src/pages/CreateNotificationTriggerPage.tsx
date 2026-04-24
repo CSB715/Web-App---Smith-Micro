@@ -37,6 +37,7 @@ import WeekdayPicker from "../components/WeekdayPicker";
 import "../styles/NumberField.css";
 import type { NotificationTrigger } from "../utils/models";
 import dayjs, { Dayjs } from "dayjs";
+import { trimUrl } from "../utils/urls";
 
 type AlertType = "Site" | "Category";
 
@@ -72,7 +73,8 @@ export default function CreateNotificationTriggerPage() {
   const [timeErrorMessage, setTimeErrorMessage] = useState("");
 
   function validateSite(siteURL: string) {
-    if (!siteURL.trim() || !/\S+\.\S+/.test(siteURL.trim())) {
+    const trimmed_URL = trimUrl(siteURL);
+    if (!/\S+\.\S+/.test(trimmed_URL)) {
       setSiteError(true);
       setSiteErrorMessage("Please enter a valid web address.");
       return false;
@@ -87,6 +89,7 @@ export default function CreateNotificationTriggerPage() {
     if (startTime > endTime) {
       setTimeError(true);
       setTimeErrorMessage("Start time must be before end time.");
+      setAdvancedView(true);
       return false;
     } else {
       setTimeError(false);
@@ -347,7 +350,7 @@ export default function CreateNotificationTriggerPage() {
                 }
               }}
               onChange={(_: any, newValue: Array<string>) => {
-                setSites(newValue);
+                setSites(newValue.map(trimUrl));
               }}
               options={[]} /* add site names maybe?  */
               renderInput={(params) => (
