@@ -142,7 +142,8 @@ function NotificationSettings() {
                     },
                   }}
                 >
-                  {notification.data()!.name}
+                  {notification.data()!.name.trim().substring(0, 12) +
+                    (notification.data()!.name.trim().length > 12 ? "..." : "")}
                 </ListItemText>
                 <Box
                   sx={{
