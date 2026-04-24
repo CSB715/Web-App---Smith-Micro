@@ -255,7 +255,7 @@ export async function CreateUser(
   password: string,
   phone?: string,
 ) {
-  return createUserWithEmailAndPassword(auth, email, password).then(
+  return createUserWithEmailAndPassword(getAuthInstance(), email, password).then(
     (userCredential) => {
       const userDoc = doc(getDb(), "Users", userCredential.user.uid);
       return setDoc(userDoc, {

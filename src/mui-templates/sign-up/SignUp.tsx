@@ -18,6 +18,7 @@ export default function SignUp(props: { disableCustomTheme?: boolean }) {
   const [emailErrorMessage, setEmailErrorMessage] = React.useState('');
   const [passwordError, setPasswordError] = React.useState(false);
   const [passwordErrorMessage, setPasswordErrorMessage] = React.useState('');
+  const [loading, setLoading] = React.useState(false);
 
   const navigate = useNavigate();
 
@@ -53,14 +54,41 @@ export default function SignUp(props: { disableCustomTheme?: boolean }) {
     if (emailError || passwordError) {
       return;
     }
+    setLoading(true);
     const data = new FormData(event.currentTarget);
     const email = data.get('email');
     const password = data.get('password');
   
-    CreateUser(email!.toString(), password!.toString()).then( () => {
-      navigate("/");
-    });
-    
+    CreateUser(email!.toString(), password!.toString())
+      .then(() => {
+        navigate("/");
+      })
+      .catch((error) => {
+        const code = error?.code ?? '';
+        switch (code) {
+          case 'auth/email-already-in-use':
+            setEmailError(true);
+            setEmailErrorMessage('This email is already in use.');
+            break;
+          case 'auth/invalid-email':
+            setEmailError(true);
+            setEmailErrorMessage('Please enter a valid email address.');
+            break;
+          case 'auth/weak-password':
+            setPasswordError(true);
+            setPasswordErrorMessage('Password is too weak. Use at least 6 characters.');
+            break;
+          case 'auth/network-request-failed':
+            setEmailError(true);
+            setEmailErrorMessage('Network error. Please check your connection and try again.');
+            break;
+          default:
+            setEmailError(true);
+            setEmailErrorMessage(error?.message ?? 'Sign up failed. Please try again.');
+            break;
+        }
+        setLoading(false);
+      });
   };
 
   return (
@@ -100,7 +128,7 @@ export default function SignUp(props: { disableCustomTheme?: boolean }) {
               variant="outlined"
               error={emailError}
               helperText={emailErrorMessage}
-              color={passwordError ? 'error' : 'primary'}
+              color={emailError ? 'error' : 'primary'}
             />
           </FormControl>
           <FormControl>
@@ -124,8 +152,9 @@ export default function SignUp(props: { disableCustomTheme?: boolean }) {
             fullWidth
             variant="contained"
             onClick={validateInputs}
+            disabled={loading}
           >
-            Sign up
+            {loading ? 'Signing up…' : 'Sign up'}
           </Button>
         </Box>
         <Divider>
