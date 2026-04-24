@@ -86,6 +86,7 @@ export default function CreateNotificationTriggerPage() {
     if (startTime > endTime) {
       setTimeError(true);
       setTimeErrorMessage("Start time must be before end time.");
+      setAdvancedView(true);
       return false;
     } else {
       setTimeError(false);
