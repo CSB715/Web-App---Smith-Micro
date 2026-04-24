@@ -28,6 +28,7 @@ export default function SignIn(props: { disableCustomTheme?: boolean }) {
   const [passwordError, setPasswordError] = React.useState(false);
   const [passwordErrorMessage, setPasswordErrorMessage] = React.useState('');
   const [open, setOpen] = React.useState(false);
+  const [loading, setLoading] = React.useState(false);
 
   const navigate = useNavigate();
 
@@ -41,6 +42,10 @@ export default function SignIn(props: { disableCustomTheme?: boolean }) {
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault(); // this stops the reload
+
+    if (!validateInputs()) return;
+
+    setLoading(true);
 
     const data = new FormData(event.currentTarget);
     const email = data.get('email');
@@ -67,6 +72,36 @@ export default function SignIn(props: { disableCustomTheme?: boolean }) {
       });
 
       navigate("/"); // navigate to main page after sign in
+    }).catch((error) => {
+      const code = error?.code as string | undefined;
+      switch (code) {
+        case 'auth/invalid-email':
+        case 'auth/user-not-found':
+          setEmailError(true);
+          setEmailErrorMessage('No account found with that email.');
+          setPasswordError(false);
+          setPasswordErrorMessage('');
+          break;
+        case 'auth/wrong-password':
+        case 'auth/invalid-credential':
+          setEmailError(false);
+          setEmailErrorMessage('');
+          setPasswordError(true);
+          setPasswordErrorMessage('Incorrect email or password.');
+          break;
+        case 'auth/too-many-requests':
+          setPasswordError(true);
+          setPasswordErrorMessage('Too many attempts. Try again later.');
+          break;
+        case 'auth/network-request-failed':
+          setEmailError(true);
+          setEmailErrorMessage('Network error. Check your connection and try again.');
+          break;
+        default:
+          setPasswordError(true);
+          setPasswordErrorMessage(error?.message ?? 'Sign-in failed. Please try again.');
+      }
+      setLoading(false);
     });
   }
 
@@ -154,7 +189,6 @@ export default function SignIn(props: { disableCustomTheme?: boolean }) {
               type="password"
               id="password"
               autoComplete="current-password"
-              autoFocus
               required
               fullWidth
               variant="outlined"
@@ -171,8 +205,9 @@ export default function SignIn(props: { disableCustomTheme?: boolean }) {
             fullWidth
             variant="contained"
             onClick={validateInputs}
+            disabled={loading}
           >
-            Sign in
+            {loading ? 'Signing in…' : 'Sign in'}
           </Button>
           <Link
             component="button"
