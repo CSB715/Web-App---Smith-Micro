@@ -29,6 +29,7 @@ import Divider from "@mui/material/Divider";
 import Paper from "@mui/material/Paper";
 import Button from "@mui/material/Button";
 import Modal from "@mui/material/Modal";
+import { getModalStyle } from "../utils/modalStyle";
 
 const style = {
   position: "absolute",
@@ -54,11 +55,19 @@ function Account() {
   const [lastResetEmailDateTime, setLastResetEmailDateTime] = useState<
     number | null
   >(null);
+  // Synchronous guards to prevent rapid-click bypass of the password-reset
+  // throttle. State (above) is async/batched, so multiple clicks before the
+  // first awaited sendPasswordResetEmail resolves all read `null` and fire
+  // independent resets. Refs update immediately and are visible to the next
+  // click in the same tick.
+  const isSendingResetRef = useRef(false);
+  const lastResetEmailRef = useRef<number | null>(null);
   const [deleteDeviceOpen, setDeleteDeviceOpen] = useState(false);
   const [renameDeviceOpen, setRenameDeviceOpen] = useState(false);
   const [addEmailOpen, setAddEmailOpen] = useState(false);
   const [addPhoneOpen, setAddPhoneOpen] = useState(false);
   const [deleteAccountOpen, setDeleteAccountOpen] = useState(false);
+  const [signOutOpen, setSignOutOpen] = useState(false);
   const [resetAlertOpen, setResetAlertOpen] = useState(false);
   const [errorAlertOpen, setErrorAlertOpen] = useState(false);
   const [pendingDelete, setPendingDelete] = useState<{
@@ -122,24 +131,33 @@ function Account() {
 
   async function handleResetPassword() {
     const auth = getAuthInstance();
+    const now = Date.now();
+
+    if (isSendingResetRef.current) return;
+    if (
+      lastResetEmailRef.current &&
+      now - lastResetEmailRef.current < 120000
+    ) {
+      const secondsLeft = Math.ceil(
+        (120000 - (now - lastResetEmailRef.current)) / 1000,
+      );
+      alert(
+        `Please wait ${secondsLeft} seconds before sending another password reset email.`,
+      );
+      return;
+    }
+
+    isSendingResetRef.current = true;
     try {
-      if (
-        lastResetEmailDateTime &&
-        new Date().getTime() - lastResetEmailDateTime < 120000
-      ) {
-        const secondsLeft = Math.ceil(
-          (120000 - (new Date().getTime() - lastResetEmailDateTime)) / 1000,
-        );
-        alert(
-          `Please wait ${secondsLeft} seconds before sending another password reset email.`,
-        );
-        return;
-      }
       await sendPasswordResetEmail(auth, auth.currentUser!.email!);
-      setLastResetEmailDateTime(new Date().getTime());
+      const sentAt = Date.now();
+      lastResetEmailRef.current = sentAt;
+      setLastResetEmailDateTime(sentAt);
       setResetAlertOpen(true);
     } catch (error: any) {
       alert(`Error: ${error.message}`);
+    } finally {
+      isSendingResetRef.current = false;
     }
   }
 
@@ -517,7 +535,7 @@ function Account() {
         <Button
           variant="outlined"
           fullWidth
-          onClick={() => getAuthInstance().signOut()}
+          onClick={() => setSignOutOpen(true)}
         >
           Sign Out
         </Button>
@@ -568,6 +586,44 @@ function Account() {
               }}
             >
               Confirm
+            </Button>
+          </Box>
+        </Box>
+      </Modal>
+
+      {/* ── Sign Out Confirmation ── */}
+      <Modal
+        open={signOutOpen}
+        onClose={() => setSignOutOpen(false)}
+        aria-labelledby="signout-modal-title"
+        aria-describedby="signout-modal-description"
+      >
+        <Box sx={getModalStyle("small")}>
+          <Typography
+            id="signout-modal-title"
+            sx={{ fontWeight: "bold", fontSize: "1.5rem", mb: 1 }}
+          >
+            Sign out?
+          </Typography>
+          <Typography
+            id="signout-modal-description"
+            sx={{ color: "text.secondary", mb: 3 }}
+          >
+            You'll need to sign in again to access your account.
+          </Typography>
+          <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 1 }}>
+            <Button variant="outlined" onClick={() => setSignOutOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              variant="outlined"
+              color="error"
+              onClick={() => {
+                setSignOutOpen(false);
+                getAuthInstance().signOut();
+              }}
+            >
+              Sign Out
             </Button>
           </Box>
         </Box>
