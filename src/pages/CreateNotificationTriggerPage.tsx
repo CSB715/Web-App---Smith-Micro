@@ -50,6 +50,7 @@ export default function CreateNotificationTriggerPage() {
   const [name, setName] = useState<string>("");
   const [categories, setCategories] = useState<string[]>([]);
   const [sites, setSites] = useState<string[]>([]);
+  const [siteInputValue, setSiteInputValue] = useState<string>("");
   const [devices, setDevices] = useState<Device[]>([]);
   const [selectedDevices, setSelectedDevices] = useState<Device[]>([]);
   const [uid, setUid] = useState<string>("");
@@ -334,6 +335,17 @@ export default function CreateNotificationTriggerPage() {
               freeSolo
               multiple
               value={sites}
+              inputValue={siteInputValue}
+              onInputChange={(_: any, newInputValue: string) => {
+                setSiteInputValue(newInputValue);
+              }}
+              onBlur={() => {
+                const trimmedValue = siteInputValue.trim();
+                if (trimmedValue) {
+                  setSites((prev) => [...prev, trimmedValue]);
+                  setSiteInputValue("");
+                }
+              }}
               onChange={(_: any, newValue: Array<string>) => {
                 setSites(newValue);
               }}
