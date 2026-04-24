@@ -5,3 +5,7 @@ export function getDisplayUrl(url: string) {
     return url;
   }
 }
+
+export function trimUrl(url: string): string {
+  return url.replace(/^https?:\/\/(www\.)?/, "").replace(/^www\./, "").replace(/\/.*$/, "");
+}
